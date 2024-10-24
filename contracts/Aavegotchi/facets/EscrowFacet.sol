@@ -5,7 +5,6 @@ import {Modifiers} from "../libraries/LibAppStorage.sol";
 import {LibERC20} from "../../shared/libraries/LibERC20.sol";
 import {IERC20} from "../../shared/interfaces/IERC20.sol";
 import {LibMeta} from "../../shared/libraries/LibMeta.sol";
-import {LibAavegotchi} from "../libraries/LibAavegotchi.sol";
 import {CollateralEscrow} from "../CollateralEscrow.sol";
 
 contract EscrowFacet is Modifiers {
@@ -21,7 +20,7 @@ contract EscrowFacet is Modifiers {
     ///@param _tokenId The identifier of the NFT receiving the ERC20 token
     ///@param _erc20Contract The contract address of the ERC20 token to be deposited
     ///@param _value The amount of ERC20 tokens to deposit
-    function depositERC20(uint256 _tokenId, address _erc20Contract, uint256 _value) public onlyPolygon {
+    function depositERC20(uint256 _tokenId, address _erc20Contract, uint256 _value) public onlyPolygonOrTesting {
         address escrow = s.aavegotchis[_tokenId].escrow;
         address collateralType = s.aavegotchis[_tokenId].collateralType;
         require(escrow != address(0), "EscrowFacet: Does not have an escrow");
@@ -37,7 +36,11 @@ contract EscrowFacet is Modifiers {
     ///@param _tokenIds An array containing the identifiers of the NFTs receiving the ERC20 tokens
     ///@param _erc20Contracts An array containing the contract addresses of the ERC20 tokens to be deposited
     ///@param _values An array containing the amounts of ERC20 tokens to deposit
-    function batchDepositERC20(uint256[] calldata _tokenIds, address[] calldata _erc20Contracts, uint256[] calldata _values) external onlyPolygon {
+    function batchDepositERC20(
+        uint256[] calldata _tokenIds,
+        address[] calldata _erc20Contracts,
+        uint256[] calldata _values
+    ) external onlyPolygonOrTesting {
         require(_tokenIds.length == _values.length, "EscrowFacet: TokenIDs and Values length must match");
         require(_tokenIds.length == _erc20Contracts.length, "EscrowFacet: TokenIDs and ERC20Contracts length must match");
 
@@ -91,7 +94,7 @@ contract EscrowFacet is Modifiers {
         address _erc20Contract,
         address _recipient,
         uint256 _transferAmount
-    ) public onlyAavegotchiOwner(_tokenId) onlyUnlocked(_tokenId) onlyPolygon {
+    ) public onlyAavegotchiOwner(_tokenId) onlyUnlocked(_tokenId) onlyPolygonOrTesting {
         address escrow = s.aavegotchis[_tokenId].escrow;
         address collateralType = s.aavegotchis[_tokenId].collateralType;
         require(escrow != address(0), "EscrowFacet: Does not have an escrow");
@@ -119,7 +122,7 @@ contract EscrowFacet is Modifiers {
         address[] calldata _erc20Contracts,
         address[] calldata _recipients,
         uint256[] calldata _transferAmounts
-    ) external onlyPolygon {
+    ) external onlyPolygonOrTesting {
         require(_tokenIds.length == _erc20Contracts.length, "EscrowFacet: TokenIDs and ERC20Contracts length must match");
         require(_tokenIds.length == _recipients.length, "EscrowFacet: TokenIDs and Recipients length must match");
         require(_tokenIds.length == _transferAmounts.length, "EscrowFacet: TokenIDs and TransferAmounts length must match");

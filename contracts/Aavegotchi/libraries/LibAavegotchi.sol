@@ -3,9 +3,6 @@ pragma solidity 0.8.1;
 
 import {IERC20} from "../../shared/interfaces/IERC20.sol";
 import {LibAppStorage, AavegotchiCollateralTypeInfo, AppStorage, Aavegotchi, ItemType, NUMERIC_TRAITS_NUM, EQUIPPED_WEARABLE_SLOTS, PORTAL_AAVEGOTCHIS_NUM} from "./LibAppStorage.sol";
-import {LibERC20} from "../../shared/libraries/LibERC20.sol";
-import {LibMeta} from "../../shared/libraries/LibMeta.sol";
-import {IERC721} from "../../shared/interfaces/IERC721.sol";
 import {LibERC721} from "../../shared/libraries/LibERC721.sol";
 import {LibItems, ItemTypeIO} from "../libraries/LibItems.sol";
 
@@ -286,7 +283,7 @@ library LibAavegotchi {
         }
     }
 
-    // Need to ensure there is no overflow of _ghst
+    // // Need to ensure there is no overflow of _ghst
     function purchase(address _from, uint256 _ghst) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();
         //33% to burn address
@@ -301,13 +298,22 @@ library LibAavegotchi {
         //10% to DAO
         uint256 daoShare = (_ghst - burnShare - companyShare - rarityFarmShare);
 
-        // Using 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF as burn address.
-        // GHST token contract does not allow transferring to address(0) address: https://etherscan.io/address/0x3F382DbD960E3a9bbCeaE22651E88158d2791550#code
-        address ghstContract = s.ghstContract;
-        LibERC20.transferFrom(ghstContract, _from, address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF), burnShare);
-        LibERC20.transferFrom(ghstContract, _from, s.pixelCraft, companyShare);
-        LibERC20.transferFrom(ghstContract, _from, s.rarityFarming, rarityFarmShare);
-        LibERC20.transferFrom(ghstContract, _from, s.dao, daoShare);
+        //transfer ETH
+        // Transfer ETH to burn address
+        (bool success, ) = payable(address(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF)).call{value: burnShare}("");
+        require(success, "ETH transfer to burn address failed");
+
+        // Transfer ETH to Pixelcraft wallet
+        (success, ) = payable(s.pixelCraft).call{value: companyShare}("");
+        require(success, "ETH transfer to Pixelcraft wallet failed");
+
+        // Transfer ETH to rarity farming rewards
+        (success, ) = payable(s.rarityFarming).call{value: rarityFarmShare}("");
+        require(success, "ETH transfer to rarity farming rewards failed");
+
+        // Transfer ETH to DAO
+        (success, ) = payable(s.dao).call{value: daoShare}("");
+        require(success, "ETH transfer to DAO failed");
     }
 
     function sqrt(uint256 x) internal pure returns (uint256 y) {
@@ -337,10 +343,6 @@ library LibAavegotchi {
         }
         return string(name);
     }
-
-    // function addTokenToUser(address _to, uint256 _tokenId) internal {}
-
-    // function removeTokenFromUser(address _from, uint256 _tokenId) internal {}
 
     function transfer(address _from, address _to, uint256 _tokenId) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();

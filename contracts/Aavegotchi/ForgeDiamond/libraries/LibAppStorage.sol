@@ -215,7 +215,7 @@ contract Modifiers {
         _;
     }
 
-    modifier onlyPolygon() {
+    modifier onlyPolygonOrTesting() {
         // enabled for polygon only
         require(block.chainid == 137, "LibAppStorage: Disabled function");
         _;

@@ -39,8 +39,12 @@ import { allSideViewDimensions } from "../svgs/sideViewDimensions";
 import { convertSideDimensionsToTaskFormat } from "../tasks/updateItemSideDimensions";
 import { allExceptions } from "../svgs/allExceptions";
 import { convertExceptionsToTaskFormat } from "../tasks/updateWearableExceptions";
+import { xpRelayerAddress } from "./helperFunctions";
 
-const diamond = require("../js/diamond-util/src/index.js");
+import { deploy, deployWithoutInit } from "../js/diamond-util/src/index";
+import { deployWGHST } from "./deployWGHST";
+
+// const diamond = require("../js/diamond-util/src/index.js");
 const { collaterals } = require("./testCollateralTypes.js");
 
 function addCommas(nStr: any) {
@@ -59,13 +63,16 @@ function strDisplay(str: any) {
   return addCommas(str.toString());
 }
 
-async function main() {
-  if (!["hardhat", "localhost", "amoy", "polter", "base-sepolia"].includes(network.name)) {
+export async function deployFullDiamond() {
+  if (
+    !["hardhat", "localhost", "amoy", "polter", "base-sepolia"].includes(
+      network.name
+    )
+  ) {
     throw Error("No network settings for " + network.name);
   }
 
   //amoy
-  const ghstContract = "0xB40B75b4a8e5153357b3e5e4343d997B1a1019f9";
   const ghstStakingDiamondAddress =
     "0xae83d5fc564Ef58224e934ba4Df72a100d5082a0";
   const realmDiamondAddress = "0x5a4faEb79951bAAa0866B72fD6517E693c8E4620";
@@ -93,11 +100,14 @@ async function main() {
 
   console.log("Owner: " + ownerAddress);
 
+  const wghst = await deployWGHST();
+  const wghstContractAddress = wghst.address;
+
   const dao = ownerAddress; // 'todo'
   const daoTreasury = ownerAddress;
   const rarityFarming = ownerAddress; // 'todo'
   const pixelCraft = ownerAddress; // 'todo'
-  const itemManagers = [ownerAddress]; // 'todo'
+  const itemManagers = [ownerAddress, xpRelayerAddress]; // 'todo'
 
   const initArgs = [
     [
@@ -105,13 +115,13 @@ async function main() {
       daoTreasury,
       pixelCraft,
       rarityFarming,
-      ghstContract,
       keyHash,
       subscriptionIdAmoy,
       vrfCoordinatorAmoy,
       childChainManager,
       name,
       symbol,
+      wghstContractAddress,
     ],
   ];
 
@@ -196,7 +206,7 @@ async function main() {
     "PolygonXGeistBridgeFacet"
   );
 
-  const aavegotchiDiamond = await diamond.deploy({
+  const aavegotchiDiamond = await deploy({
     diamondName: "AavegotchiDiamond",
     initDiamond: "contracts/Aavegotchi/InitDiamond.sol:InitDiamond",
     facets: [
@@ -231,6 +241,7 @@ async function main() {
     owner: ownerAddress,
     args: initArgs,
   });
+
   console.log("Aavegotchi diamond address:" + aavegotchiDiamond.address);
 
   tx = aavegotchiDiamond.deployTransaction;
@@ -254,7 +265,7 @@ async function main() {
   const [cutAddress, loupeAddress, ownershipAddress] =
     await aavegotchiDiamond.getDefaultFacetAddresses();
 
-  const wearableDiamond = await diamond.deployWithoutInit({
+  const wearableDiamond = await deployWithoutInit({
     diamondName: "WearableDiamond",
     facets: [
       ["EventHandlerFacet", eventhandlerFacet],
@@ -303,7 +314,7 @@ async function main() {
       "contracts/Aavegotchi/ForgeDiamond/facets/ForgeVRFFacet.sol:ForgeVRFFacet"
     );
 
-  const forgeDiamond = await diamond.deployWithoutInit({
+  const forgeDiamond = await deployWithoutInit({
     diamondName: "ForgeDiamond",
     facets: [
       ["ForgeFacet", forgeFacet],
@@ -615,6 +626,10 @@ async function main() {
   console.log("Forge diamond set:" + strDisplay(receipt.gasUsed));
   totalGasUsed = totalGasUsed.add(receipt.gasUsed);
 
+  return {
+    aavegotchiDiamond: aavegotchiDiamond,
+  };
+
   // add erc721 and 1155 categories
   // console.log("Adding ERC721 categories");
   // const erc721Categories = [
@@ -731,7 +746,7 @@ async function main() {
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 if (require.main === module) {
-  main()
+  deployFullDiamond()
     .then(() => process.exit(0))
     .catch((error) => {
       console.error(error);
@@ -739,4 +754,4 @@ if (require.main === module) {
     });
 }
 
-exports.deployProject = main;
+exports.deployProject = deployFullDiamond;

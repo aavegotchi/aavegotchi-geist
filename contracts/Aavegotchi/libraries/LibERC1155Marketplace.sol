@@ -4,8 +4,6 @@ pragma solidity 0.8.1;
 import {LibAppStorage, AppStorage, ListingListItem, ERC1155Listing} from "./LibAppStorage.sol";
 import {IERC1155} from "../../shared/interfaces/IERC1155.sol";
 
-// import "hardhat/console.sol";
-
 library LibERC1155Marketplace {
     event ERC1155ListingCancelled(uint256 indexed listingId, uint256 category, uint256 time);
     event ERC1155ListingRemoved(uint256 indexed listingId, uint256 category, uint256 time);

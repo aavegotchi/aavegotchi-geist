@@ -3,14 +3,7 @@ pragma solidity 0.8.1;
 
 import "../libraries/LibAppStorage.sol";
 import {LibToken} from "../libraries/LibToken.sol";
-
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
-import {IERC1155MetadataURI} from "@openzeppelin/contracts/token/ERC1155/extensions/IERC1155MetadataURI.sol";
-import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
 import {LibMeta} from "../../../shared/libraries/LibMeta.sol";
 import {LibStrings} from "../../../shared/libraries/LibStrings.sol";
 import {IERC1155Marketplace} from "../../../shared/interfaces/IERC1155Marketplace.sol";
@@ -20,16 +13,6 @@ contract ForgeTokenFacet is Modifiers {
     event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values);
     event ApprovalForAll(address indexed account, address indexed operator, bool approved);
     event URI(string value, uint256 indexed id);
-
-    //    /**
-    //     * @dev See {IERC165-supportsInterface}.
-    //     */
-    //    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
-    //        return
-    //        interfaceId == type(IERC1155).interfaceId ||
-    //        interfaceId == type(IERC1155MetadataURI).interfaceId ||
-    //        super.supportsInterface(interfaceId);
-    //    }
 
     function name() external pure returns (string memory) {
         return "Aavegotchi Forge";

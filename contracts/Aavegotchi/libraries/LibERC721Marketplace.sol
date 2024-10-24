@@ -6,8 +6,6 @@ import {LibMeta} from "../../shared/libraries/LibMeta.sol";
 
 import "../../shared/interfaces/IERC721.sol";
 
-// import "hardhat/console.sol";
-
 library LibERC721Marketplace {
     event ERC721ListingCancelled(uint256 indexed listingId, uint256 category, uint256 time);
     event ERC721ListingRemoved(uint256 indexed listingId, uint256 category, uint256 time);

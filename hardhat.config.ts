@@ -40,7 +40,7 @@ export default {
   etherscan: {
     apiKey: {
       // matic: process.env.POLYGON_API_KEY,
-      polter: 'empty',
+      polter: "empty",
     },
     customChains: [
       {
@@ -48,18 +48,18 @@ export default {
         chainId: 631571,
         urls: {
           apiURL: "https://polter-testnet.explorer.alchemy.com/api",
-          browserURL: "https://polter-testnet.explorer.alchemy.com"
-        }
-      }
-    ]
+          browserURL: "https://polter-testnet.explorer.alchemy.com",
+        },
+      },
+    ],
   },
   networks: {
     hardhat: {
-      forking: {
-        url: process.env.MATIC_URL,
-        timeout: 12000000,
-        // blockNumber: 31480850,
-      },
+      // forking: {
+      //   url: process.env.MATIC_URL,
+      //   timeout: 12000000,
+      //   // blockNumber: 31480850,
+      // },
       blockGasLimit: 20000000,
       timeout: 120000,
       gas: "auto",
@@ -93,10 +93,11 @@ export default {
       url: process.env.POLTER_TESTNET_URL,
       accounts: [process.env.SECRET],
     },
-    "base-sepolia": {
-      url: process.env.BASE_SEPOLIA_URL,
-      accounts: [process.env.SECRET],
-    },
+    // "base-sepolia": {
+    //   url: process.env.BASE_SEPOLIA_URL,
+    //   accounts: [process.env.SECRET],
+    // },
+
     // gorli: {
     //   url: process.env.GORLI,
     //   accounts: [process.env.SECRET],

@@ -8,9 +8,6 @@ pragma solidity 0.8.1;
 /******************************************************************************/
 
 import {ForgeLibDiamond} from "./libraries/ForgeLibDiamond.sol";
-import {DiamondCutFacet} from "../../shared/facets/DiamondCutFacet.sol";
-import {DiamondLoupeFacet} from "../../shared/facets/DiamondLoupeFacet.sol";
-import {OwnershipFacet} from "../../shared/facets/OwnershipFacet.sol";
 
 contract ForgeDiamond {
     constructor(
