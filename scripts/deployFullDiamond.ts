@@ -773,7 +773,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         diamondName: "AavegotchiDiamond",
         initDiamond: "contracts/Aavegotchi/InitDiamond.sol:InitDiamond",
         facetNames: [
-          "contracts/Aavegotchi/facets/BridgeFacet.sol:BridgeFacet",
+          //"contracts/Aavegotchi/facets/BridgeFacet.sol:BridgeFacet",
           "contracts/Aavegotchi/facets/AavegotchiFacet.sol:AavegotchiFacet",
           "AavegotchiGameFacet",
           "SvgFacet",
@@ -799,6 +799,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
           "ItemsRolesRegistryFacet",
           "ERC1155BuyOrderFacet",
           "PolygonXGeistBridgeFacet",
+          "WearablesConfigFacet",
         ],
         owner: ownerAddress,
         args: initArgs,

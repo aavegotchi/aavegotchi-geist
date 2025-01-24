@@ -65,10 +65,11 @@ export default {
   },
   networks: {
     hardhat: {
+      allowUnlimitedContractSize: true, // for testing
       forking: {
         url: process.env.GEIST_URL,
         // timeout: 12000000,
-        blockNumber: 1743308,
+        blockNumber: 2523699,
       },
       blockGasLimit: 20000000,
       timeout: 120000,
