@@ -37,10 +37,12 @@ export async function upgrade() {
   ) as DAOFacetInterface;
   const payload = iface.encodeFunctionData("setBaazaarTradingAllowlists", [
     [
-      "0x7b1d9b594c875c0a807f65e8a92e8a8ccd740060",
-      "0x7b1d9b594c875c0a807f65e8a92e8a8ccd740061",
+      "0x7b1d9b594c875c0a807f65e8a92e8a8ccd740060", //guardians
+      "0x6Acc828BbbC6874de40Ca20bfeA7Cd2a2DA8DA8c", //aavegotchi
+      "0xaC336aB3CFC58698B582205A861A5C6B798c01B9", //wearables
+      "0x751134C3b016CF57feDcDA252871daEF2A018765", //forge
     ],
-    [true, false],
+    [true, true, true, true],
   ]);
 
   const args: DeployUpgradeTaskArgs = {
