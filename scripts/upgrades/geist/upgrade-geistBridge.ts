@@ -3,8 +3,8 @@ import {
   convertFacetAndSelectorsToString,
   DeployUpgradeTaskArgs,
   FacetsAndAddSelectors,
-} from "../../tasks/deployUpgrade";
-import { bridgeConfig } from "../geistBridge/bridgeConfig";
+} from "../../../tasks/deployUpgrade";
+import { bridgeConfig } from "../../geistBridge/bridgeConfig";
 
 export async function upgrade() {
   const facets: FacetsAndAddSelectors[] = [

@@ -3,10 +3,9 @@ import {
   convertFacetAndSelectorsToString,
   DeployUpgradeTaskArgs,
   FacetsAndAddSelectors,
-} from "../../tasks/deployUpgrade";
+} from "../../../tasks/deployUpgrade";
 
 export async function upgrade() {
-
   const facets: FacetsAndAddSelectors[] = [
     {
       facetName: "PolygonXGeistBridgeFacet",
@@ -28,8 +27,8 @@ export async function upgrade() {
   const joined = convertFacetAndSelectorsToString(facets);
 
   const args: DeployUpgradeTaskArgs = {
-    diamondOwner: '0xd38Df837a1EAd12ee16f8b8b7E5F58703f841668', // polter-testnet
-    diamondAddress: '0x1F0eb9099b9c398323dcf2F133dFdAD9dE7cF994', // polter-testnet
+    diamondOwner: "0xd38Df837a1EAd12ee16f8b8b7E5F58703f841668", // polter-testnet
+    diamondAddress: "0x1F0eb9099b9c398323dcf2F133dFdAD9dE7cF994", // polter-testnet
     facetsAndAddSelectors: joined,
     useLedger: false,
     useMultisig: false,

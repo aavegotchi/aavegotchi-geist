@@ -143,11 +143,14 @@ library LibSharedMarketplace {
             category_ = s.erc1155Categories[_erc1155TokenAddress][_erc1155TypeId];
         }
 
-        if (category_ == 0) {
-            require(
-                _erc1155TokenAddress == address(this) && s.itemTypes[_erc1155TypeId].maxQuantity > 0,
-                "ERC1155Marketplace: erc1155 item not supported"
-            );
+        //Aavegotchi Wearables specific
+        if (category_ == 0 && _erc1155TokenAddress == address(this)) {
+            require(s.itemTypes[_erc1155TypeId].maxQuantity > 0, "ERC1155Marketplace: erc1155 item not supported");
+        }
+
+        //We don't need to support whitelisting specific IDs for collections anymore. As long as the contract is on the allowlist, all items are supported.
+        if (category_ == 0 && _erc1155TokenAddress != address(this)) {
+            require(s.baazaarTradingAllowlist[_erc1155TokenAddress], "ERC1155Marketplace: baazaar trading not allowed");
         }
     }
 }

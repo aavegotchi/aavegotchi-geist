@@ -387,6 +387,7 @@ struct AppStorage {
     mapping(uint256 => ERC1155BuyOrder) erc1155BuyOrders; // buyOrderId => data
     address gotchGeistBridge;
     address itemGeistBridge;
+    mapping(address => bool) baazaarTradingAllowlist; // allowlist for baazaar trading
 }
 
 library LibAppStorage {

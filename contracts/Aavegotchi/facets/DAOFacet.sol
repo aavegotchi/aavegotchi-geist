@@ -34,6 +34,7 @@ contract DAOFacet is Modifiers {
     event GotchiGeistBridgeUpdate(address _newBridge);
     event ItemGeistBridgeUpdate(address _newBridge);
     event WGHSTContractUpdate(address _newWGHSTContract);
+    event BaazaarTradingAllowlistUpdate(address _contract, bool _allow);
 
     /***********************************|
    |             Read Functions         |
@@ -456,5 +457,14 @@ contract DAOFacet is Modifiers {
 
     function getWGHSTContract() external view returns (address) {
         return s.wghstContract;
+    }
+
+    function setBaazaarTradingAllowlist(address _contract, bool _allow) external onlyDaoOrOwner {
+        s.baazaarTradingAllowlist[_contract] = _allow;
+        emit BaazaarTradingAllowlistUpdate(_contract, _allow);
+    }
+
+    function getBaazaarTradingAllowlist(address _contract) external view returns (bool) {
+        return s.baazaarTradingAllowlist[_contract];
     }
 }

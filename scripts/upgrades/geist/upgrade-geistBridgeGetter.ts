@@ -3,7 +3,7 @@ import {
   convertFacetAndSelectorsToString,
   DeployUpgradeTaskArgs,
   FacetsAndAddSelectors,
-} from "../../tasks/deployUpgrade";
+} from "../../../tasks/deployUpgrade";
 
 export async function upgrade() {
   const facets: FacetsAndAddSelectors[] = [
