@@ -459,9 +459,12 @@ contract DAOFacet is Modifiers {
         return s.wghstContract;
     }
 
-    function setBaazaarTradingAllowlist(address _contract, bool _allow) external onlyDaoOrOwner {
-        s.baazaarTradingAllowlist[_contract] = _allow;
-        emit BaazaarTradingAllowlistUpdate(_contract, _allow);
+    function setBaazaarTradingAllowlists(address[] calldata _contracts, bool[] calldata _allows) external onlyDaoOrOwner {
+        require(_contracts.length == _allows.length, "DAOFacet: Contracts and allows must be the same length");
+        for (uint256 i; i < _contracts.length; i++) {
+            s.baazaarTradingAllowlist[_contracts[i]] = _allows[i];
+            emit BaazaarTradingAllowlistUpdate(_contracts[i], _allows[i]);
+        }
     }
 
     function getBaazaarTradingAllowlist(address _contract) external view returns (bool) {

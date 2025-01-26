@@ -47,6 +47,7 @@ contract ERC1155MarketplaceFacet is Modifiers {
     }
 
     ///@notice Allow the aavegotchi diamond owner or DAO to set the category details for multiple ERC1155 NFTs
+    ///@dev This function is deprecated on Geist and will be removed in the future.
     ///@param _categories An array of structs where each struct contains details about each ERC1155 item //erc1155TokenAddress,erc1155TypeId and category
     function setERC1155Categories(Category[] calldata _categories) external onlyItemManager {
         for (uint256 i; i < _categories.length; i++) {

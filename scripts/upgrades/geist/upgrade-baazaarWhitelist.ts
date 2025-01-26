@@ -13,7 +13,7 @@ export async function upgrade() {
     {
       facetName: "DAOFacet",
       addSelectors: [
-        "function setBaazaarTradingAllowlist(address _contract, bool _allow)",
+        "function setBaazaarTradingAllowlists(address[] calldata _contracts, bool[] calldata _allows)",
         "function getBaazaarTradingAllowlist(address _contract) external view returns (bool)",
       ],
       removeSelectors: [],
@@ -35,9 +35,12 @@ export async function upgrade() {
   const iface = new ethers.utils.Interface(
     DAOFacet__factory.abi
   ) as DAOFacetInterface;
-  const payload = iface.encodeFunctionData("setBaazaarTradingAllowlist", [
-    "0x7b1d9b594c875c0a807f65e8a92e8a8ccd740060",
-    true,
+  const payload = iface.encodeFunctionData("setBaazaarTradingAllowlists", [
+    [
+      "0x7b1d9b594c875c0a807f65e8a92e8a8ccd740060",
+      "0x7b1d9b594c875c0a807f65e8a92e8a8ccd740061",
+    ],
+    [true, false],
   ]);
 
   const args: DeployUpgradeTaskArgs = {

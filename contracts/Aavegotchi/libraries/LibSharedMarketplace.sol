@@ -117,10 +117,9 @@ library LibSharedMarketplace {
     function getERC721Category(address _erc721TokenAddress, uint256 _erc721TokenId) internal view returns (uint256 category_) {
         AppStorage storage s = LibAppStorage.diamondStorage();
 
-        require(
-            _erc721TokenAddress == address(this) || s.erc721Categories[_erc721TokenAddress][0] != 0,
-            "ERC721Marketplace: ERC721 category does not exist"
-        );
+        require(s.baazaarTradingAllowlist[_erc721TokenAddress], "ERC721Marketplace: baazaar trading not allowed");
+
+        //this will usually be 0
         if (_erc721TokenAddress != address(this)) {
             category_ = s.erc721Categories[_erc721TokenAddress][0];
         } else {
@@ -133,6 +132,9 @@ library LibSharedMarketplace {
     ///@param _erc1155TypeId Identifier of the NFT to query
     ///@return category_ Category of the NFT // 0 is wearable, 1 is badge, 2 is consumable, 3 is tickets
     function getERC1155Category(address _erc1155TokenAddress, uint256 _erc1155TypeId) internal view returns (uint256 category_) {
+        //We don't need to support whitelisting specific IDs for collections anymore. As long as the contract is on the allowlist, all items are supported.
+        require(s.baazaarTradingAllowlist[_erc1155TokenAddress], "ERC1155Marketplace: baazaar trading not allowed");
+
         AppStorage storage s = LibAppStorage.diamondStorage();
         if (_erc1155TokenAddress == s.forgeDiamond && _erc1155TypeId < 1_000_000_000) {
             //Schematics are always supported to trade, so long as the wearable exists
@@ -146,11 +148,6 @@ library LibSharedMarketplace {
         //Aavegotchi Wearables specific
         if (category_ == 0 && _erc1155TokenAddress == address(this)) {
             require(s.itemTypes[_erc1155TypeId].maxQuantity > 0, "ERC1155Marketplace: erc1155 item not supported");
-        }
-
-        //We don't need to support whitelisting specific IDs for collections anymore. As long as the contract is on the allowlist, all items are supported.
-        if (category_ == 0 && _erc1155TokenAddress != address(this)) {
-            require(s.baazaarTradingAllowlist[_erc1155TokenAddress], "ERC1155Marketplace: baazaar trading not allowed");
         }
     }
 }
