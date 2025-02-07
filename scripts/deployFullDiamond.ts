@@ -52,7 +52,6 @@ import { allSideViewDimensions } from "../svgs/sideViewDimensions";
 import { convertSideDimensionsToTaskFormat } from "../tasks/updateItemSideDimensions";
 import { allExceptions } from "../svgs/allExceptions";
 import { convertExceptionsToTaskFormat } from "../tasks/updateWearableExceptions";
-import { xpRelayerAddress } from "./helperFunctions";
 
 import { deploy, deployWithoutInit } from "../js/diamond-util/src";
 
@@ -70,6 +69,7 @@ import {
   collateralsLeftSvgs,
   collateralsRightSvgs,
 } from "../svgs/collaterals-sides";
+import { xpRelayerAddress } from "./helperFunctions";
 
 // Define the interface for the deployment configuration
 export interface DeploymentConfig {
@@ -1126,5 +1126,3 @@ if (require.main === module) {
       process.exit(1);
     });
 }
-
-exports.deployProject = deployFullDiamond;

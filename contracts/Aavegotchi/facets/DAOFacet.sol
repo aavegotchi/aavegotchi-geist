@@ -450,9 +450,9 @@ contract DAOFacet is Modifiers {
         emit ItemGeistBridgeUpdate(_newBridge);
     }
 
-    function setWGHSTContract(address _wghstContract) external onlyDaoOrOwner {
-        s.wghstContract = _wghstContract;
-        emit WGHSTContractUpdate(_wghstContract);
+    function setWGHSTContract(address _ghstContract) external onlyDaoOrOwner {
+        s.ghstContract = _ghstContract;
+        emit WGHSTContractUpdate(_ghstContract);
     }
 
     function getWGHSTContract() external view returns (address) {
