@@ -5,6 +5,7 @@ import {LibAppStorage, AppStorage, ERC721BuyOrder, ERC1155BuyOrder} from "./LibA
 import {LibAavegotchi} from "./LibAavegotchi.sol";
 import {LibSharedMarketplace} from "./LibSharedMarketplace.sol";
 import {IERC20} from "../../shared/interfaces/IERC20.sol";
+import {LibERC20} from "../../shared/libraries/LibERC20.sol";
 
 library LibBuyOrder {
     function cancelERC721BuyOrder(uint256 _buyOrderId) internal {

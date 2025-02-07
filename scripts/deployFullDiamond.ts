@@ -734,7 +734,10 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   const rarityFarming = ownerAddress; // 'todo'
   const pixelCraft = ownerAddress; // 'todo'
   const itemManagers = [ownerAddress, xpRelayerAddress]; // 'todo'
-  let wghstContractAddress = "";
+  let ghstContractAddress = "";
+  let chainlinkKeyHash = "";
+  let subscriptionId = 0;
+  let vrfCoordinator = "";
 
   const addresses = networkAddresses[chainId];
 
@@ -744,9 +747,9 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
     const ERC20Factory = await ethers.getContractFactory("ERC20Token");
     const erc20 = await ERC20Factory.deploy();
     await erc20.deployed();
-    wghstContractAddress = erc20.address;
+    ghstContractAddress = erc20.address;
   } else {
-    wghstContractAddress = addresses.wghst;
+    ghstContractAddress = addresses.ghst;
   }
 
   const initArgs = [
@@ -757,9 +760,14 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       rarityFarming,
       name,
       symbol,
-      wghstContractAddress,
+      ghstContractAddress,
+      chainlinkKeyHash,
+      subscriptionId,
+      vrfCoordinator,
     ],
   ];
+
+  console.log("args:", initArgs);
 
   let totalGasUsed = ethers.BigNumber.from("0");
   let tx;
@@ -773,7 +781,6 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         diamondName: "AavegotchiDiamond",
         initDiamond: "contracts/Aavegotchi/InitDiamond.sol:InitDiamond",
         facetNames: [
-          "contracts/Aavegotchi/facets/BridgeFacet.sol:BridgeFacet",
           "contracts/Aavegotchi/facets/AavegotchiFacet.sol:AavegotchiFacet",
           "AavegotchiGameFacet",
           "SvgFacet",
@@ -798,7 +805,6 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
           "ERC721BuyOrderFacet",
           "ItemsRolesRegistryFacet",
           "ERC1155BuyOrderFacet",
-          "PolygonXGeistBridgeFacet",
         ],
         owner: ownerAddress,
         args: initArgs,
@@ -923,7 +929,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         daoFacet,
         "10000",
         ethers.utils.parseEther("0.1"),
-        getCollaterals(network.name, wghstContractAddress, h1Collaterals),
+        getCollaterals(network.name, ghstContractAddress, h1Collaterals),
         totalGasUsed
       );
 
@@ -942,7 +948,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         daoFacet,
         "15000",
         ethers.utils.parseEther("0.1"),
-        getCollaterals(network.name, wghstContractAddress, h2Collaterals),
+        getCollaterals(network.name, ghstContractAddress, h2Collaterals),
         totalGasUsed
       );
 
@@ -1112,7 +1118,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
     aavegotchiDiamond: aavegotchiDiamond,
     forgeDiamond: forgeDiamond,
     wearableDiamond: wearableDiamond,
-    testGhstContractAddress: wghstContractAddress, //testing only
+    testGhstContractAddress: ghstContractAddress, //testing only
   };
 }
 

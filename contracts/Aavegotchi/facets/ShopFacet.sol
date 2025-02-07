@@ -9,6 +9,7 @@ import {LibERC721} from "../../shared/libraries/LibERC721.sol";
 import {LibERC1155} from "../../shared/libraries/LibERC1155.sol";
 import {LibItems} from "../libraries/LibItems.sol";
 import {LibMeta} from "../../shared/libraries/LibMeta.sol";
+import {LibERC1155Marketplace} from "../libraries/LibERC1155Marketplace.sol";
 
 import "../WearableDiamond/interfaces/IEventHandlerFacet.sol";
 

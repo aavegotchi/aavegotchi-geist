@@ -21,7 +21,10 @@ contract InitDiamond {
         address rarityFarming;
         string name;
         string symbol;
-        address wghstContract;
+        address ghstContract;
+        bytes32 chainlinkKeyHash;
+        uint64 subscriptionId;
+        address vrfCoordinator;
     }
 
     function init(Args memory _args) external {
@@ -44,7 +47,7 @@ contract InitDiamond {
 
         s.ghstContract = _args.ghstContract;
         s.keyHash = _args.chainlinkKeyHash;
-        s.subscriptionId = (_args.subscriptionId);
+        s.subscriptionId = _args.subscriptionId;
         s.vrfCoordinator = _args.vrfCoordinator;
 
         s.listingFeeInWei = 1e17;

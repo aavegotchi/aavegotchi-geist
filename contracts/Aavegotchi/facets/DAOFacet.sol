@@ -33,7 +33,7 @@ contract DAOFacet is Modifiers {
     event UpdateItemPrice(uint256 _itemId, uint256 _priceInWei);
     event GotchiGeistBridgeUpdate(address _newBridge);
     event ItemGeistBridgeUpdate(address _newBridge);
-    event WGHSTContractUpdate(address _newWGHSTContract);
+    event GHSTContractUpdate(address _newGHSTContract);
     event BaazaarTradingAllowlistUpdate(address _contract, bool _allow);
 
     /***********************************|
@@ -450,13 +450,13 @@ contract DAOFacet is Modifiers {
         emit ItemGeistBridgeUpdate(_newBridge);
     }
 
-    function setWGHSTContract(address _ghstContract) external onlyDaoOrOwner {
+    function setGHSTContract(address _ghstContract) external onlyDaoOrOwner {
         s.ghstContract = _ghstContract;
-        emit WGHSTContractUpdate(_ghstContract);
+        emit GHSTContractUpdate(_ghstContract);
     }
 
-    function getWGHSTContract() external view returns (address) {
-        return s.wghstContract;
+    function getGHSTContract() external view returns (address) {
+        return s.ghstContract;
     }
 
     function setBaazaarTradingAllowlists(address[] calldata _contracts, bool[] calldata _allows) external onlyDaoOrOwner {

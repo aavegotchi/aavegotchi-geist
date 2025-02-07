@@ -74,27 +74,28 @@ export const AMOY_WEARABLE_DIAMOND =
 export const AMOY_FORGE_DIAMOND = "0xF7c2AC46723Ad844620F798ECe67f5C673120FB6";
 
 interface NetworkAddresses {
-  wghst: string;
-  ghst?: string;
+  ghst: string;
   aavegotchiDiamond?: string;
 }
 
 export const networkAddresses: Record<number, NetworkAddresses> = {
   137: {
-    wghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
   },
   31337: {
-    wghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
   },
+
   631571: {
-    wghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
   },
+
   63157: {
-    wghst: "0x74e2051A9Cd994F83f2d789448dCa4a3e879964c",
+    ghst: "0x74e2051A9Cd994F83f2d789448dCa4a3e879964c",
     aavegotchiDiamond: "0x6Acc828BbbC6874de40Ca20bfeA7Cd2a2DA8DA8c",
   },
+
   84532: {
-    wghst: "0xe97f36a00058aa7dfc4e85d23532c3f70453a7ae",
     ghst: "0xe97f36a00058aa7dfc4e85d23532c3f70453a7ae",
   },
 };

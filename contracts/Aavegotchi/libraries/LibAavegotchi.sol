@@ -5,6 +5,7 @@ import {IERC20} from "../../shared/interfaces/IERC20.sol";
 import {LibAppStorage, AavegotchiCollateralTypeInfo, AppStorage, Aavegotchi, ItemType, NUMERIC_TRAITS_NUM, EQUIPPED_WEARABLE_SLOTS, PORTAL_AAVEGOTCHIS_NUM} from "./LibAppStorage.sol";
 import {LibERC721} from "../../shared/libraries/LibERC721.sol";
 import {LibItems, ItemTypeIO} from "../libraries/LibItems.sol";
+import {LibERC20} from "../../shared/libraries/LibERC20.sol";
 
 struct AavegotchiCollateralTypeIO {
     address collateralType;
@@ -156,7 +157,7 @@ library LibAavegotchi {
             aavegotchiInfo_.equippedWearables = s.aavegotchis[_tokenId].equippedWearables;
             aavegotchiInfo_.collateral = s.aavegotchis[_tokenId].collateralType; //this collateral doesn't exist on Polter/Geist
             aavegotchiInfo_.escrow = s.aavegotchis[_tokenId].escrow;
-            aavegotchiInfo_.stakedAmount = IERC20(s.wghstContract).balanceOf(aavegotchiInfo_.escrow);
+            aavegotchiInfo_.stakedAmount = IERC20(s.ghstContract).balanceOf(aavegotchiInfo_.escrow);
             aavegotchiInfo_.minimumStake = s.aavegotchis[_tokenId].minimumStake;
             aavegotchiInfo_.kinship = kinship(_tokenId);
             aavegotchiInfo_.lastInteracted = s.aavegotchis[_tokenId].lastInteracted;
