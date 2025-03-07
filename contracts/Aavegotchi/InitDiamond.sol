@@ -9,7 +9,8 @@ import {IERC165} from "../shared/interfaces/IERC165.sol";
 import {IERC721} from "../shared/interfaces/IERC721.sol";
 import {IDiamondLoupe} from "../shared/interfaces/IDiamondLoupe.sol";
 import {IERC173} from "../shared/interfaces/IERC173.sol";
-import {ILink} from "./interfaces/ILink.sol";
+
+import "./libraries/LibAppStorage.sol";
 
 contract InitDiamond {
     AppStorage internal s;
@@ -22,9 +23,8 @@ contract InitDiamond {
         string name;
         string symbol;
         address ghstContract;
-        bytes32 chainlinkKeyHash;
-        uint64 subscriptionId;
         address vrfCoordinator;
+        RequestConfig requestConfig;
     }
 
     function init(Args memory _args) external {
@@ -44,14 +44,10 @@ contract InitDiamond {
         ds.supportedInterfaces[type(IDiamondLoupe).interfaceId] = true;
         ds.supportedInterfaces[type(IERC173).interfaceId] = true;
         ds.supportedInterfaces[(type(IERC721).interfaceId)] = true;
-
         s.ghstContract = _args.ghstContract;
-        s.keyHash = _args.chainlinkKeyHash;
-        s.subscriptionId = _args.subscriptionId;
         s.vrfCoordinator = _args.vrfCoordinator;
-
+        s.requestConfig = _args.requestConfig;
         s.listingFeeInWei = 1e17;
-
         s.name = _args.name;
         s.symbol = _args.symbol;
     }

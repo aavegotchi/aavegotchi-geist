@@ -20,7 +20,6 @@ import {
   ERC721MarketplaceFacet,
   ERC1155MarketplaceFacet,
 } from "../typechain";
-import { BigNumberish, BigNumber } from "@ethersproject/bignumber";
 import { uploadSvgs } from "./svgHelperFunctions";
 import { getWearables } from "../svgs/allWearables";
 import { closedPortals, openedPortals } from "../svgs/portals";
@@ -64,7 +63,7 @@ import { networkAddresses } from "../helpers/constants";
 
 // Import fs and path for file operations
 import * as os from "os";
-import { Contract } from "ethers";
+import { BigNumber, BigNumberish, Contract } from "ethers";
 import {
   collateralsLeftSvgs,
   collateralsRightSvgs,
@@ -233,7 +232,7 @@ async function createHauntWithCollaterals(
   totalGasUsed = totalGasUsed.add(receipt.gasUsed);
 
   // Add collateral info for haunt
-  console.log("Adding Collateral Types", collaterals);
+  console.log("Adding Collateral Types");
 
   tx = await daoFacet.addCollateralTypes(hauntId, collaterals);
   receipt = await tx.wait();
@@ -693,6 +692,9 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   if (network.name === "geist") {
     chainId = 63157;
   }
+  if (network.name === "localhost") {
+    chainId = 31337;
+  }
 
   // Load existing deployment configuration
   const deploymentConfig = loadDeploymentConfig(chainId, useFreshDeploy);
@@ -735,9 +737,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   const pixelCraft = ownerAddress; // 'todo'
   const itemManagers = [ownerAddress, xpRelayerAddress]; // 'todo'
   let ghstContractAddress = "";
-  let chainlinkKeyHash = "";
-  let subscriptionId = 0;
-  let vrfCoordinator = "";
+  let requestConfig;
 
   const addresses = networkAddresses[chainId];
 
@@ -749,6 +749,12 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
     await erc20.deployed();
     ghstContractAddress = erc20.address;
   } else {
+    // Check if addresses exist for this network
+    if (!addresses || !addresses.ghst) {
+      throw new Error(
+        `No GHST address configured for network ${network.name} (chainId: ${chainId})`
+      );
+    }
     ghstContractAddress = addresses.ghst;
   }
 
@@ -761,9 +767,8 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       name,
       symbol,
       ghstContractAddress,
-      chainlinkKeyHash,
-      subscriptionId,
-      vrfCoordinator,
+      addresses.vrfCoordinator,
+      requestConfig,
     ],
   ];
 

@@ -1,3 +1,5 @@
+import { BigNumber } from "ethers";
+
 export const aavegotchiDiamondAddressMatic =
   "0x86935F11C86623deC8a25696E1C19a8659CbF95d";
 export const fudAddress = "0x403e967b044d4be25170310157cb1a4bf10bdd0f";
@@ -76,6 +78,8 @@ export const AMOY_FORGE_DIAMOND = "0xF7c2AC46723Ad844620F798ECe67f5C673120FB6";
 interface NetworkAddresses {
   ghst: string;
   aavegotchiDiamond?: string;
+  vrfCoordinator?: string;
+  vrfVars?: VRFVars;
 }
 
 export const networkAddresses: Record<number, NetworkAddresses> = {
@@ -84,6 +88,20 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
   },
   31337: {
     ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
+    vrfVars: {
+      linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+      keyHash:
+        "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+      subId: BigNumber.from(
+        "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+      ),
+      requestConfirmations: 32,
+      callbackGasLimit: 2_500_00,
+      numWords: 4,
+      //use LINK for payment
+      nativePayment: false,
+    },
   },
 
   631571: {
@@ -97,6 +115,61 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
 
   84532: {
     ghst: "0xe97f36a00058aa7dfc4e85d23532c3f70453a7ae",
+    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
+    vrfVars: {
+      linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+      keyHash:
+        "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+      subId: BigNumber.from(
+        "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+      ),
+      requestConfirmations: 32,
+      callbackGasLimit: 2_500_00,
+      numWords: 4,
+      //use LINK for payment
+      nativePayment: false,
+    },
+  },
+};
+
+export interface VRFVars {
+  linkAddress: string;
+  keyHash: string;
+  subId: BigNumber;
+  requestConfirmations: number;
+  callbackGasLimit: number;
+  numWords: number;
+  nativePayment: boolean;
+}
+
+export const vrfVars: Record<number, VRFVars> = {
+  //base Sepolia
+  84532: {
+    linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+    keyHash:
+      "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+    subId: BigNumber.from(
+      "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+    ),
+    requestConfirmations: 32,
+    callbackGasLimit: 2_500_000,
+    numWords: 4,
+    //use LINK for payment
+    nativePayment: false,
+  },
+  //same place-holder values for local
+  31337: {
+    linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+    keyHash:
+      "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+    subId: BigNumber.from(
+      "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+    ),
+    requestConfirmations: 32,
+    callbackGasLimit: 2_500_00,
+    numWords: 4,
+    //use LINK for payment
+    nativePayment: false,
   },
 };
 

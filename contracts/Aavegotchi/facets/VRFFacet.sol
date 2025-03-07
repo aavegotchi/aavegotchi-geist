@@ -5,9 +5,15 @@ import {Modifiers} from "../libraries/LibAppStorage.sol";
 import {LibMeta} from "../../shared/libraries/LibMeta.sol";
 import {LibERC721Marketplace} from "../libraries/LibERC721Marketplace.sol";
 import {LibAavegotchi} from "../libraries/LibAavegotchi.sol";
-import {ILink} from "../interfaces/ILink.sol";
-import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
-import {REQUEST_CONFIRMATIONS, NO_OF_WORDS, VRF_GAS_LIMIT} from "../libraries/LibAppStorage.sol";
+// import {ILink} from "../interfaces/ILink.sol";
+
+import {RequestConfig} from "../libraries/LibAppStorage.sol";
+//import {VRFCoordinatorV2Interface} from "../interfaces/VRFCoordinatorV2Interface.sol";
+// // import {REQUEST_CONFIRMATIONS, NO_OF_WORDS, VRF_GAS_LIMIT} from "../libraries/LibAppStorage.sol";
+
+import {IVRF} from "../interfaces/IVRF.sol";
+
+import {LibVrf} from "../libraries/LibVrf.sol";
 
 //import "hardhat/console.sol";
 
@@ -102,14 +108,6 @@ contract VrfFacet is Modifiers {
         return s.vrfCoordinator;
     }
 
-    // function link() external view returns (address) {
-    //     return address(s.link);
-    // }
-
-    function keyHash() external view returns (bytes32) {
-        return s.keyHash;
-    }
-
     /***********************************|
    |            Write Functions        |
    |__________________________________*/
@@ -135,12 +133,16 @@ contract VrfFacet is Modifiers {
 
     function drawRandomNumber(uint256 _tokenId) internal returns (uint256 requestId_) {
         s.aavegotchis[_tokenId].status = LibAavegotchi.STATUS_VRF_PENDING;
-        requestId_ = VRFCoordinatorV2Interface(s.vrfCoordinator).requestRandomWords(
-            s.keyHash,
-            s.subscriptionId,
-            REQUEST_CONFIRMATIONS,
-            VRF_GAS_LIMIT,
-            NO_OF_WORDS
+
+        requestId_ = IVRF(s.vrfCoordinator).requestRandomWords(
+            LibVrf.RandomWordsRequest({
+                keyHash: s.requestConfig.keyHash,
+                subId: s.requestConfig.subId,
+                requestConfirmations: s.requestConfig.requestConfirmations,
+                callbackGasLimit: s.requestConfig.callbackGasLimit,
+                numWords: s.requestConfig.numWords,
+                extraArgs: LibVrf._argsToBytes(LibVrf.ExtraArgsV1({nativePayment: s.requestConfig.nativePayment}))
+            })
         );
         s.vrfRequestIdToTokenId[requestId_] = _tokenId;
         // for testing
@@ -178,14 +180,12 @@ contract VrfFacet is Modifiers {
      * @param _requestId The Id initially returned by requestRandomness
      * @param _randomWords the VRF output
      */
-    function rawFulfillRandomWords(uint256 _requestId, uint256[] memory _randomWords) external {
+    function rawFulfillRandomWords(uint256 _requestId, uint256[] calldata _randomWords) external {
         require(LibMeta.msgSender() == s.vrfCoordinator, "Only VRFCoordinator can fulfill");
         uint256 tokenId = s.vrfRequestIdToTokenId[_requestId];
         require(s.aavegotchis[tokenId].status == LibAavegotchi.STATUS_VRF_PENDING, "VrfFacet: VRF is not pending");
-
         s.aavegotchis[tokenId].status = LibAavegotchi.STATUS_OPEN_PORTAL;
         s.tokenIdToRandomNumber[tokenId] = _randomWords[0];
-
         emit PortalOpened(tokenId);
         emit VrfRandomNumber(tokenId, _randomWords[0], block.timestamp);
     }
@@ -195,23 +195,14 @@ contract VrfFacet is Modifiers {
     //@param _keyHash New keyhash
     //@param _vrfCoordinator The new vrf coordinator address
     //@param _link New LINK token contract address
-    function changeVrf(uint64 _newSubscriptionId, bytes32 _keyHash, address _vrfCoordinator) external onlyOwner {
-        if (_newSubscriptionId != 0) {
-            s.subscriptionId = _newSubscriptionId;
-        }
-        if (_keyHash != 0) {
-            s.keyHash = _keyHash;
-        }
-        if (_vrfCoordinator != address(0)) {
-            s.vrfCoordinator = _vrfCoordinator;
-        }
+    function setConfig(RequestConfig calldata _requestConfig) external onlyOwner {
+        s.requestConfig = RequestConfig(
+            _requestConfig.keyHash,
+            _requestConfig.subId,
+            _requestConfig.requestConfirmations,
+            _requestConfig.callbackGasLimit,
+            _requestConfig.numWords,
+            _requestConfig.nativePayment
+        );
     }
-
-    function getVrfInfo() public view returns (uint64, bytes32, address, string memory) {
-        return (s.subscriptionId, s.keyHash, s.vrfCoordinator, s.name);
-    }
-    // // Remove the LINK tokens from this contract that are used to pay for VRF random number fees
-    // function removeLinkTokens(address _to, uint256 _value) external onlyOwner {
-    //     s.link.transfer(_to, _value);
-    // }
 }
