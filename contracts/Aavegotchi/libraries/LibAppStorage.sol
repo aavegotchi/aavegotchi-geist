@@ -11,9 +11,18 @@ uint256 constant NUMERIC_TRAITS_NUM = 6;
 uint256 constant TRAIT_BONUSES_NUM = 5;
 uint256 constant PORTAL_AAVEGOTCHIS_NUM = 10;
 
-uint16 constant REQUEST_CONFIRMATIONS = 3;
-uint32 constant NO_OF_WORDS = 1;
-uint32 constant VRF_GAS_LIMIT = 2_500_000;
+// uint16 constant REQUEST_CONFIRMATIONS = 3;
+// uint32 constant NO_OF_WORDS = 1;
+// uint32 constant VRF_GAS_LIMIT = 2_500_000;
+
+struct RequestConfig {
+    bytes32 keyHash;
+    uint256 subId;
+    uint16 requestConfirmations;
+    uint32 callbackGasLimit;
+    uint32 numWords;
+    bool nativePayment;
+}
 
 //  switch (traitType) {
 //         case 0:
@@ -295,8 +304,6 @@ struct AppStorage {
     //VRF
     mapping(uint256 => uint256) vrfRequestIdToTokenId;
     // mapping(bytes32 => uint256) vrfNonces;
-    bytes32 keyHash;
-    uint64 subscriptionId;
     address vrfCoordinator;
     // Marketplace
     uint256 nextERC1155ListingId;
@@ -389,6 +396,8 @@ struct AppStorage {
     address gotchGeistBridge;
     address itemGeistBridge;
     mapping(address => bool) baazaarTradingAllowlist; // allowlist for baazaar trading
+    //chainlink vrf 2.5
+    RequestConfig requestConfig;
 }
 
 library LibAppStorage {

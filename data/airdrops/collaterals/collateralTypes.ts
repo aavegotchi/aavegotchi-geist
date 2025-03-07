@@ -202,7 +202,7 @@ export function getCollaterals(
 
     if (network === "kovan") {
       collateralAddress = collateralType.kovanAddress;
-    } else if (network === "hardhat") {
+    } else if (network === "hardhat" || network === "localhost") {
       collateralAddress = ghstAddress;
     } else if (network === "mainnet") {
       collateralAddress = collateralType.mainnetAddress;

@@ -110,6 +110,7 @@ export default {
     baseSepolia: {
       url: process.env.BASE_SEPOLIA_URL,
       accounts: [process.env.SECRET],
+      chainId: 84532,
     },
 
     // gorli: {
