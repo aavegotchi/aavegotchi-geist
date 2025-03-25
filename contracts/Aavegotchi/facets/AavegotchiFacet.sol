@@ -2,13 +2,17 @@
 pragma solidity 0.8.1;
 
 import {LibAavegotchi, AavegotchiInfo} from "../libraries/LibAavegotchi.sol";
+import {LibItems} from "../libraries/LibItems.sol";
 
 import {LibStrings} from "../../shared/libraries/LibStrings.sol";
-import {Modifiers} from "../libraries/LibAppStorage.sol";
+import {Modifiers, Aavegotchi} from "../libraries/LibAppStorage.sol";
 import {LibGotchiLending} from "../libraries/LibGotchiLending.sol";
 import {LibMeta} from "../../shared/libraries/LibMeta.sol";
 import {LibERC721Marketplace} from "../libraries/LibERC721Marketplace.sol";
 import {LibERC721} from "../../shared/libraries/LibERC721.sol";
+import {LibERC1155} from "../../shared/libraries/LibERC1155.sol";
+
+import {CollateralEscrow} from "../CollateralEscrow.sol";
 
 import {ForgeFacet} from "../ForgeDiamond/facets/ForgeFacet.sol";
 
@@ -235,6 +239,74 @@ contract AavegotchiFacet is Modifiers {
         require(owner == LibMeta.msgSender() || s.operators[owner][LibMeta.msgSender()], "ERC721: Not owner or operator of token.");
         s.approved[_tokenId] = _approved;
         emit LibERC721.Approval(owner, _approved, _tokenId);
+    }
+
+    struct MintAavegotchiParams {
+        address owner;
+        uint256[] tokenIds;
+    }
+
+    struct Aavegotchi998Data {
+        uint256 tokenId;
+        AavegotchiItembalance[] balances;
+    }
+
+    struct AavegotchiItembalance {
+        uint256 itemid;
+        uint256 balance;
+    }
+
+    //TO-DO: set s.tokenIdCounter and other vars to sync with polygon
+    function mintAavegotchiBridged(MintAavegotchiParams[] calldata _params) external onlyOwner {
+        for (uint256 i = 0; i < _params.length; i++) {
+            MintAavegotchiParams memory param = _params[i];
+            for (uint256 j = 0; j < param.tokenIds.length; j++) {
+                uint256 tokenId = param.tokenIds[j];
+                s.ownerTokenIdIndexes[param.owner][tokenId] = s.ownerTokenIds[param.owner].length;
+                s.ownerTokenIds[param.owner].push(uint32(tokenId));
+                s.aavegotchis[tokenId].owner = param.owner;
+                emit LibERC721.Transfer(address(0), param.owner, tokenId);
+            }
+        }
+    }
+
+    function setMetadata(uint256[] calldata _tokenIds, Aavegotchi[] calldata _aavegotchis) external onlyOwner {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            _setMetadata(_tokenIds[i], _aavegotchis[i]);
+        }
+    }
+
+    function setAavegotchi998Data(Aavegotchi998Data[] calldata _data) external onlyOwner {
+        for (uint256 i = 0; i < _data.length; i++) {
+            uint256 tokenId = _data[i].tokenId;
+            for (uint256 j = 0; j < _data[i].balances.length; j++) {
+                LibItems.addToParent(address(this), tokenId, _data[i].balances[j].itemid, _data[i].balances[j].balance);
+                emit LibERC1155.TransferToParent(address(this), tokenId, _data[i].balances[j].itemid, _data[i].balances[j].balance);
+            }
+        }
+    }
+
+    function _setMetadata(uint256 _tokenId, Aavegotchi memory _aavegotchi) internal {
+        //set it individually
+        s.aavegotchis[_tokenId].equippedWearables = _aavegotchi.equippedWearables;
+        s.aavegotchis[_tokenId].temporaryTraitBoosts = _aavegotchi.temporaryTraitBoosts;
+        s.aavegotchis[_tokenId].numericTraits = _aavegotchi.numericTraits;
+        s.aavegotchis[_tokenId].name = _aavegotchi.name;
+        s.aavegotchis[_tokenId].randomNumber = _aavegotchi.randomNumber;
+        s.aavegotchis[_tokenId].experience = _aavegotchi.experience;
+        s.aavegotchis[_tokenId].minimumStake = _aavegotchi.minimumStake;
+        s.aavegotchis[_tokenId].usedSkillPoints = _aavegotchi.usedSkillPoints;
+        s.aavegotchis[_tokenId].interactionCount = _aavegotchi.interactionCount;
+        s.aavegotchis[_tokenId].collateralType = _aavegotchi.collateralType;
+        s.aavegotchis[_tokenId].claimTime = _aavegotchi.claimTime;
+        s.aavegotchis[_tokenId].lastTemporaryBoost = _aavegotchi.lastTemporaryBoost;
+        s.aavegotchis[_tokenId].hauntId = _aavegotchi.hauntId;
+        s.aavegotchis[_tokenId].owner = _aavegotchi.owner;
+        s.aavegotchis[_tokenId].status = _aavegotchi.status;
+        s.aavegotchis[_tokenId].lastInteracted = _aavegotchi.lastInteracted;
+        s.aavegotchis[_tokenId].locked = _aavegotchi.locked;
+        s.aavegotchis[_tokenId].escrow = address(new CollateralEscrow(_aavegotchi.collateralType));
+        //TO-DO whether to set onchain block-Age
     }
 
     /// @notice Enable or disable approval for a third party ("operator") to manage

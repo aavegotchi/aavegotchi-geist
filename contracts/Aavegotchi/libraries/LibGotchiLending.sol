@@ -316,7 +316,7 @@ library LibGotchiLending {
         GotchiLending storage lending = s.gotchiLendings[listingId];
 
         uint256[] memory amounts = new uint256[](lending.revenueTokens.length);
-        address escrow = s.aavegotchis[lending.erc721TokenId].escrow;
+        address payable escrow = payable(s.aavegotchis[lending.erc721TokenId].escrow);
 
         require(escrow != address(0), "LibGotchiLending: Escrow is zero address");
 

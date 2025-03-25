@@ -108,7 +108,7 @@ export default {
       accounts: [process.env.SECRET],
     },
     baseSepolia: {
-      url: process.env.BASE_SEPOLIA_URL,
+      url: process.env.BASE_SEPOLIA_RPC_URL,
       accounts: [process.env.SECRET],
       chainId: 84532,
     },

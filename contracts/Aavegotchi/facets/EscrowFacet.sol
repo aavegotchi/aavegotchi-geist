@@ -95,7 +95,7 @@ contract EscrowFacet is Modifiers {
         address _recipient,
         uint256 _transferAmount
     ) public onlyAavegotchiOwner(_tokenId) onlyUnlocked(_tokenId) onlyPolygonOrTesting {
-        address escrow = s.aavegotchis[_tokenId].escrow;
+        address payable escrow = payable(s.aavegotchis[_tokenId].escrow);
         address collateralType = s.aavegotchis[_tokenId].collateralType;
         require(escrow != address(0), "EscrowFacet: Does not have an escrow");
         require(collateralType != _erc20Contract, "EscrowFacet: Transferring ERC20 token CANNOT be same as collateral ERC20 token");

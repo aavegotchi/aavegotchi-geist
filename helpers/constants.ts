@@ -1,4 +1,9 @@
 import { BigNumber } from "ethers";
+import { HardhatEthersHelpers } from "hardhat/types";
+import { ethers } from "ethers";
+import * as dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 export const aavegotchiDiamondAddressMatic =
   "0x86935F11C86623deC8a25696E1C19a8659CbF95d";
@@ -80,66 +85,7 @@ interface NetworkAddresses {
   aavegotchiDiamond?: string;
   vrfCoordinator?: string;
   vrfVars?: VRFVars;
-}
-
-export const networkAddresses: Record<number, NetworkAddresses> = {
-  137: {
-    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
-  },
-  31337: {
-    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
-    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
-    vrfVars: {
-      linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-      keyHash:
-        "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-      subId: BigNumber.from(
-        "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-      ),
-      requestConfirmations: 32,
-      callbackGasLimit: 2_500_00,
-      numWords: 4,
-      //use LINK for payment
-      nativePayment: false,
-    },
-  },
-
-  631571: {
-    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
-  },
-
-  63157: {
-    ghst: "0x74e2051A9Cd994F83f2d789448dCa4a3e879964c",
-    aavegotchiDiamond: "0x6Acc828BbbC6874de40Ca20bfeA7Cd2a2DA8DA8c",
-  },
-
-  84532: {
-    ghst: "0xe97f36a00058aa7dfc4e85d23532c3f70453a7ae",
-    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
-    vrfVars: {
-      linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-      keyHash:
-        "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-      subId: BigNumber.from(
-        "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-      ),
-      requestConfirmations: 32,
-      callbackGasLimit: 2_500_00,
-      numWords: 4,
-      //use LINK for payment
-      nativePayment: false,
-    },
-  },
-};
-
-export interface VRFVars {
-  linkAddress: string;
-  keyHash: string;
-  subId: BigNumber;
-  requestConfirmations: number;
-  callbackGasLimit: number;
-  numWords: number;
-  nativePayment: boolean;
+  safeProxyFactory?: string;
 }
 
 export const vrfVars: Record<number, VRFVars> = {
@@ -173,6 +119,60 @@ export const vrfVars: Record<number, VRFVars> = {
   },
 };
 
+export const networkAddresses: Record<number, NetworkAddresses> = {
+  137: {
+    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+  },
+  31337: {
+    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
+    vrfVars: vrfVars[84532],
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+  },
+
+  631571: {
+    ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+  },
+
+  63157: {
+    ghst: "0x74e2051A9Cd994F83f2d789448dCa4a3e879964c",
+    aavegotchiDiamond: "0x6Acc828BbbC6874de40Ca20bfeA7Cd2a2DA8DA8c",
+  },
+
+  84532: {
+    ghst: "0xe97f36a00058aa7dfc4e85d23532c3f70453a7ae",
+    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
+    vrfVars: vrfVars[84532],
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+  },
+
+  8453: {
+    ghst: "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb",
+    vrfCoordinator: "",
+    vrfVars: vrfVars[84532], //TO-DO: Add vrfVars for base
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+  },
+};
+
+export interface VRFVars {
+  linkAddress: string;
+  keyHash: string;
+  subId: BigNumber;
+  requestConfirmations: number;
+  callbackGasLimit: number;
+  numWords: number;
+  nativePayment: boolean;
+}
+
+export async function varsForNetwork(ethers: HardhatEthersHelpers) {
+  return varsByChainId((await ethers.provider.getNetwork()).chainId);
+}
+
+export function varsByChainId(chainId: number) {
+  return networkAddresses[chainId];
+}
+
 export enum ERC1155_BAAZAAR_CATEGORY_TO_ID {
   WEARABLE = 0,
   BADGE = 1,
@@ -198,4 +198,22 @@ export enum WEARABLE_BASE_QUANTITIES {
   LEGENDARY = 100,
   MYTHICAL = 50,
   GODLIKE = 10,
+}
+
+export function baseSepoliaProvider() {
+  const url = process.env.BASE_SEPOLIA_RPC_URL;
+  if (!url) {
+    throw new Error("BASE_SEPOLIA_RPC_URL not found in environment variables");
+  }
+  console.log("Using Base Sepolia URL:", url);
+  return new ethers.providers.JsonRpcProvider(url);
+}
+
+export function baseProvider() {
+  const url = process.env.BASE_RPC_URL;
+  if (!url) {
+    throw new Error("BASE_RPC_URL not found in environment variables");
+  }
+  console.log("Using Base URL:", url);
+  return new ethers.providers.JsonRpcProvider(url);
 }

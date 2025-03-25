@@ -261,6 +261,50 @@ contract DAOFacet is Modifiers {
         IEventHandlerFacet(s.wearableDiamond).emitTransferBatchEvent(sender, address(0), _to, _itemIds, _quantities);
         LibERC1155.onERC1155BatchReceived(sender, address(0), _to, _itemIds, _quantities, "");
     }
+    struct MintItemsBridged {
+        address to;
+        ItemBalance[] itemBalances;
+    }
+
+    struct ItemBalance {
+        uint256 itemId;
+        uint256 quantity;
+    }
+
+    function batchMintItems(MintItemsBridged[] calldata _mintItemsBridged) external onlyItemManager {
+        for (uint256 i; i < _mintItemsBridged.length; i++) {
+            address sender = LibMeta.msgSender();
+            uint256 itemTypesLength = s.itemTypes.length;
+            for (uint256 j; j < _mintItemsBridged[i].itemBalances.length; j++) {
+                uint256 itemId = _mintItemsBridged[i].itemBalances[j].itemId;
+
+                require(itemTypesLength > itemId, "DAOFacet: Item type does not exist");
+
+                uint256 quantity = _mintItemsBridged[i].itemBalances[j].quantity;
+                uint256 totalQuantity = s.itemTypes[itemId].totalQuantity + quantity;
+                require(totalQuantity <= s.itemTypes[itemId].maxQuantity, "DAOFacet: Total item type quantity exceeds max quantity");
+
+                LibItems.addToOwner(_mintItemsBridged[i].to, itemId, quantity);
+                s.itemTypes[itemId].totalQuantity = totalQuantity;
+
+                IEventHandlerFacet(s.wearableDiamond).emitTransferSingleEvent(
+                    sender,
+                    address(0),
+                    _mintItemsBridged[i].to,
+                    _mintItemsBridged[i].itemBalances[j].itemId,
+                    _mintItemsBridged[i].itemBalances[j].quantity
+                );
+                LibERC1155.onERC1155Received(
+                    sender,
+                    address(0),
+                    _mintItemsBridged[i].to,
+                    _mintItemsBridged[i].itemBalances[j].itemId,
+                    _mintItemsBridged[i].itemBalances[j].quantity,
+                    ""
+                );
+            }
+        }
+    }
 
     ///@notice Allow the DAO, a game manager or the aavegotchi diamond owner to grant XP(experience points) to multiple aavegotchis
     ///@dev recipients must be claimed aavegotchis

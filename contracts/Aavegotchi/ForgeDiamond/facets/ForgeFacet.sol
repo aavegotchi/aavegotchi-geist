@@ -530,6 +530,26 @@ contract ForgeFacet is Modifiers {
         _mintBatch(to, ids, amounts);
     }
 
+    struct MintForgeItemsBridged {
+        address to;
+        ForgeItemBalance[] itemBalances;
+    }
+
+    struct ForgeItemBalance {
+        uint256 itemId;
+        uint256 quantity;
+    }
+
+    function batchMintForgeItems(MintForgeItemsBridged[] calldata _mintForgeItemsBridged) external onlyDaoOrOwner {
+        for (uint256 i; i < _mintForgeItemsBridged.length; i++) {
+            address to = _mintForgeItemsBridged[i].to;
+            ForgeItemBalance[] memory itemBalances = _mintForgeItemsBridged[i].itemBalances;
+            for (uint256 j; j < itemBalances.length; j++) {
+                _mintItem(to, itemBalances[j].itemId, itemBalances[j].quantity);
+            }
+        }
+    }
+
     function burn(address account, uint256 id, uint256 amount) external {
         require(
             account == msg.sender || forgeTokenFacet().isApprovedForAll(account, msg.sender),
