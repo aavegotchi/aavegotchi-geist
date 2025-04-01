@@ -14,7 +14,13 @@ interface StoredData {
 }
 
 async function fetchGHSTBalances() {
-  const outputPath = path.join(process.cwd(), "data", "ghst-balances.json");
+  // Create timestamped filename
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const outputPath = path.join(
+    process.cwd(),
+    "data",
+    `ghst-balances-${timestamp}.json`
+  );
   console.log(`Output file will be saved to: ${outputPath}`);
 
   // Create data directory if it doesn't exist
@@ -28,19 +34,8 @@ async function fetchGHSTBalances() {
     console.log(`Data directory already exists.`);
   }
 
-  // Initialize or load existing data
-  let storedData: StoredData = { lastUpdated: "", accounts: [] };
-  if (fs.existsSync(outputPath)) {
-    try {
-      const fileContent = fs.readFileSync(outputPath, "utf-8");
-      storedData = JSON.parse(fileContent);
-      console.log(
-        `Loaded existing data with ${storedData.accounts.length} accounts`
-      );
-    } catch (error) {
-      console.error("Error reading existing file:", error);
-    }
-  }
+  // Initialize new data object
+  const storedData: StoredData = { lastUpdated: "", accounts: [] };
 
   let page = 1;
   let hasMoreResults = true;
@@ -61,7 +56,7 @@ async function fetchGHSTBalances() {
           hasMoreResults = false;
           console.log("No more results found. Finishing...");
         } else {
-          // Append new results to existing accounts
+          // Append new results to accounts
           storedData.accounts = [...storedData.accounts, ...results];
           console.log(`Added ${results.length} accounts from page ${page}`);
 
@@ -97,6 +92,7 @@ async function fetchGHSTBalances() {
   console.log(`Completed fetching GHST balances`);
   console.log(`Final count: ${storedData.accounts.length} accounts`);
   console.log(`Last updated: ${storedData.lastUpdated}`);
+  console.log(`Data saved to: ${outputPath}`);
 }
 
 // Execute the function if this file is run directly
