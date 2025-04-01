@@ -14,11 +14,15 @@ contract CollateralEscrow {
     struct AppStorage {
         address owner;
         uint256 state;
+        address token;
+        uint256 tokenId;
     }
     AppStorage internal s;
 
-    constructor(address _aTokenContract) {
+    constructor(address _aTokenContract, address _token, uint256 _tokenId) {
         s.owner = LibMeta.msgSender();
+        s.token = _token;
+        s.tokenId = _tokenId;
         approveAavegotchiDiamond(_aTokenContract);
     }
 
@@ -68,13 +72,7 @@ contract CollateralEscrow {
     }
 
     function token() public view returns (uint256, address, uint256) {
-        bytes memory footer = new bytes(0x60);
-
-        assembly {
-            extcodecopy(address(), add(footer, 0x20), 0x4d, 0x60)
-        }
-
-        return abi.decode(footer, (uint256, address, uint256));
+        return (block.chainid, s.token, s.tokenId);
     }
 
     function _isValidSigner(address signer) internal view virtual returns (bool) {

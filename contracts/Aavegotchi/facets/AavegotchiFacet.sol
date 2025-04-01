@@ -305,7 +305,7 @@ contract AavegotchiFacet is Modifiers {
         s.aavegotchis[_tokenId].status = _aavegotchi.status;
         s.aavegotchis[_tokenId].lastInteracted = _aavegotchi.lastInteracted;
         s.aavegotchis[_tokenId].locked = _aavegotchi.locked;
-        s.aavegotchis[_tokenId].escrow = address(new CollateralEscrow(_aavegotchi.collateralType));
+        s.aavegotchis[_tokenId].escrow = address(new CollateralEscrow(_aavegotchi.collateralType, address(this), _tokenId));
         //TO-DO whether to set onchain block-Age
     }
 
