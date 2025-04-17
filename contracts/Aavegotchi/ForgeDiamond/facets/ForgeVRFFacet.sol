@@ -8,11 +8,15 @@ import {ILink} from "../../interfaces/ILink.sol";
 import {ForgeFacet} from "./ForgeFacet.sol";
 import {ForgeTokenFacet} from "./ForgeTokenFacet.sol";
 
+import "../../interfaces/IVRF.sol";
+
+import {LibVrf} from "../../libraries/LibVrf.sol";
+
 contract ForgeVRFFacet is Modifiers {
-    event VrfResponse(address user, uint256 randomNumber, bytes32 requestId, uint256 blockNumber);
-    event GeodeWin(address user, uint256 itemId, uint256 geodeTokenId, bytes32 requestId, uint256 blockNumber);
-    event GeodeEmpty(address user, uint256 geodeTokenId, bytes32 requestId, uint256 blockNumber);
-    event GeodeRefunded(address user, uint256 geodeTokenId, bytes32 requestId, uint256 blockNumber);
+    event VrfResponse(address user, uint256 randomNumber, uint256 requestId, uint256 blockNumber);
+    event GeodeWin(address user, uint256 itemId, uint256 geodeTokenId, uint256 requestId, uint256 blockNumber);
+    event GeodeEmpty(address user, uint256 geodeTokenId, uint256 requestId, uint256 blockNumber);
+    event GeodeRefunded(address user, uint256 geodeTokenId, uint256 requestId, uint256 blockNumber);
 
     function forgeTokenFacet() internal view returns (ForgeTokenFacet facet) {
         facet = ForgeTokenFacet(address(this));
@@ -22,20 +26,8 @@ contract ForgeVRFFacet is Modifiers {
         facet = ForgeFacet(address(this));
     }
 
-    function linkBalance() external view returns (uint256 linkBalance_) {
-        linkBalance_ = s.link.balanceOf(address(this));
-    }
-
-    function vrfCoordinator() external view returns (address) {
-        return s.vrfCoordinator;
-    }
-
-    function link() external view returns (address) {
-        return address(s.link);
-    }
-
-    function keyHash() external view returns (bytes32) {
-        return s.keyHash;
+    function vrfSystem() external view returns (address) {
+        return s.VRFSystem;
     }
 
     function getMaxVrf() public pure returns (uint256) {
@@ -92,14 +84,7 @@ contract ForgeVRFFacet is Modifiers {
 
         require(!s.userVrfPending[sender], "ForgeVRFFacet: Already waiting for VRF response or to claim previous call.");
         s.userVrfPending[sender] = true;
-
-        uint256 fee = s.vrfFee;
-        require(s.link.balanceOf(address(this)) >= fee, "ForgeVRFFacet: Not enough LINK");
-        bytes32 l_keyHash = s.keyHash;
-        require(s.link.transferAndCall(s.vrfCoordinator, fee, abi.encode(l_keyHash, 0)), "ForgeVRFFacet: link transfer failed");
-        uint256 vrfSeed = uint256(keccak256(abi.encode(l_keyHash, 0, address(this), s.vrfNonces[l_keyHash])));
-        s.vrfNonces[l_keyHash]++;
-        bytes32 requestId = keccak256(abi.encodePacked(l_keyHash, vrfSeed));
+        uint256 requestId = IVRFSystem(s.VRFSystem).requestRandomNumberWithTraceId(0); //no need for traceId since we can have duplicate tokenIds
 
         VrfRequestInfo memory reqInfo = VrfRequestInfo({
             user: sender,
@@ -130,42 +115,34 @@ contract ForgeVRFFacet is Modifiers {
     //      emit VrfResponse(info.user, _randomNumber, _requestId, block.number);
     //  }
 
-    /**
-         * @notice fulfillRandomness handles the VRF response. Your contract must
-         * @notice implement it.
-         *
-         * @dev The VRFCoordinator expects a calling contract to have a method with
-         * @dev this signature, and will trigger it once it has verified the proof
-         * @dev associated with the randomness (It is triggered via a call to
-         * @dev rawFulfillRandomness, below.)
-         *
-         * @param _requestId The Id initially returned by requestRandomness
-         * @param _randomNumber the VRF output
-    //     */
-    function rawFulfillRandomness(bytes32 _requestId, uint256 _randomNumber) external {
-        require(LibMeta.msgSender() == s.vrfCoordinator, "Only VRFCoordinator can fulfill");
+    function randomNumberCallback(uint256 requestId, uint256 randomNumber) external {
+        require(LibMeta.msgSender() == s.VRFSystem, "Only VRFSystem can fulfill");
 
-        VrfRequestInfo storage info = s.vrfRequestIdToVrfRequestInfo[_requestId];
+        VrfRequestInfo storage info = s.vrfRequestIdToVrfRequestInfo[requestId];
 
         require(s.userVrfPending[info.user], "ForgeVRFFacet: VRF is not pending for user");
         require(info.status == VrfStatus.PENDING, "ForgeVRFFacet: VRF request is not pending");
 
-        info.randomNumber = _randomNumber;
+        info.randomNumber = randomNumber;
         info.status = VrfStatus.READY_TO_CLAIM;
 
-        emit VrfResponse(info.user, _randomNumber, _requestId, block.number);
+        emit VrfResponse(info.user, randomNumber, requestId, block.number);
     }
 
     function getRequestInfo(address user) external view returns (VrfRequestInfo memory) {
         //        require(s.vrfUserToRequestIds[user].length > 0, "ForgeVRFFacet: No VRF requests");
-        bytes32 requestId = s.vrfUserToRequestIds[user][s.vrfUserToRequestIds[user].length - 1];
+        uint256 requestId = s.vrfUserToRequestIds[user][s.vrfUserToRequestIds[user].length - 1];
         VrfRequestInfo storage info = s.vrfRequestIdToVrfRequestInfo[requestId];
 
         return info;
     }
 
-    function getRequestInfoByRequestId(bytes32 requestId) external view returns (VrfRequestInfo memory) {
+    function getRequestInfoByRequestId(uint256 requestId) external view returns (VrfRequestInfo memory) {
         return s.vrfRequestIdToVrfRequestInfo[requestId];
+    }
+
+    function setVRFSystem(address _vrfSystem) external onlyDaoOrOwner {
+        s.VRFSystem = _vrfSystem;
     }
 
     /**
@@ -283,7 +260,7 @@ contract ForgeVRFFacet is Modifiers {
         address sender = LibMeta.msgSender();
 
         require(s.vrfUserToRequestIds[sender].length > 0, "ForgeVRFFacet: No VRF requests");
-        bytes32 requestId = s.vrfUserToRequestIds[sender][s.vrfUserToRequestIds[sender].length - 1];
+        uint256 requestId = s.vrfUserToRequestIds[sender][s.vrfUserToRequestIds[sender].length - 1];
 
         VrfRequestInfo storage info = s.vrfRequestIdToVrfRequestInfo[requestId];
 
@@ -365,30 +342,5 @@ contract ForgeVRFFacet is Modifiers {
         }
         info.status = VrfStatus.CLAIMED;
         s.userVrfPending[info.user] = false;
-    }
-
-    ///@notice Allow the diamond owner or DAO to change the vrf details
-    //@param _newFee New VRF fee (in LINK)
-    //@param _keyHash New keyhash
-    //@param _vrfCoordinator The new vrf coordinator address
-    //@param _link New LINK token contract address
-    function changeVrf(uint256 _newFee, bytes32 _keyHash, address _vrfCoordinator, address _link) external onlyDaoOrOwner {
-        if (_newFee != 0) {
-            s.vrfFee = uint96(_newFee);
-        }
-        if (_keyHash != 0) {
-            s.keyHash = _keyHash;
-        }
-        if (_vrfCoordinator != address(0)) {
-            s.vrfCoordinator = _vrfCoordinator;
-        }
-        if (_link != address(0)) {
-            s.link = ILink(_link);
-        }
-    }
-
-    // Remove the LINK tokens from this contract that are used to pay for VRF random number fees
-    function removeLinkTokens(address _to, uint256 _value) external onlyDaoOrOwner {
-        s.link.transfer(_to, _value);
     }
 }

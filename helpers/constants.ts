@@ -83,41 +83,41 @@ export const AMOY_FORGE_DIAMOND = "0xF7c2AC46723Ad844620F798ECe67f5C673120FB6";
 interface NetworkAddresses {
   ghst: string;
   aavegotchiDiamond?: string;
-  vrfCoordinator?: string;
-  vrfVars?: VRFVars;
+  vrfSystem?: string;
+  // vrfVars?: string;
   safeProxyFactory?: string;
 }
 
-export const vrfVars: Record<number, VRFVars> = {
-  //base Sepolia
-  84532: {
-    linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-    keyHash:
-      "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-    subId: BigNumber.from(
-      "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-    ),
-    requestConfirmations: 32,
-    callbackGasLimit: 2_500_000,
-    numWords: 4,
-    //use LINK for payment
-    nativePayment: false,
-  },
-  //same place-holder values for local
-  31337: {
-    linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-    keyHash:
-      "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-    subId: BigNumber.from(
-      "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-    ),
-    requestConfirmations: 32,
-    callbackGasLimit: 2_500_00,
-    numWords: 4,
-    //use LINK for payment
-    nativePayment: false,
-  },
-};
+// export const vrfVars: Record<number, VRFVars> = {
+//   //base Sepolia
+//   84532: {
+//     linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+//     keyHash:
+//       "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+//     subId: BigNumber.from(
+//       "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+//     ),
+//     requestConfirmations: 32,
+//     callbackGasLimit: 2_500_000,
+//     numWords: 4,
+//     //use LINK for payment
+//     nativePayment: false,
+//   },
+//   //same place-holder values for local
+//   31337: {
+//     linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+//     keyHash:
+//       "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+//     subId: BigNumber.from(
+//       "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+//     ),
+//     requestConfirmations: 32,
+//     callbackGasLimit: 2_500_00,
+//     numWords: 4,
+//     //use LINK for payment
+//     nativePayment: false,
+//   },
+// };
 
 export const networkAddresses: Record<number, NetworkAddresses> = {
   137: {
@@ -126,8 +126,8 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
   },
   31337: {
     ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
-    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
-    vrfVars: vrfVars[84532],
+    vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
+    // vrfVars: vrfVars[84532],
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
   },
 
@@ -142,15 +142,15 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
 
   84532: {
     ghst: "0xe97f36a00058aa7dfc4e85d23532c3f70453a7ae",
-    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
-    vrfVars: vrfVars[84532],
+    vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
+    // vrfVars: vrfVars[84532],
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
   },
 
   8453: {
     ghst: "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb",
-    vrfCoordinator: "",
-    vrfVars: vrfVars[84532], //TO-DO: Add vrfVars for base
+    vrfSystem: "",
+    // vrfVars: vrfVars[84532], //TO-DO: Add vrfVars for base
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
   },
 };

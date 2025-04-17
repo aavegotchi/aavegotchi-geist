@@ -23,10 +23,8 @@ contract InitDiamond {
         string name;
         string symbol;
         address ghstContract;
-        address vrfCoordinator;
-        RequestConfig requestConfig;
+        address vrfSystem;
     }
-
     function init(Args memory _args) external {
         s.dao = _args.dao;
         s.daoTreasury = _args.daoTreasury;
@@ -35,6 +33,7 @@ contract InitDiamond {
         s.itemsBaseUri = "https://app.aavegotchi.com/metadata/items/";
 
         s.domainSeparator = LibMeta.domainSeparator("AavegotchiDiamond", "V1");
+        s.VRFSystem = _args.vrfSystem;
 
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
 
@@ -45,8 +44,6 @@ contract InitDiamond {
         ds.supportedInterfaces[type(IERC173).interfaceId] = true;
         ds.supportedInterfaces[(type(IERC721).interfaceId)] = true;
         s.ghstContract = _args.ghstContract;
-        s.vrfCoordinator = _args.vrfCoordinator;
-        s.requestConfig = _args.requestConfig;
         s.listingFeeInWei = 1e17;
         s.name = _args.name;
         s.symbol = _args.symbol;

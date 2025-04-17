@@ -252,7 +252,7 @@ contract AavegotchiGameFacet is Modifiers {
         aavegotchi.status = LibAavegotchi.STATUS_AAVEGOTCHI;
         emit ClaimAavegotchi(_tokenId);
 
-        address escrow = address(new CollateralEscrow(option.collateralType));
+        address escrow = address(new CollateralEscrow(option.collateralType, address(this), _tokenId));
         aavegotchi.escrow = escrow;
         address owner = LibMeta.msgSender();
         LibERC20.transferFrom(option.collateralType, owner, escrow, _stakeAmount);

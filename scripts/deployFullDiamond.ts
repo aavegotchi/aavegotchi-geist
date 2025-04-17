@@ -194,6 +194,7 @@ async function deployForgeDiamond(
   ownerAddress: string,
   aavegotchiDiamondAddress: string,
   wearableDiamondAddress: string,
+  vrfSystemAddress: string,
   deploymentConfig: DeploymentConfig
 ) {
   // Deploy forge facets
@@ -767,8 +768,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       name,
       symbol,
       ghstContractAddress,
-      addresses.vrfCoordinator,
-      requestConfig,
+      addresses.vrfSystem,
     ],
   ];
 
@@ -907,6 +907,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         ownerAddress,
         aavegotchiDiamond.address,
         wearableDiamond.address,
+        addresses.vrfSystem!,
         deploymentConfig
       );
       console.log("Forge diamond address:" + forgeDiamond.address);

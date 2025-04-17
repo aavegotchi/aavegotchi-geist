@@ -16,7 +16,7 @@ interface MintingProgress {
   };
 }
 
-const FORGE_ITEMS_DIR = `${__dirname}/forgeWearables`;
+export const FORGE_ITEMS_DIR = `${__dirname}/forgeWearables`;
 const PROCESSED_FORGE_ITEMS_DIR = `${FORGE_ITEMS_DIR}/processed/`;
 
 interface ForgeItemBalance {
