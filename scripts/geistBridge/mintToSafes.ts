@@ -2,7 +2,12 @@ import { ethers } from "hardhat";
 import fs from "fs";
 import path from "path";
 import { deploySafe } from "./deploySafe";
-import { ForgeFacet, DAOFacet, AavegotchiFacet } from "../../typechain";
+import {
+  ForgeFacet,
+  DAOFacet,
+  AavegotchiFacet,
+  AavegotchiBridgeFacet,
+} from "../../typechain";
 import { maticDiamondAddress } from "../helperFunctions";
 import { GNOSIS_PATH } from "./deploySafe";
 
@@ -134,7 +139,7 @@ async function verifySafes(
 
 // Add these helper functions first
 async function mintAavegotchisToSafe(
-  contract: AavegotchiFacet,
+  contract: AavegotchiBridgeFacet,
   safeAddress: string,
   tokenIds: string[],
   progress: MintingProgress
@@ -286,9 +291,9 @@ async function mintToSafes() {
 
   // Initialize contracts
   const aavegotchiFacet = (await ethers.getContractAt(
-    "AavegotchiFacet",
+    "AavegotchiBridgeFacet",
     maticDiamondAddress
-  )) as AavegotchiFacet;
+  )) as AavegotchiBridgeFacet;
 
   const daoFacet = (await ethers.getContractAt(
     "DAOFacet",

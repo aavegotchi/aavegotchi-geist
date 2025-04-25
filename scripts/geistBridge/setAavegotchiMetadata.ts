@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 import fs from "fs";
 import path from "path";
 import { BigNumber } from "ethers";
-import { AavegotchiFacet } from "../../typechain";
+import { AavegotchiBridgeFacet, AavegotchiFacet } from "../../typechain";
 import { maticDiamondAddress } from "../helperFunctions";
 
 interface AavegotchiInfo {
@@ -25,6 +25,7 @@ interface AavegotchiInfo {
   lastInteracted: number;
   locked: boolean;
   items: number[];
+  respecCount: number;
 }
 
 interface MetadataProgress {
@@ -83,9 +84,9 @@ async function setAavegotchiMetadata() {
 
   // Get contract
   const contract = (await ethers.getContractAt(
-    "AavegotchiFacet",
+    "AavegotchiBridgeFacet",
     maticDiamondAddress
-  )) as AavegotchiFacet;
+  )) as AavegotchiBridgeFacet;
 
   // Load progress
   let processedTokenIds: string[] = [];

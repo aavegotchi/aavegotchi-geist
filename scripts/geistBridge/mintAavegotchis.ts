@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 import fs from "fs";
 import path from "path";
-import { AavegotchiFacet } from "../../typechain";
+import { AavegotchiBridgeFacet, AavegotchiFacet } from "../../typechain";
 import { maticDiamondAddress } from "../helperFunctions";
 
 interface MintingProgress {
@@ -64,7 +64,7 @@ function createBatches(aavegotchiData: Record<string, string[]>): MintBatch[] {
 }
 
 async function processBatch(
-  contract: AavegotchiFacet,
+  contract: AavegotchiBridgeFacet,
   batch: MintBatch,
   progress: MintingProgress,
   batchIndex: number,
@@ -155,9 +155,9 @@ export async function mintAavegotchis() {
   );
 
   const contract = (await ethers.getContractAt(
-    "AavegotchiFacet",
+    "AavegotchiBridgeFacet",
     maticDiamondAddress
-  )) as AavegotchiFacet;
+  )) as AavegotchiBridgeFacet;
 
   const progress = await loadProgress();
   const batches = createBatches(aavegotchiData);

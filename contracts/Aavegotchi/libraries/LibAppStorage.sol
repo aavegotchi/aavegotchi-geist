@@ -58,6 +58,7 @@ struct Aavegotchi {
     uint40 lastInteracted; //The last time this Aavegotchi was interacted with
     bool locked;
     address escrow; //The escrow address this Aavegotchi manages.
+    uint256 respecCount; //The number of times this Aavegotchi has been respec'd
 }
 
 struct Dimensions {
@@ -288,8 +289,8 @@ struct AppStorage {
     mapping(address => uint256) metaNonces;
     uint32 tokenIdCounter;
     uint16 currentHauntId;
-    string name;
-    string symbol;
+    // string name;
+    // string symbol;
     //Addresses
     address[] collateralTypes;
     address ghstContract;
@@ -378,7 +379,7 @@ struct AppStorage {
     mapping(address => mapping(uint256 => mapping(uint256 => uint256))) erc721TokenToBuyOrderIdIndexes; // erc721 token address => erc721TokenId => buyOrderId => index
     mapping(address => mapping(uint256 => mapping(address => uint256))) buyerToBuyOrderId; // erc721 token address => erc721TokenId => sender => buyOrderId
     // respec
-    mapping(uint32 => uint256) gotchiRespecCount;
+    // mapping(uint32 => uint256) gotchiRespecCount;
     address daoDirectorTreasury;
     // Items Roles Registry
     // depositId => userRoleDepositInfo
@@ -393,8 +394,6 @@ struct AppStorage {
     // states for erc1155 buy orders
     uint256 nextERC1155BuyOrderId;
     mapping(uint256 => ERC1155BuyOrder) erc1155BuyOrders; // buyOrderId => data
-    address gotchGeistBridge;
-    address itemGeistBridge;
     mapping(address => bool) baazaarTradingAllowlist; // allowlist for baazaar trading
     //proofofplay vrf
     address VRFSystem;
@@ -461,18 +460,6 @@ contract Modifiers {
             sender == LibDiamond.contractOwner() || s.itemManagers[sender] == true,
             "LibAppStorage: only an Owner or ItemManager can call this function"
         );
-        _;
-    }
-
-    modifier onlyGotchiGeistBridge() {
-        address sender = LibMeta.msgSender();
-        require(sender == s.gotchGeistBridge, "LibAppStorage: Do not have access");
-        _;
-    }
-
-    modifier onlyItemGeistBridge() {
-        address sender = LibMeta.msgSender();
-        require(sender == s.itemGeistBridge, "LibAppStorage: Do not have access");
         _;
     }
 

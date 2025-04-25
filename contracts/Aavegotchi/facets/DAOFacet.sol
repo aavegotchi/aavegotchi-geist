@@ -480,20 +480,6 @@ contract DAOFacet is Modifiers {
         }
     }
 
-    ///@notice Allow the DAO to update an address as a Geist bridge of the gotchi
-    ///@param _newBridge The address to be update as a bridge
-    function updateGotchiGeistBridge(address _newBridge) external onlyDaoOrOwner {
-        s.gotchGeistBridge = _newBridge;
-        emit GotchiGeistBridgeUpdate(_newBridge);
-    }
-
-    ///@notice Allow the DAO to update an address as a Geist bridge of the item
-    ///@param _newBridge The address to be update as a bridge
-    function updateItemGeistBridge(address _newBridge) external onlyDaoOrOwner {
-        s.itemGeistBridge = _newBridge;
-        emit ItemGeistBridgeUpdate(_newBridge);
-    }
-
     function setGHSTContract(address _ghstContract) external onlyDaoOrOwner {
         s.ghstContract = _ghstContract;
         emit GHSTContractUpdate(_ghstContract);

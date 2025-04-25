@@ -20,8 +20,9 @@ contract InitDiamond {
         address daoTreasury;
         address pixelCraft;
         address rarityFarming;
-        string name;
-        string symbol;
+        //name and symbol are now constants
+        // string name;
+        // string symbol;
         address ghstContract;
         address vrfSystem;
     }
@@ -45,7 +46,8 @@ contract InitDiamond {
         ds.supportedInterfaces[(type(IERC721).interfaceId)] = true;
         s.ghstContract = _args.ghstContract;
         s.listingFeeInWei = 1e17;
-        s.name = _args.name;
-        s.symbol = _args.symbol;
+        //we set hauntId to 2
+        s.currentHauntId = 2;
+        s.tokenIdCounter = 25_000;
     }
 }
