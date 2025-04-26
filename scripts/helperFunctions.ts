@@ -6,6 +6,7 @@ import {
   DefenderRelayProvider,
   DefenderRelaySigner,
 } from "defender-relay-client/lib/ethers";
+// import { run } from "hardhat";
 
 import { fundSigner } from "../helpers/helpers";
 
@@ -325,5 +326,22 @@ export function logXPRecipients(
 
     fs.writeFileSync(parentFile, JSON.stringify(data));
     console.log("finished writing to file");
+  }
+}
+
+export async function verifyContract(
+  address: string,
+  withArgs: boolean = false,
+  args?: any[]
+) {
+  if (withArgs) {
+    await hre.run("verify:verify", {
+      address,
+      constructorArguments: args,
+    });
+  } else {
+    await hre.run("verify:verify", {
+      address,
+    });
   }
 }

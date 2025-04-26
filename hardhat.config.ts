@@ -4,7 +4,8 @@
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-contract-sizer";
-import "@nomiclabs/hardhat-etherscan";
+// import "@nomiclabs/hardhat-etherscan";
+import "@nomicfoundation/hardhat-verify";
 import "solidity-coverage";
 //import './tasks/generateDiamondABI.js';
 import * as dotenv from "dotenv";
@@ -43,6 +44,7 @@ export default {
       // matic: process.env.POLYGON_API_KEY,
       polter: "empty",
       geist: "empty",
+      baseSepolia: process.env.BASE_API_KEY,
     },
     customChains: [
       {

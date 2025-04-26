@@ -4,9 +4,57 @@ pragma solidity 0.8.1;
 import "../libraries/LibAppStorage.sol";
 import "../libraries/LibItems.sol";
 import "../libraries/LibAavegotchi.sol";
+import {LibMeta} from "../../shared/libraries/LibMeta.sol";
+import {LibERC1155} from "../../shared/libraries/LibERC1155.sol";
+import "../WearableDiamond/interfaces/IEventHandlerFacet.sol";
 import "../CollateralEscrow.sol";
 
 contract AavegotchiBridgeFacet is Modifiers {
+    struct MintItemsBridged {
+        address to;
+        ItemBalance[] itemBalances;
+    }
+
+    struct ItemBalance {
+        uint256 itemId;
+        uint256 quantity;
+    }
+
+    function batchMintItems(MintItemsBridged[] calldata _mintItemsBridged) external onlyItemManager {
+        for (uint256 i; i < _mintItemsBridged.length; i++) {
+            address sender = LibMeta.msgSender();
+            uint256 itemTypesLength = s.itemTypes.length;
+            for (uint256 j; j < _mintItemsBridged[i].itemBalances.length; j++) {
+                uint256 itemId = _mintItemsBridged[i].itemBalances[j].itemId;
+
+                require(itemTypesLength > itemId, "DAOFacet: Item type does not exist");
+
+                uint256 quantity = _mintItemsBridged[i].itemBalances[j].quantity;
+                uint256 totalQuantity = s.itemTypes[itemId].totalQuantity + quantity;
+                require(totalQuantity <= s.itemTypes[itemId].maxQuantity, "DAOFacet: Total item type quantity exceeds max quantity");
+
+                LibItems.addToOwner(_mintItemsBridged[i].to, itemId, quantity);
+                s.itemTypes[itemId].totalQuantity = totalQuantity;
+
+                IEventHandlerFacet(s.wearableDiamond).emitTransferSingleEvent(
+                    sender,
+                    address(0),
+                    _mintItemsBridged[i].to,
+                    _mintItemsBridged[i].itemBalances[j].itemId,
+                    _mintItemsBridged[i].itemBalances[j].quantity
+                );
+                LibERC1155.onERC1155Received(
+                    sender,
+                    address(0),
+                    _mintItemsBridged[i].to,
+                    _mintItemsBridged[i].itemBalances[j].itemId,
+                    _mintItemsBridged[i].itemBalances[j].quantity,
+                    ""
+                );
+            }
+        }
+    }
+
     struct MintAavegotchiParams {
         address owner;
         uint256[] tokenIds;

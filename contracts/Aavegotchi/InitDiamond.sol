@@ -46,8 +46,6 @@ contract InitDiamond {
         ds.supportedInterfaces[(type(IERC721).interfaceId)] = true;
         s.ghstContract = _args.ghstContract;
         s.listingFeeInWei = 1e17;
-        //we set hauntId to 2
-        s.currentHauntId = 2;
         s.tokenIdCounter = 25_000;
     }
 }

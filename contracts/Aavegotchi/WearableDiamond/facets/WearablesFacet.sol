@@ -87,45 +87,4 @@ contract WearablesFacet {
         //emit event
         LibEventHandler._receiveAndEmitTransferBatchEvent(msg.sender, _from, _to, _ids, _values);
     }
-
-    //Bridging
-
-    function setItemGeistBridge(address _itemGeistBridge) external {
-        WearableLibDiamond.enforceIsContractOwner();
-        WearableLibDiamond.diamondStorage().itemGeistBridge = _itemGeistBridge;
-        emit ItemGeistBridgeUpdate(_itemGeistBridge);
-    }
-
-    function itemGeistBridge() public view returns (address) {
-        return WearableLibDiamond.diamondStorage().itemGeistBridge;
-    }
-
-    function bridgeItem(address _receiver, uint256 _tokenId, uint256 _amount, uint256 _msgGasLimit, address _connector) external payable {
-        WearableLibDiamond.DiamondStorage storage ds = WearableLibDiamond.diamondStorage();
-
-        INFTBridge(ds.itemGeistBridge).bridge{value: msg.value}(
-            _receiver,
-            msg.sender,
-            _tokenId,
-            _amount,
-            _msgGasLimit,
-            _connector,
-            new bytes(0),
-            new bytes(0)
-        );
-    }
-
-    function mint(address _to, uint _tokenId, uint _quantity) external {
-        require(msg.sender == WearableLibDiamond.diamondStorage().itemGeistBridge, "WearablesFacet: Only item geist bridge can mint");
-
-        periphery().peripheryBridgeMint(_to, _tokenId, _quantity);
-
-        LibEventHandler._receiveAndEmitTransferSingleEvent(msg.sender, address(0), _to, _tokenId, _quantity);
-    }
-
-    function burn(address _from, uint _tokenId, uint _quantity) external {
-        require(msg.sender == WearableLibDiamond.diamondStorage().itemGeistBridge, "WearablesFacet: Only item geist bridge can burn");
-        periphery().peripheryBridgeBurn(_from, _tokenId, _quantity);
-        LibEventHandler._receiveAndEmitTransferSingleEvent(msg.sender, _from, address(0), _tokenId, _quantity);
-    }
 }

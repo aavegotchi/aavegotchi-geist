@@ -207,7 +207,12 @@ async function deployForgeDiamond(
       "ForgeVRFFacet",
       "ForgeDAOFacet",
     ],
-    args: [ownerAddress, aavegotchiDiamondAddress, wearableDiamondAddress],
+    args: [
+      ownerAddress,
+      aavegotchiDiamondAddress,
+      wearableDiamondAddress,
+      vrfSystemAddress,
+    ],
     deploymentConfig,
   });
 

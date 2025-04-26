@@ -180,7 +180,7 @@ async function mintAavegotchisToSafe(
 }
 
 async function mintWearablesToSafe(
-  contract: DAOFacet,
+  contract: AavegotchiBridgeFacet,
   safeAddress: string,
   tokens: TokenData[],
   progress: MintingProgress
@@ -295,10 +295,10 @@ async function mintToSafes() {
     maticDiamondAddress
   )) as AavegotchiBridgeFacet;
 
-  const daoFacet = (await ethers.getContractAt(
-    "DAOFacet",
-    maticDiamondAddress
-  )) as DAOFacet;
+  // const daoFacet = (await ethers.getContractAt(
+  //   "DAOFacet",
+  //   maticDiamondAddress
+  // )) as DAOFacet;
 
   const forgeFacet = (await ethers.getContractAt(
     "ForgeFacet",
@@ -330,7 +330,7 @@ async function mintToSafes() {
     if (wearableData) {
       console.log(`Minting ${wearableData.tokens.length} Wearables...`);
       await mintWearablesToSafe(
-        daoFacet,
+        aavegotchiFacet,
         safeAddress,
         wearableData.tokens,
         progress

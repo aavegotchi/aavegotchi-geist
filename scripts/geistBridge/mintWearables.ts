@@ -1,6 +1,6 @@
 import { ethers } from "hardhat";
 import fs from "fs";
-import { DAOFacet } from "../../typechain";
+import { AavegotchiBridgeFacet, DAOFacet } from "../../typechain";
 import { maticDiamondAddress } from "../helperFunctions";
 import { PROCESSED_AAVEGOTCHI_DIR } from "./setAavegotchiMetadata";
 
@@ -70,7 +70,7 @@ function createBatches(
 }
 
 async function processBatch(
-  contract: DAOFacet,
+  contract: AavegotchiBridgeFacet,
   batch: MintBatch,
   progress: MintingProgress,
   batchIndex: number,
@@ -160,9 +160,9 @@ export async function mintWearables() {
   );
 
   const contract = (await ethers.getContractAt(
-    "DAOFacet",
+    "AavegotchiBridgeFacet",
     maticDiamondAddress
-  )) as DAOFacet;
+  )) as AavegotchiBridgeFacet;
   const progress = await loadProgress();
   const batches = createBatches(wearablesData);
 

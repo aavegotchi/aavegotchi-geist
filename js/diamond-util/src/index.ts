@@ -6,6 +6,7 @@ import {
   DeploymentConfig,
   saveDeploymentConfig,
 } from "../../../scripts/deployFullDiamond";
+import { verifyContract } from "../../../scripts/helperFunctions";
 
 const FacetCutAction = {
   Add: 0,
@@ -81,6 +82,7 @@ async function deployFacets(
         console.log(`Deploying ${facet}`);
         const deployedFactory = await facetFactory.deploy();
         await deployedFactory.deployed();
+        await verifyContract(deployedFactory.address, false);
 
         if (!deploymentConfig[diamondName]) {
           deploymentConfig[diamondName] = {
@@ -170,6 +172,8 @@ export async function deploy({
     initDiamond = await ethers.getContractFactory(initDiamond);
     initDiamond = await initDiamond.deploy();
     await initDiamond.deployed();
+    await verifyContract(initDiamond.address, false);
+
     result = await initDiamond.deployTransaction.wait();
     if (!result.status) {
       throw Error(
@@ -191,6 +195,7 @@ export async function deploy({
 
   const deployedDiamond = await diamondFactory.deploy(owner);
   await deployedDiamond.deployed();
+  await verifyContract(deployedDiamond.address, true, [owner]);
   result = await deployedDiamond.deployTransaction.wait();
   if (!result.status) {
     console.log(
@@ -292,9 +297,7 @@ export async function deployWithoutInit({
 
   // return;
 
-  console.log("here1");
   await deployedDiamond.deployed();
-  console.log("here2");
   result = await deployedDiamond.deployTransaction.wait();
   if (!result.status) {
     console.log(

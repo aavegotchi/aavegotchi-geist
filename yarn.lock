@@ -1231,6 +1231,21 @@
   dependencies:
     ethereumjs-util "^7.1.4"
 
+"@nomicfoundation/hardhat-verify@^2.0.13":
+  version "2.0.13"
+  resolved "https://registry.npmjs.org/@nomicfoundation/hardhat-verify/-/hardhat-verify-2.0.13.tgz"
+  integrity sha512-i57GX1sC0kYGyRVnbQrjjyBTpWTKgrvKC+jH8CMKV6gHp959Upb8lKaZ58WRHIU0espkulTxLnacYeUDirwJ2g==
+  dependencies:
+    "@ethersproject/abi" "^5.1.2"
+    "@ethersproject/address" "^5.0.2"
+    cbor "^8.1.0"
+    debug "^4.1.1"
+    lodash.clonedeep "^4.5.0"
+    picocolors "^1.1.0"
+    semver "^6.3.0"
+    table "^6.8.0"
+    undici "^5.14.0"
+
 "@nomicfoundation/slang@^0.18.3":
   version "0.18.3"
   resolved "https://registry.npmjs.org/@nomicfoundation/slang/-/slang-0.18.3.tgz"
@@ -1908,8 +1923,8 @@
 
 "@zksync/contracts@git+https://github.com/matter-labs/era-contracts.git#446d391d34bdb48255d5f8fef8a8248925fc98b9":
   version "0.1.0"
-  resolved "git+ssh://git@github.com/matter-labs/era-contracts.git"
-  integrity sha512-oubU8Z7cmhu2DuqRmOmcv4Y1jx6Eqzq5bf0VsiAc2lB8+V2Bih/bRuU1Gbdx9q0201+q7YyHhozJ1ZrYfdhuZQ==
+  resolved "git+ssh://git@github.com/matter-labs/era-contracts.git#446d391d34bdb48255d5f8fef8a8248925fc98b9"
+  integrity sha512-Uke6C3HTDonp/sqP4SlNxU40YL9TK1ICCubcmEBryGQoZCa0z9oc3GSUZ1WBAHQ9HhLiHnpqpayFNmq9fZkK7Q==
 
 abbrev@1, abbrev@1.0.x:
   version "1.0.9"
@@ -6351,6 +6366,11 @@ locate-path@^6.0.0:
   integrity sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==
   dependencies:
     p-locate "^5.0.0"
+
+lodash.clonedeep@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.npmjs.org/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz"
+  integrity sha512-H5ZhCF25riFd9uB5UCkVKo61m3S/xZk1x4wA6yp/L3RFP6Z/eHH1ymQcGLo7J3GMPfm0V/7m1tryHuGVxpqEBQ==
 
 lodash.isequal@^4.5.0:
   version "4.5.0"

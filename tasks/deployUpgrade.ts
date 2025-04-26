@@ -10,7 +10,12 @@ import { Signer } from "@ethersproject/abstract-signer";
 
 import { IDiamondCut } from "../typechain";
 import { LedgerSigner } from "@anders-t/ethers-ledger";
-import { getSelectors, getSighashes, delay } from "../scripts/helperFunctions";
+import {
+  getSelectors,
+  getSighashes,
+  delay,
+  verifyContract,
+} from "../scripts/helperFunctions";
 
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { sendToMultisig } from "../scripts/libraries/multisig/multisig";
@@ -198,6 +203,8 @@ task(
             `Deployed Facet Address for ${facet.facetName}:`,
             deployedFacet.address
           );
+          //verify all new facets by default
+          await verifyContract(deployedFacet.address);
           deployedFacets.push(deployedFacet);
 
           const newSelectors = getSighashes(facet.addSelectors, hre.ethers);
