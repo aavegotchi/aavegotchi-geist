@@ -91,15 +91,15 @@ describe("Baazaar Test", function () {
 
   describe("WGHST", () => {
     it("should expect WGHST to be set during init", async () => {
-      const wghstContract = await daoFacet.getWGHSTContract();
-      expect(wghstContract).to.not.equal(ethers.constants.AddressZero);
-      console.log("ghstTokenAddress", wghstContract);
+      const ghstContract = await daoFacet.getGHSTContract();
+      expect(ghstContract).to.not.equal(ethers.constants.AddressZero);
+      console.log("ghstTokenAddress", ghstContract);
     });
 
-    it("should be able to set the WGHST contract", async () => {
-      await daoFacet.setWGHSTContract(addr1.address);
-      const wghstContract = await daoFacet.getWGHSTContract();
-      expect(wghstContract).to.equal(addr1.address);
+    it("should be able to set the GHST contract", async () => {
+      await daoFacet.setGHSTContract(addr1.address);
+      const ghstContract = await daoFacet.getGHSTContract();
+      expect(ghstContract).to.equal(addr1.address);
     });
   });
 

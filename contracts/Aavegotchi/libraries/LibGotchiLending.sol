@@ -212,6 +212,9 @@ library LibGotchiLending {
         // gas savings
         address lender = lending.lender;
 
+        if (lending.initialCost > 0) {
+            LibERC20.transferFrom(s.ghstContract, _borrower, lender, _initialCost);
+        }
         lending.borrower = _borrower;
         uint40 currentTime = uint40(block.timestamp);
         lending.timeAgreed = currentTime;
@@ -461,6 +464,8 @@ library LibGotchiLending {
         if (lending.whitelistId > 0) {
             require(s.isWhitelisted[lending.whitelistId][_borrower] > 0, "LibGotchiLending: Not whitelisted address");
         }
+        // Removed balance check for GHST since this will revert anyway if transferFrom is called
+        //require(IERC20(s.ghstContract).balanceOf(_borrower) >= lending.initialCost, "GotchiLending: Not enough GHST");
     }
 
     function removeLentAavegotchi(uint32 _tokenId, address _lender) internal {
