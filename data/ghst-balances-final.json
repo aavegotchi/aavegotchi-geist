@@ -62864,7 +62864,8 @@
     {
       "address": "0x74e2051a9cd994f83f2d789448dca4a3e879964c",
       "balance": "1905180087074083434822",
-      "stale": true
+      "stale": true,
+      "smartContract": true
     },
     {
       "address": "0x4a54058429b84defdc1e69bdd4927b57634f0ca5",
@@ -62934,7 +62935,8 @@
     {
       "address": "0x78860e9be983cabcda2c101cbc185b23efd1f4cc",
       "balance": "23999900000000000000",
-      "stale": true
+      "stale": true,
+      "smartContract": true
     },
     {
       "address": "0x8c1e6969ca76ca73a9b002fe8085f6a45b3679e5",
@@ -64329,7 +64331,8 @@
     {
       "address": "0x0000000071727de22e5e9d8baf0edac6f37da032",
       "balance": "49999751920305600000",
-      "stale": true
+      "stale": true,
+      "smartContract": true
     },
     {
       "address": "0xefc2c1444ebcc4db75e7613d20c6a62ff67a167c",
@@ -64339,7 +64342,8 @@
     {
       "address": "0x5ff137d4b0fdcd49dca30c7cf57e578a026d2789",
       "balance": "49999807195334600000",
-      "stale": true
+      "stale": true,
+      "smartContract": true
     },
     {
       "address": "0x7fc98430eaedbb6070b35b39d798725049088348",
@@ -64714,7 +64718,8 @@
     {
       "address": "0x4337001fff419768e088ce247456c1b892888084",
       "balance": "11998696733676000000",
-      "stale": true
+      "stale": true,
+      "smartContract": true
     },
     {
       "address": "0x4337003fcd2f56de3977ccb806383e9161628d0e",
