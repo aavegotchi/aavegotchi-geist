@@ -25,7 +25,7 @@ interface TallyResult {
  * @returns Object containing wallet count and total balance statistics
  */
 async function tallyGHSTBalances(): Promise<TallyResult> {
-  const filePath = path.join(process.cwd(), "data", "ghst-balances.json");
+  const filePath = path.join(process.cwd(), "data", "ghst-balances-final.json");
   console.log(`Reading GHST balances from: ${filePath}`);
 
   // Check if file exists
@@ -67,6 +67,38 @@ async function tallyGHSTBalances(): Promise<TallyResult> {
     console.log("=== GHST Balance Statistics ===");
     console.log(`Total wallets: ${result.totalWallets.toLocaleString()}`);
     console.log(`Total GHST: ${result.totalBalanceFormatted}`);
+
+    const zeroBalanceWallets = data.accounts.filter(
+      (account) => account.balance === "0"
+    ).length;
+    console.log(
+      `Number of wallets with 0 balance: ${zeroBalanceWallets.toLocaleString()}`
+    );
+
+    const smallBalanceWallets = data.accounts.filter((account) => {
+      const balanceInEther = parseFloat(formatEther(BigInt(account.balance)));
+      return balanceInEther > 0 && balanceInEther < 1;
+    }).length;
+    console.log(
+      `Number of wallets with balance > 0 and < 1 GHST: ${smallBalanceWallets.toLocaleString()}`
+    );
+
+    const midBalanceWallets = data.accounts.filter((account) => {
+      const balanceInEther = parseFloat(formatEther(BigInt(account.balance)));
+      return balanceInEther > 1 && balanceInEther < 100;
+    }).length;
+    console.log(
+      `Number of wallets with balance > 1 and < 100 GHST: ${midBalanceWallets.toLocaleString()}`
+    );
+
+    const largeBalanceWallets = data.accounts.filter((account) => {
+      const balanceInEther = parseFloat(formatEther(BigInt(account.balance)));
+      return balanceInEther > 100;
+    }).length;
+    console.log(
+      `Number of wallets with balance > 100 GHST: ${largeBalanceWallets.toLocaleString()}`
+    );
+
     console.log(`Last updated: ${result.lastUpdated}`);
 
     //Compare this to the total GHST in the bridge contract: https://basescan.org/address/0x9f904fea0eff79708b37b99960e05900fe310a8e#tokentxns
