@@ -215,7 +215,9 @@ export function getCollaterals(
     } else if (network === "geist") {
       collateralAddress = collateralType.maticAddress;
     } else if (network === "baseSepolia") {
-      collateralAddress = ghstAddress;
+      collateralAddress = collateralType.maticAddress; //use normal matic address on base sepolia
+    } else if (network === "base") {
+      collateralAddress = collateralType.maticAddress; //use normal matic address on base
     }
 
     const item = {

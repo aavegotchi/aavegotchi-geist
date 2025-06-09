@@ -83,9 +83,17 @@ export const AMOY_FORGE_DIAMOND = "0xF7c2AC46723Ad844620F798ECe67f5C673120FB6";
 interface NetworkAddresses {
   ghst: string;
   aavegotchiDiamond?: string;
+  wearableDiamond?: string;
+  forgeDiamond?: string;
   vrfSystem?: string;
   // vrfVars?: string;
   safeProxyFactory?: string;
+  realmDiamond?: string;
+  installationDiamond?: string;
+  tileDiamond?: string;
+  fakeGotchiCardDiamond?: string;
+  fakeGotchiArtDiamond?: string;
+  ghstStakingDiamond?: string;
 }
 
 // export const vrfVars: Record<number, VRFVars> = {
@@ -123,12 +131,18 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
   137: {
     ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    aavegotchiDiamond: "0x86935F11C86623deC8a25696E1C19a8659CbF95d",
+    forgeDiamond: "0x4fDfc1B53Fd1D80d969C984ba7a8CE4c7bAaD442",
+    wearableDiamond: "0x58de9AaBCaeEC0f69883C94318810ad79Cc6a44f",
   },
   31337: {
     ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
     vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
     // vrfVars: vrfVars[84532],
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    aavegotchiDiamond: "0x86e527A5863975d0141514D20248aD17B6BF92D0",
+    forgeDiamond: "0xf0b0aFA15c61E939dD7Ae2e82Fbe98FFd5598C65",
+    wearableDiamond: "0x83FAaC162062524e041dFB43681B0d958eD49Acb",
   },
 
   631571: {
@@ -145,6 +159,15 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
     // vrfVars: vrfVars[84532],
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    aavegotchiDiamond: "0x10759c35F8dE7E6172BB30e0B10312c1a295aC2F",
+    forgeDiamond: "0x17D1fd7B55c60d003f5B850aE34613DCcB68b661",
+    wearableDiamond: "0xBB8613F101b57b33c00E8Fb46E8725A0b8D7eAff",
+    realmDiamond: "0x37D140074B2f771bEa7ef23288EB87064e45bF8D",
+    installationDiamond: "0x5Aefdc5283B24EEa7b50FFBBf7FB8A2bD4537609",
+    tileDiamond: "0x96B19Fa954d961fAD4b665e3259C72466ca4C1dA",
+    fakeGotchiCardDiamond: "0xE4E508dab5D7d98f4c06aB6D24bB225588036C9D",
+    fakeGotchiArtDiamond: "0xD0dCC1d1E22D490e5270631787E1866E773b16C7",
+    ghstStakingDiamond: "0xD0dCC1d1E22D490e5270631787E1866E773b16C7",
   },
 
   8453: {
@@ -205,7 +228,6 @@ export function baseSepoliaProvider() {
   if (!url) {
     throw new Error("BASE_SEPOLIA_RPC_URL not found in environment variables");
   }
-  console.log("Using Base Sepolia URL:", url);
   return new ethers.providers.JsonRpcProvider(url);
 }
 

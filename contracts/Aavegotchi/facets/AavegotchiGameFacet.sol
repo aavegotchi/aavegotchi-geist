@@ -247,12 +247,12 @@ contract AavegotchiGameFacet is Modifiers {
         aavegotchi.interactionCount = 50;
         aavegotchi.claimTime = uint40(block.timestamp);
 
-        require(_stakeAmount >= option.minimumStake, "AavegotchiGameFacet: _stakeAmount less than minimum stake");
+        // require(_stakeAmount >= option.minimumStake, "AavegotchiGameFacet: _stakeAmount less than minimum stake");
 
         aavegotchi.status = LibAavegotchi.STATUS_AAVEGOTCHI;
         emit ClaimAavegotchi(_tokenId);
 
-        address escrow = address(new CollateralEscrow(option.collateralType, address(this), _tokenId));
+        address escrow = address(new CollateralEscrow(address(this), _tokenId));
         aavegotchi.escrow = escrow;
         address owner = LibMeta.msgSender();
         LibERC20.transferFrom(option.collateralType, owner, escrow, _stakeAmount);

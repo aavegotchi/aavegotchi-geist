@@ -19,11 +19,11 @@ contract CollateralEscrow {
     }
     AppStorage internal s;
 
-    constructor(address _aTokenContract, address _token, uint256 _tokenId) {
+    constructor(address _token, uint256 _tokenId) {
         s.owner = LibMeta.msgSender();
         s.token = _token;
         s.tokenId = _tokenId;
-        approveAavegotchiDiamond(_aTokenContract);
+        //  approveAavegotchiDiamond(_aTokenContract);
     }
 
     function approveAavegotchiDiamond(address _aTokenContract) public {

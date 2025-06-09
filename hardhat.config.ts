@@ -78,6 +78,7 @@ export default {
     },
     localhost: {
       timeout: 16000000,
+      //  chainId: 31337,
     },
     matic: {
       url: process.env.MATIC_URL,

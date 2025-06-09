@@ -1,20 +1,25 @@
 import { ethers } from "hardhat";
 import { FORGE_ITEMS_DIR } from "./mintForgeItems";
-import { maticForgeDiamondAddress } from "../helperFunctions";
+import { maticForgeDiamondAddress, getRelayerSigner } from "../helperFunctions";
 import { BigNumber } from "ethers";
-
+import { varsForNetwork } from "../../helpers/constants";
 import fs from "fs";
 
 async function main() {
   const itemAltDataPath = `${FORGE_ITEMS_DIR}/forgeAltData.json`;
+  // @ts-ignore
+  const signer = await getRelayerSigner(hre);
+  const c = await varsForNetwork(ethers);
   const forgeWriteFacet = await ethers.getContractAt(
     "ForgeWriteFacet",
-    maticForgeDiamondAddress
+    c.forgeDiamond!,
+    signer
   );
 
   const forgeDAOFacet = await ethers.getContractAt(
     "ForgeDAOFacet",
-    maticForgeDiamondAddress
+    c.forgeDiamond!,
+    signer
   );
 
   interface ForgeAltData {
@@ -50,7 +55,7 @@ async function main() {
   let tx;
   tx = await forgeWriteFacet.setForgeAlloyCosts(data.alloyCosts.alloyCosts);
   console.log(`tx: ${tx.hash}`);
-  await tx.wait();
+  await ethers.provider.waitForTransaction(tx.hash, 1);
   console.log(`tx: ${tx.hash} confirmed`);
 
   console.log(`setting essenceCosts`);
@@ -58,7 +63,7 @@ async function main() {
     data.essenceCosts.essenceCosts
   );
   console.log(`tx: ${tx.hash}`);
-  await tx.wait();
+  await ethers.provider.waitForTransaction(tx.hash, 1);
   console.log(`tx: ${tx.hash} confirmed`);
 
   console.log(`setting timeCosts`);
@@ -66,7 +71,7 @@ async function main() {
     data.timeCosts.timeCosts
   );
   console.log(`tx: ${tx.hash}`);
-  await tx.wait();
+  await ethers.provider.waitForTransaction(tx.hash, 1);
   console.log(`tx: ${tx.hash} confirmed`);
 
   console.log(`setting skillPoints`);
@@ -74,7 +79,7 @@ async function main() {
     data.skillPoints.skillPoints
   );
   console.log(`tx: ${tx.hash}`);
-  await tx.wait();
+  await ethers.provider.waitForTransaction(tx.hash, 1);
   console.log(`tx: ${tx.hash} confirmed`);
 
   console.log(`setting smeltingSkillPointReductionFactorBips`);
@@ -82,7 +87,7 @@ async function main() {
     data.smeltingSkillPointReductionFactorBips
   );
   console.log(`tx: ${tx.hash}`);
-  await tx.wait();
+  await ethers.provider.waitForTransaction(tx.hash, 1);
   console.log(`tx: ${tx.hash} confirmed`);
 
   console.log(`setting geodeWinChanceMultiTierBips`);
@@ -92,7 +97,7 @@ async function main() {
     data.geodeWinChanceMultiTierBips.winChances
   );
   console.log(`tx: ${tx.hash}`);
-  await tx.wait();
+  await ethers.provider.waitForTransaction(tx.hash, 1);
   console.log(`tx: ${tx.hash} confirmed`);
 
   console.log(`setting geodeRarities`);
@@ -102,7 +107,7 @@ async function main() {
     data.geodeRarities
   );
   console.log(`tx: ${tx.hash}`);
-  await tx.wait();
+  await ethers.provider.waitForTransaction(tx.hash, 1);
   console.log(`tx: ${tx.hash} confirmed`);
 
   //set gotchi smithing skill points in batches of 200
@@ -119,7 +124,7 @@ async function main() {
       data.gotchiSmithingSkillPoints.skillPoints.slice(i, i + 200)
     );
     console.log(`tx: ${tx.hash}`);
-    await tx.wait();
+    await ethers.provider.waitForTransaction(tx.hash, 1);
     console.log(`tx: ${tx.hash} confirmed`);
   }
 }

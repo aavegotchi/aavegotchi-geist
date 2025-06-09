@@ -20,6 +20,47 @@ contract AavegotchiBridgeFacet is Modifiers {
         uint256 quantity;
     }
 
+    // Struct for Portal Options (potential Aavegotchis in a portal)
+    struct PortalOption {
+        uint8 portalOptionId; // The index of this option (0-9)
+        uint256 randomNumber; // The random number associated with this option's stats
+        int16[6] numericTraits; // The 6 numeric traits
+        address collateralType; // The address of the collateral token
+        uint256 minimumStake; // The minimum stake required in collateral (wei)
+        uint16 baseRarityScore; // The base rarity score of this option
+    }
+    // Struct for the main Aavegotchi/Portal data entry from subgraph
+    struct AavegotchiSubgraphPortalData {
+        uint256 gotchiId; // The Aavegotchi's token ID (or portal ID if not claimed yet)
+        address buyer; // Address of the buyer (address(0) if not applicable/null)
+        uint256 hauntId; // The ID of the Haunt this portal/gotchi belongs to
+        address owner; // Current owner of the portal/gotchi
+        PortalOption[] options; // Array of up to 10 portal options
+        string status; // Status like "Bought", "Claimed"
+        uint256 boughtAtBlock; // Block number when bought (0 if not applicable/null)
+        uint256 openedAtBlock; // Block number when portal opened (0 if not applicable/null)
+        uint256 claimedAtBlock; // Block number when Aavegotchi claimed from portal (0 if not applicable/null)
+        uint256 claimedTimestamp; // Timestamp when Aavegotchi claimed (0 if not applicable/null)
+        uint256 timesTraded; // Number of times this Aavegotchi/portal has been traded
+        uint256[] historicalPrices; // Array of historical sale prices in wei
+        uint256 activeListingId; // ID of the active marketplace listing (0 if not listed/null)
+    }
+
+    struct AavegotchiHistoricalRecord {
+        uint256 gotchiId; // The Aavegotchi's token ID
+        string name; // The Aavegotchi's name
+        uint256 createdAtBlock; // Block number when created/recorded
+        uint256[] historicalPrices; // Array of historical sale prices in wei
+        uint256 timesTraded; // Number of times this Aavegotchi has been traded
+        uint256 activeListing; // ID of the active marketplace listing (0 if not listed/null)
+    }
+
+    // Event to emit processed subgraph data
+    event PortalData(AavegotchiSubgraphPortalData data);
+
+    // Event for processed historical Aavegotchi data
+    event AavegotchiHistory(AavegotchiHistoricalRecord data);
+
     function batchMintItems(MintItemsBridged[] calldata _mintItemsBridged) external onlyItemManager {
         for (uint256 i; i < _mintItemsBridged.length; i++) {
             address sender = LibMeta.msgSender();
@@ -83,7 +124,31 @@ contract AavegotchiBridgeFacet is Modifiers {
         }
     }
 
-    function setMetadata(uint256[] calldata _tokenIds, Aavegotchi[] calldata _aavegotchis) external onlyOwner {
+    struct AavegotchiBridged {
+        uint16[EQUIPPED_WEARABLE_SLOTS] equippedWearables; //The currently equipped wearables of the Aavegotchi
+        // [Experience, Rarity Score, Kinship, Eye Color, Eye Shape, Brain Size, Spookiness, Aggressiveness, Energy]
+        int8[NUMERIC_TRAITS_NUM] temporaryTraitBoosts;
+        int16[NUMERIC_TRAITS_NUM] numericTraits; // Sixteen 16 bit ints.  [Eye Color, Eye Shape, Brain Size, Spookiness, Aggressiveness, Energy]
+        string name;
+        uint256 randomNumber;
+        uint256 experience; //How much XP this Aavegotchi has accrued. Begins at 0.
+        uint256 minimumStake; //The minimum amount of collateral that must be staked. Set upon creation.
+        uint256 usedSkillPoints; //The number of skill points this aavegotchi has already used
+        uint256 interactionCount; //How many times the owner of this Aavegotchi has interacted with it.
+        address collateralType;
+        uint40 claimTime; //The block timestamp when this Aavegotchi was claimed
+        uint40 lastTemporaryBoost;
+        uint16 hauntId;
+        address owner;
+        uint8 status; // 0 == portal, 1 == VRF_PENDING, 2 == open portal, 3 == Aavegotchi
+        uint40 lastInteracted; //The last time this Aavegotchi was interacted with
+        bool locked;
+        address escrow; //The escrow address this Aavegotchi manages.
+        uint256 respecCount; //The number of times this Aavegotchi has been respec'd
+        uint256 baseRandomNumber;
+    }
+
+    function setMetadata(uint256[] calldata _tokenIds, AavegotchiBridged[] calldata _aavegotchis) external onlyOwner {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             _setMetadata(_tokenIds[i], _aavegotchis[i]);
         }
@@ -99,13 +164,15 @@ contract AavegotchiBridgeFacet is Modifiers {
         }
     }
 
-    function _setMetadata(uint256 _tokenId, Aavegotchi memory _aavegotchi) internal {
+    function _setMetadata(uint256 _tokenId, AavegotchiBridged memory _aavegotchi) internal {
         //set it individually
         s.aavegotchis[_tokenId].equippedWearables = _aavegotchi.equippedWearables;
         s.aavegotchis[_tokenId].temporaryTraitBoosts = _aavegotchi.temporaryTraitBoosts;
         s.aavegotchis[_tokenId].numericTraits = _aavegotchi.numericTraits;
         s.aavegotchis[_tokenId].name = _aavegotchi.name;
+        //account for portals that do not have any singluar random number yet
         s.aavegotchis[_tokenId].randomNumber = _aavegotchi.randomNumber;
+        s.tokenIdToRandomNumber[_tokenId] = _aavegotchi.baseRandomNumber;
         s.aavegotchis[_tokenId].experience = _aavegotchi.experience;
         s.aavegotchis[_tokenId].minimumStake = _aavegotchi.minimumStake;
         s.aavegotchis[_tokenId].usedSkillPoints = _aavegotchi.usedSkillPoints;
@@ -118,10 +185,42 @@ contract AavegotchiBridgeFacet is Modifiers {
         s.aavegotchis[_tokenId].status = _aavegotchi.status;
         s.aavegotchis[_tokenId].lastInteracted = _aavegotchi.lastInteracted;
         s.aavegotchis[_tokenId].locked = _aavegotchi.locked;
-        s.aavegotchis[_tokenId].escrow = address(new CollateralEscrow(_aavegotchi.collateralType, address(this), _tokenId));
+        s.aavegotchis[_tokenId].escrow = address(new CollateralEscrow(address(this), _tokenId));
         s.aavegotchis[_tokenId].respecCount = _aavegotchi.respecCount;
         //set in storage
-        s.aavegotchiNamesUsed[LibAavegotchi.validateAndLowerName(_aavegotchi.name)] = true;
+        s.aavegotchiNamesUsed[LibAavegotchi.validateAndLowerNameBridge(_aavegotchi.name)] = true;
         //TO-DO whether to set onchain block-Age
+    }
+
+    /**
+     * @notice Processes an array of Aavegotchi subgraph data entries and emits an event for each.
+     * @param _dataEntries An array of AavegotchiSubgraphData structs.
+     */
+    function processSubgraphData(AavegotchiSubgraphPortalData[] calldata _dataEntries) external onlyOwner {
+        // Assuming onlyOwner or similar modifier
+        for (uint i = 0; i < _dataEntries.length; i++) {
+            AavegotchiSubgraphPortalData calldata entry = _dataEntries[i];
+
+            emit PortalData(entry);
+        }
+    }
+
+    /**
+     * @notice Processes an array of Aavegotchi historical data records and emits an event for each.
+     * @param _records An array of AavegotchiHistoricalRecord structs.
+     */
+    function processHistoricalAavegotchiData(AavegotchiHistoricalRecord[] calldata _records) external onlyOwner {
+        // Or other appropriate access control
+        for (uint i = 0; i < _records.length; i++) {
+            AavegotchiHistoricalRecord calldata record = _records[i];
+            emit AavegotchiHistory(record);
+        }
+    }
+
+    event ResyncAavegotchis(uint256 _tokenId);
+    function resyncAavegotchis(uint256[] calldata _tokenIds) external onlyOwner {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            emit ResyncAavegotchis(_tokenIds[i]);
+        }
     }
 }

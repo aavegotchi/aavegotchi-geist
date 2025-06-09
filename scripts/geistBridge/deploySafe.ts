@@ -9,14 +9,21 @@ import {
   baseSepoliaProvider,
   varsForNetwork,
 } from "../../helpers/constants";
+import { getRelayerSigner } from "../helperFunctions";
+import { GNOSIS_PATH, PROCESSED_PATH } from "./paths";
 
 // Use absolute path resolution
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
-export const GNOSIS_PATH = `${__dirname}/gnosis`;
 const FAILED_SAFES_PATH = `${GNOSIS_PATH}/failedSafes.json`;
 const DEPLOYED_SAFES_PATH = `${GNOSIS_PATH}/deployedSafes.json`;
-const toBase = false;
+
+const toBase = false; //TO-DO: change to true during mainnet deployment
+
+//create processed directory if it doesn't exist
+if (!fs.existsSync(PROCESSED_PATH)) {
+  fs.mkdirSync(PROCESSED_PATH, { recursive: true });
+}
 
 // Create gnosis directory if it doesn't exist
 if (!fs.existsSync(GNOSIS_PATH)) {
@@ -101,7 +108,6 @@ export async function deploySafe(safeAddress: string): Promise<string | null> {
     }
 
     const provider = toBase ? baseProvider() : baseSepoliaProvider();
-    const wallet = new ethers.Wallet(privateKey, await provider);
 
     // Check if safe already exists
 
@@ -118,12 +124,12 @@ export async function deploySafe(safeAddress: string): Promise<string | null> {
 
     // Get creation transaction data
     const inputData = await getCreationTxnData(safeAddress);
+    // @ts-ignore
+    const signer = await getRelayerSigner(hre);
 
-    const tx = await wallet.sendTransaction({
+    const tx = await signer.sendTransaction({
       to: SAFE_PROXY_FACTORY,
       data: inputData,
-      gasPrice: ethers.utils.parseUnits("0.01", "gwei"),
-      // gasLimit: 1500000,
     });
 
     const receipt = await tx.wait();

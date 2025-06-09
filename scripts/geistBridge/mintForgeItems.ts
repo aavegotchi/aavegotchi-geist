@@ -1,23 +1,37 @@
 import { ethers } from "hardhat";
 import fs from "fs";
 import { ForgeFacet } from "../../typechain";
-import { maticDiamondAddress } from "../helperFunctions";
+import { maticDiamondAddress, getRelayerSigner } from "../helperFunctions";
+import { varsForNetwork } from "../../helpers/constants";
+import { DATA_PATH, PROCESSED_PATH } from "./paths";
 
 interface MintingProgress {
   totalProcessed: number;
   lastBatchIndex: number;
-  failedBatches: number[];
+  failedBatches: {
+    index: number;
+    error: string;
+    retryCount: number;
+    timestamp: number;
+  }[];
   startTime: number;
+  lastUpdateTime: number;
   processedAddresses: {
     [address: string]: {
       itemIds: string[];
       timestamp: number;
+      batchIndex: number;
     };
+  };
+  statistics: {
+    totalItemsMinted: number;
+    totalAddressesProcessed: number;
+    averageBatchProcessingTime: number;
+    lastSuccessfulBatchTime: number;
   };
 }
 
-export const FORGE_ITEMS_DIR = `${__dirname}/forgeWearables`;
-const PROCESSED_FORGE_ITEMS_DIR = `${FORGE_ITEMS_DIR}/processed/`;
+export const FORGE_ITEMS_DIR = `${DATA_PATH}/forgeWearables`;
 
 interface ForgeItemBalance {
   tokenId: string;
@@ -29,25 +43,47 @@ interface MintBatch {
   itemBalances: ForgeItemBalance[][];
 }
 
-const BATCH_SIZE = 500; // Number of addresses per batch
+const BATCH_SIZE = 50; // Number of addresses per batch
+const MAX_ITEMS_PER_TX = 1000; // Maximum items to mint in a single transaction
 const MAX_RETRIES = 3;
 const FORGE_ITEMS_FILE = `${FORGE_ITEMS_DIR}/forgeWearables-regular.json`;
-const PROGRESS_FILE = `${PROCESSED_FORGE_ITEMS_DIR}forge-items-progress.json`;
+const PROGRESS_FILE = `${PROCESSED_PATH}/forge_minting_progress.json`;
 
 async function loadProgress(): Promise<MintingProgress> {
   try {
     const data = fs.readFileSync(PROGRESS_FILE, "utf8");
-    return JSON.parse(data);
-  } catch (error) {
-    // File doesn't exist yet, create it
-    fs.writeFileSync(PROGRESS_FILE, JSON.stringify([]));
+    const progress = JSON.parse(data);
     return {
+      totalProcessed: progress.totalProcessed || 0,
+      lastBatchIndex: progress.lastBatchIndex || 0,
+      failedBatches: progress.failedBatches || [],
+      startTime: progress.startTime || Date.now(),
+      lastUpdateTime: progress.lastUpdateTime || Date.now(),
+      processedAddresses: progress.processedAddresses || {},
+      statistics: progress.statistics || {
+        totalItemsMinted: 0,
+        totalAddressesProcessed: 0,
+        averageBatchProcessingTime: 0,
+        lastSuccessfulBatchTime: 0,
+      },
+    };
+  } catch (error) {
+    const initialProgress: MintingProgress = {
       totalProcessed: 0,
       lastBatchIndex: 0,
       failedBatches: [],
       startTime: Date.now(),
+      lastUpdateTime: Date.now(),
       processedAddresses: {},
+      statistics: {
+        totalItemsMinted: 0,
+        totalAddressesProcessed: 0,
+        averageBatchProcessingTime: 0,
+        lastSuccessfulBatchTime: 0,
+      },
     };
+    fs.writeFileSync(PROGRESS_FILE, JSON.stringify(initialProgress, null, 2));
+    return initialProgress;
   }
 }
 
@@ -57,13 +93,60 @@ function createBatches(
   const batches: MintBatch[] = [];
   const entries = Object.entries(forgeItemsData);
 
-  // Batch addresses, 500 per batch
+  // Process each address
   for (let i = 0; i < entries.length; i += BATCH_SIZE) {
     const batchEntries = entries.slice(i, i + BATCH_SIZE);
-    batches.push({
-      owners: batchEntries.map(([owner]) => owner),
-      itemBalances: batchEntries.map(([, balances]) => balances),
-    });
+    const batchOwners: string[] = [];
+    const batchItemBalances: ForgeItemBalance[][] = [];
+
+    // Process each address in the batch
+    for (const [owner, items] of batchEntries) {
+      // Check if this address has too many items
+      const totalItems = items.reduce((sum, item) => sum + item.balance, 0);
+
+      if (totalItems > MAX_ITEMS_PER_TX) {
+        // Split into smaller chunks
+        let remainingItems = [...items];
+        while (remainingItems.length > 0) {
+          const chunk: ForgeItemBalance[] = [];
+          let chunkTotal = 0;
+
+          // Fill chunk up to MAX_ITEMS_PER_TX
+          while (remainingItems.length > 0 && chunkTotal < MAX_ITEMS_PER_TX) {
+            const item = remainingItems[0];
+            if (chunkTotal + item.balance <= MAX_ITEMS_PER_TX) {
+              chunk.push(item);
+              chunkTotal += item.balance;
+              remainingItems.shift();
+            } else {
+              // Split this item
+              const remainingBalance = MAX_ITEMS_PER_TX - chunkTotal;
+              chunk.push({ ...item, balance: remainingBalance });
+              remainingItems[0] = {
+                ...item,
+                balance: item.balance - remainingBalance,
+              };
+              break;
+            }
+          }
+
+          batchOwners.push(owner);
+          batchItemBalances.push(chunk);
+        }
+      } else {
+        // Normal case - add all items
+        batchOwners.push(owner);
+        batchItemBalances.push(items);
+      }
+    }
+
+    // Create batches of MAX_BATCH_SIZE
+    for (let j = 0; j < batchOwners.length; j += BATCH_SIZE) {
+      batches.push({
+        owners: batchOwners.slice(j, j + BATCH_SIZE),
+        itemBalances: batchItemBalances.slice(j, j + BATCH_SIZE),
+      });
+    }
   }
   return batches;
 }
@@ -76,22 +159,23 @@ async function processBatch(
   retryCount = 0
 ): Promise<boolean> {
   try {
-    // const tx = await contract.batchMintForgeItems(
-    //   batch.owners.map((owner, i) => ({
-    //     to: owner,
-    //     itemBalances: batch.itemBalances[i].map((item) => ({
-    //       itemId: ethers.BigNumber.from(item.tokenId),
-    //       quantity: item.balance,
-    //     })),
-    //   }))
-    // );
-    // await tx.wait();
+    const tx = await contract.batchMintForgeItems(
+      batch.owners.map((owner, i) => ({
+        to: owner,
+        itemBalances: batch.itemBalances[i].map((item) => ({
+          itemId: ethers.BigNumber.from(item.tokenId),
+          quantity: item.balance,
+        })),
+      }))
+    );
+    //    await tx.wait();
 
     // Record successful mint
     batch.owners.forEach((owner, i) => {
       progress.processedAddresses[owner] = {
         itemIds: batch.itemBalances[i].map((item) => item.tokenId),
         timestamp: Date.now(),
+        batchIndex: batchIndex,
       };
     });
 
@@ -144,9 +228,12 @@ function printAnalytics(progress: MintingProgress, totalBatches: number) {
 }
 
 export async function mintForgeItems() {
+  const c = await varsForNetwork(ethers);
+  // @ts-ignore
+  const signer = await getRelayerSigner(hre);
   // Create processed directory if it doesn't exist
-  if (!fs.existsSync(PROCESSED_FORGE_ITEMS_DIR)) {
-    fs.mkdirSync(PROCESSED_FORGE_ITEMS_DIR, { recursive: true });
+  if (!fs.existsSync(PROCESSED_PATH)) {
+    fs.mkdirSync(PROCESSED_PATH, { recursive: true });
   }
 
   const forgeItemsData = JSON.parse(fs.readFileSync(FORGE_ITEMS_FILE, "utf8"));
@@ -155,15 +242,20 @@ export async function mintForgeItems() {
   console.log(`Total unique owners: ${Object.keys(forgeItemsData).length}`);
   console.log(
     `Total items to mint: ${Object.values(forgeItemsData).reduce(
-      (acc, items: ForgeItemBalance[]) =>
-        acc + items.reduce((sum, item) => sum + item.balance, 0),
+      (acc: number, items) =>
+        acc +
+        (items as ForgeItemBalance[]).reduce(
+          (sum, item) => sum + item.balance,
+          0
+        ),
       0
     )}`
   );
 
   const contract = (await ethers.getContractAt(
     "ForgeFacet",
-    maticDiamondAddress
+    c.forgeDiamond!,
+    signer
   )) as ForgeFacet;
   const progress = await loadProgress();
   const batches = createBatches(forgeItemsData);
@@ -180,7 +272,12 @@ export async function mintForgeItems() {
     progress.lastBatchIndex = i + 1;
 
     if (!success) {
-      progress.failedBatches.push(i);
+      progress.failedBatches.push({
+        index: i,
+        error: "Retry limit reached",
+        retryCount: MAX_RETRIES,
+        timestamp: Date.now(),
+      });
     }
 
     fs.writeFileSync(PROGRESS_FILE, JSON.stringify(progress, null, 2));
@@ -194,7 +291,11 @@ export async function mintForgeItems() {
     0
   );
   console.log(`Total Items Minted: ${totalItemsMinted}`);
-  console.log(`Failed Batches: ${progress.failedBatches.join(", ") || "None"}`);
+  console.log(
+    `Failed Batches: ${progress.failedBatches
+      .map((f) => `${f.index}: ${f.error}`)
+      .join(", ")}`
+  );
   console.log("============================");
 }
 

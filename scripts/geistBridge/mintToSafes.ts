@@ -2,18 +2,22 @@ import { ethers } from "hardhat";
 import fs from "fs";
 import path from "path";
 import { deploySafe } from "./deploySafe";
-import {
-  ForgeFacet,
-  DAOFacet,
-  AavegotchiFacet,
-  AavegotchiBridgeFacet,
-} from "../../typechain";
-import { maticDiamondAddress } from "../helperFunctions";
-import { GNOSIS_PATH } from "./deploySafe";
+import { ForgeFacet, AavegotchiBridgeFacet } from "../../typechain";
+import { getRelayerSigner } from "../helperFunctions"; // Renamed for clarity
+import { GNOSIS_PATH, PROCESSED_PATH } from "./paths";
+import { DATA_PATH } from "./paths";
+import { BigNumber } from "ethers"; // Added for contract calls
+import { varsForNetwork } from "../../helpers/constants"; // Added
+
+// === Configuration ===
+const MAX_RETRIES = 3; // Added
+
+// =====================
 
 interface AavegotchiSafe {
   safeAddress: string;
   tokenIds: string[];
+  startTime: number;
 }
 
 interface TokenData {
@@ -21,7 +25,17 @@ interface TokenData {
   balance: number;
 }
 
+interface WearableTokenData {
+  itemId: string;
+  balance: number;
+}
+
 interface WearableSafe {
+  safeAddress: string;
+  tokens: WearableTokenData[];
+}
+
+interface ForgeSafe {
   safeAddress: string;
   tokens: TokenData[];
 }
@@ -35,7 +49,7 @@ interface MintingProgress {
   };
   wearables: {
     [safeAddress: string]: {
-      minted: TokenData[];
+      minted: WearableTokenData[];
       timestamp: number;
     };
   };
@@ -54,28 +68,58 @@ interface MintingProgress {
   startTime: number;
 }
 
-const MINTING_DIR = path.join(GNOSIS_PATH, "minting");
-const PROGRESS_FILE = path.join(MINTING_DIR, "minting-progress.json");
+// Added interfaces for failed safe allocations
+interface FailedSafeAllocationDetail {
+  aavegotchis?: string[];
+  wearables?: WearableTokenData[];
+  forgeItems?: TokenData[];
+}
+
+interface FailedSafeAllocationsLog {
+  [safeAddress: string]: FailedSafeAllocationDetail;
+}
+
+const PROGRESS_FILE = path.join(PROCESSED_PATH, "gnosis_minting_progress.json");
+const FAILED_ALLOCATIONS_FILE = path.join(
+  PROCESSED_PATH,
+  "failed-safe-allocations.json"
+);
+
+// Create minting directory if it doesn't exist at the very start
+if (!fs.existsSync(PROCESSED_PATH)) {
+  fs.mkdirSync(PROCESSED_PATH, { recursive: true });
+}
 
 // Load data files
 const loadSafeData = () => {
   const aavegotchiSafes: AavegotchiSafe[] = JSON.parse(
     fs.readFileSync(
-      path.join(__dirname, "aavegotchi", "aavegotchi-safe.json"),
+      path.join(DATA_PATH, "aavegotchi", "aavegotchi-safe.json"),
       "utf8"
     )
   );
 
-  const wearableSafes: WearableSafe[] = JSON.parse(
+  // Load raw wearable data
+  const rawWearableSafesData: any[] = JSON.parse(
     fs.readFileSync(
-      path.join(__dirname, "wearables", "wearables-safe.json"),
+      path.join(DATA_PATH, "wearables", "wearables-safe.json"),
       "utf8"
     )
   );
 
-  const forgeSafes: WearableSafe[] = JSON.parse(
+  // Transform wearable data
+  const wearableSafes: WearableSafe[] = rawWearableSafesData.map((safe) => ({
+    ...safe,
+    tokens: safe.tokens.map((token: any) => ({
+      itemId: token.tokenId, // Map tokenId to itemId
+      balance: token.balance,
+      // Ensure all other properties from WearableTokenData are correctly mapped or included if necessary
+    })),
+  }));
+
+  const forgeSafes: ForgeSafe[] = JSON.parse(
     fs.readFileSync(
-      path.join(__dirname, "forgeWearables", "forgeWearables-safe.json"),
+      path.join(DATA_PATH, "forgeWearables", "forgeWearables-safe.json"),
       "utf8"
     )
   );
@@ -91,7 +135,7 @@ const loadSafeData = () => {
 const loadProgress = (): MintingProgress => {
   try {
     return JSON.parse(fs.readFileSync(PROGRESS_FILE, "utf8"));
-  } catch (error) {
+  } catch (error: any) {
     const initialProgress: MintingProgress = {
       aavegotchis: {},
       wearables: {},
@@ -101,19 +145,57 @@ const loadProgress = (): MintingProgress => {
         wearables: [],
         forgeItems: [],
       },
-      lastProcessedIndex: 0,
+      lastProcessedIndex: -1, // Start with -1 if 0 is a valid index
       startTime: Date.now(),
     };
-    fs.writeFileSync(PROGRESS_FILE, JSON.stringify(initialProgress, null, 2));
+    // Use saveProgress to initialize to ensure consistency and safety
+    console.log(
+      `Progress file ${PROGRESS_FILE} not found or unreadable. Creating a new one.`
+    );
+    saveProgress(initialProgress); // Initialize by saving
     return initialProgress;
   }
 };
+
+// Utility to save progress safely
+function saveProgress(progress: MintingProgress): void {
+  const tempProgressFile = PROGRESS_FILE + ".tmp";
+  try {
+    fs.writeFileSync(tempProgressFile, JSON.stringify(progress, null, 2));
+    fs.renameSync(tempProgressFile, PROGRESS_FILE);
+  } catch (error) {
+    console.error("Critical error saving progress:", error);
+    // Consider more robust backup or notification here if renaming fails
+    if (fs.existsSync(tempProgressFile)) {
+      try {
+        fs.unlinkSync(tempProgressFile);
+      } catch (cleanupError) {
+        console.error("Error cleaning up temp progress file:", cleanupError);
+      }
+    }
+  }
+}
+
+// Added function to save failed safe allocations
+function saveFailedAllocations(allocations: FailedSafeAllocationsLog): void {
+  try {
+    fs.writeFileSync(
+      FAILED_ALLOCATIONS_FILE,
+      JSON.stringify(allocations, null, 2)
+    );
+    console.log(
+      `Logged allocations for unverified safes to ${FAILED_ALLOCATIONS_FILE}`
+    );
+  } catch (error) {
+    console.error("Critical error saving failed safe allocations:", error);
+  }
+}
 
 // Get unique safe addresses and verify/deploy them
 async function verifySafes(
   aavegotchiSafes: AavegotchiSafe[],
   wearableSafes: WearableSafe[],
-  forgeSafes: WearableSafe[]
+  forgeSafes: ForgeSafe[]
 ): Promise<string[]> {
   // Get unique safe addresses
   const uniqueSafes = new Set([
@@ -144,85 +226,134 @@ async function mintAavegotchisToSafe(
   tokenIds: string[],
   progress: MintingProgress
 ): Promise<boolean> {
-  try {
-    const unmintedTokens = tokenIds.filter(
-      (id) => !progress.aavegotchis[safeAddress]?.minted.includes(id)
-    );
+  const progressEntry = progress.aavegotchis[safeAddress.toLowerCase()] || {
+    minted: [],
+    timestamp: 0,
+  };
 
-    if (unmintedTokens.length === 0) {
-      return true;
-    }
+  const unmintedTokens = tokenIds.filter(
+    (id) => !progressEntry.minted.includes(id)
+  );
 
-    // const tx = await contract.mintAavegotchiBridged([
-    //   {
-    //     owner: safeAddress,
-    //     tokenIds: unmintedTokens,
-    //   },
-    // ]);
-    // await tx.wait();
-
-    // Update progress
-    if (!progress.aavegotchis[safeAddress]) {
-      progress.aavegotchis[safeAddress] = {
-        minted: [],
-        timestamp: Date.now(),
-      };
-    }
-    progress.aavegotchis[safeAddress].minted.push(...unmintedTokens);
+  if (unmintedTokens.length === 0) {
+    console.log(`No new Aavegotchis to mint for safe ${safeAddress}.`);
     return true;
-  } catch (error) {
-    console.error(`Failed to mint Aavegotchis to ${safeAddress}:`, error);
-    if (!progress.failedMints.aavegotchis.includes(safeAddress)) {
-      progress.failedMints.aavegotchis.push(safeAddress);
-    }
-    return false;
   }
+
+  console.log(
+    `Attempting to mint ${unmintedTokens.length} Aavegotchis to ${safeAddress}...`
+  );
+
+  for (let retry = 0; retry < MAX_RETRIES; retry++) {
+    try {
+      const tx = await contract.mintAavegotchiBridged([
+        {
+          owner: safeAddress,
+          tokenIds: unmintedTokens, // Ensure this matches contract expectation (string[] or BigNumber[])
+        },
+      ]);
+      await ethers.provider.waitForTransaction(tx.hash, 1);
+      console.log(
+        `Successfully minted Aavegotchis to ${safeAddress}. Tx: ${tx.hash}`
+      );
+
+      if (!progress.aavegotchis[safeAddress.toLowerCase()]) {
+        progress.aavegotchis[safeAddress.toLowerCase()] = {
+          minted: [],
+          timestamp: Date.now(),
+        };
+      }
+      progress.aavegotchis[safeAddress.toLowerCase()].minted.push(
+        ...unmintedTokens
+      );
+      progress.aavegotchis[safeAddress.toLowerCase()].timestamp = Date.now();
+      return true;
+    } catch (error: any) {
+      console.error(
+        `Failed to mint Aavegotchis to ${safeAddress} on try ${
+          retry + 1
+        }/${MAX_RETRIES}:`,
+        error.message || error
+      );
+      if (retry === MAX_RETRIES - 1) {
+        if (
+          !progress.failedMints.aavegotchis.includes(safeAddress.toLowerCase())
+        ) {
+          progress.failedMints.aavegotchis.push(safeAddress.toLowerCase());
+        }
+        return false;
+      }
+      // Optional: await new Promise(resolve => setTimeout(resolve, 2000)); // Delay before retry
+    }
+  }
+  return false; // Should not be reached if MAX_RETRIES > 0
 }
 
 async function mintWearablesToSafe(
   contract: AavegotchiBridgeFacet,
   safeAddress: string,
-  tokens: TokenData[],
+  tokens: WearableTokenData[],
   progress: MintingProgress
 ): Promise<boolean> {
-  try {
-    const mintedTokenIds =
-      progress.wearables[safeAddress]?.minted.map((t) => t.tokenId) || [];
-    const unmintedTokens = tokens.filter(
-      (token) => !mintedTokenIds.includes(token.tokenId)
-    );
+  const safeAddrLower = safeAddress.toLowerCase();
+  const progressEntry = progress.wearables[safeAddrLower] || {
+    minted: [],
+    timestamp: 0,
+  };
+  const mintedTokenIds = progressEntry.minted.map((t) => t.itemId); // Assuming TokenData has tokenId
+  const unmintedTokens = tokens.filter(
+    (token) => !mintedTokenIds.includes(token.itemId)
+  );
 
-    if (unmintedTokens.length === 0) {
-      return true;
-    }
-
-    // const tx = await contract.batchMintItems([
-    //   {
-    //     to: safeAddress,
-    //     itemBalances: unmintedTokens.map((token) => ({
-    //       itemId: token.tokenId,
-    //       quantity: token.balance,
-    //     })),
-    //   },
-    // ]);
-    // await tx.wait();
-
-    // Update progress
-    if (!progress.wearables[safeAddress]) {
-      progress.wearables[safeAddress] = {
-        minted: [],
-        timestamp: Date.now(),
-      };
-    }
-    progress.wearables[safeAddress].minted.push(...unmintedTokens);
+  if (unmintedTokens.length === 0) {
+    console.log(`No new Wearables to mint for safe ${safeAddress}.`);
     return true;
-  } catch (error) {
-    console.error(`Failed to mint Wearables to ${safeAddress}:`, error);
-    if (!progress.failedMints.wearables.includes(safeAddress)) {
-      progress.failedMints.wearables.push(safeAddress);
-    }
-    return false;
   }
+  console.log(
+    `Attempting to mint ${unmintedTokens.length} types of Wearables to ${safeAddress}...`
+  );
+
+  for (let retry = 0; retry < MAX_RETRIES; retry++) {
+    try {
+      const tx = await contract.batchMintItems([
+        {
+          to: safeAddress,
+          itemBalances: unmintedTokens.map((token) => ({
+            itemId: BigNumber.from(token.itemId), // Corrected to itemId and BigNumber
+            quantity: BigNumber.from(token.balance), // Corrected to quantity and BigNumber
+          })),
+        },
+      ]);
+      await ethers.provider.waitForTransaction(tx.hash, 1);
+      console.log(
+        `Successfully minted Wearables to ${safeAddress}. Tx: ${tx.hash}`
+      );
+
+      if (!progress.wearables[safeAddrLower]) {
+        progress.wearables[safeAddrLower] = {
+          minted: [],
+          timestamp: Date.now(),
+        };
+      }
+      progress.wearables[safeAddrLower].minted.push(...unmintedTokens); // Store original TokenData
+      progress.wearables[safeAddrLower].timestamp = Date.now();
+      return true;
+    } catch (error: any) {
+      console.error(
+        `Failed to mint Wearables to ${safeAddress} on try ${
+          retry + 1
+        }/${MAX_RETRIES}:`,
+        error.message || error
+      );
+      if (retry === MAX_RETRIES - 1) {
+        if (!progress.failedMints.wearables.includes(safeAddrLower)) {
+          progress.failedMints.wearables.push(safeAddrLower);
+        }
+        return false;
+      }
+    }
+  }
+  return false;
 }
 
 async function mintForgeItemsToSafe(
@@ -231,52 +362,81 @@ async function mintForgeItemsToSafe(
   tokens: TokenData[],
   progress: MintingProgress
 ): Promise<boolean> {
-  try {
-    const mintedTokenIds =
-      progress.forgeItems[safeAddress]?.minted.map((t) => t.tokenId) || [];
-    const unmintedTokens = tokens.filter(
-      (token) => !mintedTokenIds.includes(token.tokenId)
-    );
+  const safeAddrLower = safeAddress.toLowerCase();
+  const progressEntry = progress.forgeItems[safeAddrLower] || {
+    minted: [],
+    timestamp: 0,
+  };
+  const mintedTokenIds = progressEntry.minted.map((t) => t.tokenId);
+  const unmintedTokens = tokens.filter(
+    (token) => !mintedTokenIds.includes(token.tokenId)
+  );
 
-    if (unmintedTokens.length === 0) {
-      return true;
-    }
-
-    // const tx = await contract.batchMintForgeItems([
-    //   {
-    //     to: safeAddress,
-    //     itemBalances: unmintedTokens.map((token) => ({
-    //       itemId: token.tokenId,
-    //       quantity: token.balance,
-    //     })),
-    //   },
-    // ]);
-    // await tx.wait();
-
-    // Update progress
-    if (!progress.forgeItems[safeAddress]) {
-      progress.forgeItems[safeAddress] = {
-        minted: [],
-        timestamp: Date.now(),
-      };
-    }
-    progress.forgeItems[safeAddress].minted.push(...unmintedTokens);
+  if (unmintedTokens.length === 0) {
+    console.log(`No new Forge items to mint for safe ${safeAddress}.`);
     return true;
-  } catch (error) {
-    console.error(`Failed to mint Forge items to ${safeAddress}:`, error);
-    if (!progress.failedMints.forgeItems.includes(safeAddress)) {
-      progress.failedMints.forgeItems.push(safeAddress);
-    }
-    return false;
   }
+  console.log(
+    `Attempting to mint ${unmintedTokens.length} types of Forge items to ${safeAddress}...`
+  );
+
+  // Assuming ForgeFacet has a similar batchMintForgeItems method
+  // IMPORTANT: Verify the actual method name and parameters for ForgeFacet
+  const forgeItemBalances = unmintedTokens.map((token) => ({
+    itemId: BigNumber.from(token.tokenId),
+    quantity: BigNumber.from(token.balance),
+  }));
+
+  for (let retry = 0; retry < MAX_RETRIES; retry++) {
+    try {
+      // TODO: Replace with actual ForgeFacet method if available and different
+      // This is a placeholder structure based on batchMintItems
+      const tx = await contract.batchMintForgeItems([
+        {
+          to: safeAddress,
+          itemBalances: forgeItemBalances,
+        },
+      ]);
+      // Example if it was like batchMintItems:
+      // const tx = await contract.batchMintForgeItems([{ to: safeAddress, itemBalances: forgeItemBalances }]);
+      await ethers.provider.waitForTransaction(tx.hash, 1);
+      console.log(
+        `Successfully minted Forge items to ${safeAddress}. Tx: ${tx.hash}`
+      );
+
+      if (!progress.forgeItems[safeAddrLower]) {
+        progress.forgeItems[safeAddrLower] = {
+          minted: [],
+          timestamp: Date.now(),
+        };
+      }
+      progress.forgeItems[safeAddrLower].minted.push(...unmintedTokens);
+      progress.forgeItems[safeAddrLower].timestamp = Date.now();
+      return true;
+    } catch (error: any) {
+      console.error(
+        `Failed to mint Forge items to ${safeAddress} on try ${
+          retry + 1
+        }/${MAX_RETRIES}:`,
+        error.message || error
+      );
+      if (retry === MAX_RETRIES - 1) {
+        if (!progress.failedMints.forgeItems.includes(safeAddrLower)) {
+          progress.failedMints.forgeItems.push(safeAddrLower);
+        }
+        return false;
+      }
+    }
+  }
+  return false;
 }
 
 // Update the main minting function
 async function mintToSafes() {
-  // Create minting directory if it doesn't exist
-  if (!fs.existsSync(MINTING_DIR)) {
-    fs.mkdirSync(MINTING_DIR, { recursive: true });
-  }
+  const contractAddresses = await varsForNetwork(ethers);
+  // @ts-ignore
+  const signer = await getRelayerSigner(hre);
+  // Create minting directory moved to top level for immediate check
 
   // Load all data
   const { aavegotchiSafes, wearableSafes, forgeSafes } = loadSafeData();
@@ -289,25 +449,94 @@ async function mintToSafes() {
     forgeSafes
   );
 
+  // Log allocations for unverified safes
+  const allInitialSafeAddresses = new Set<string>();
+  aavegotchiSafes.forEach((s) =>
+    allInitialSafeAddresses.add(s.safeAddress.toLowerCase())
+  );
+  wearableSafes.forEach((s) =>
+    allInitialSafeAddresses.add(s.safeAddress.toLowerCase())
+  );
+  forgeSafes.forEach((s) =>
+    allInitialSafeAddresses.add(s.safeAddress.toLowerCase())
+  );
+
+  const verifiedSafesSet = new Set(verifiedSafes.map((s) => s.toLowerCase()));
+  const unverifiedSafeAddresses = [...allInitialSafeAddresses].filter(
+    (addr) => !verifiedSafesSet.has(addr)
+  );
+
+  if (unverifiedSafeAddresses.length > 0) {
+    console.log(
+      `Found ${unverifiedSafeAddresses.length} safes that were not successfully verified/deployed. Logging their intended allocations...`
+    );
+    const currentRunFailedAllocations: FailedSafeAllocationsLog = {};
+
+    for (const safeAddress of unverifiedSafeAddresses) {
+      const aData = aavegotchiSafes.find(
+        (s) => s.safeAddress.toLowerCase() === safeAddress
+      );
+      const wData = wearableSafes.find(
+        (s) => s.safeAddress.toLowerCase() === safeAddress
+      );
+      const fData = forgeSafes.find(
+        (s) => s.safeAddress.toLowerCase() === safeAddress
+      );
+
+      const allocationDetail: FailedSafeAllocationDetail = {};
+      if (aData?.tokenIds && aData.tokenIds.length > 0) {
+        allocationDetail.aavegotchis = aData.tokenIds;
+      }
+      if (wData?.tokens && wData.tokens.length > 0) {
+        allocationDetail.wearables = wData.tokens;
+      }
+      if (fData?.tokens && fData.tokens.length > 0) {
+        allocationDetail.forgeItems = fData.tokens;
+      }
+
+      if (Object.keys(allocationDetail).length > 0) {
+        currentRunFailedAllocations[safeAddress] = allocationDetail;
+        console.log(
+          `- Recording allocations for unverified safe: ${safeAddress}`
+        );
+      } else {
+        console.log(
+          `- Unverified safe ${safeAddress} had no allocations defined in input files or allocations were empty. Not logging.`
+        );
+      }
+    }
+    if (Object.keys(currentRunFailedAllocations).length > 0) {
+      saveFailedAllocations(currentRunFailedAllocations);
+    } else {
+      console.log(
+        "No allocations to log for unverified safes (either no unverified safes with items, or all safes verified)."
+      );
+    }
+  }
+
   // Initialize contracts
   const aavegotchiFacet = (await ethers.getContractAt(
     "AavegotchiBridgeFacet",
-    maticDiamondAddress
+    contractAddresses.aavegotchiDiamond!,
+    signer
   )) as AavegotchiBridgeFacet;
-
-  // const daoFacet = (await ethers.getContractAt(
-  //   "DAOFacet",
-  //   maticDiamondAddress
-  // )) as DAOFacet;
 
   const forgeFacet = (await ethers.getContractAt(
     "ForgeFacet",
-    maticDiamondAddress
+    contractAddresses.forgeDiamond!,
+    signer
   )) as ForgeFacet;
 
-  // Process each verified safe
-  for (const safeAddress of verifiedSafes) {
-    console.log(`\nProcessing safe: ${safeAddress}`);
+  // Process each verified safe from lastProcessedIndex
+  // Ensure verifiedSafes is an array of strings, and use lastProcessedIndex for resumption
+  const startIndex =
+    progress.lastProcessedIndex > -1 ? progress.lastProcessedIndex : 0;
+
+  for (let i = startIndex; i < verifiedSafes.length; i++) {
+    const safeAddress = verifiedSafes[i];
+    console.log(
+      `\nProcessing safe ${i + 1}/${verifiedSafes.length}: ${safeAddress}`
+    );
 
     // 1. Mint Aavegotchis
     const aavegotchiData = aavegotchiSafes.find(
@@ -351,8 +580,9 @@ async function mintToSafes() {
       );
     }
 
-    // Save progress after each safe
-    fs.writeFileSync(PROGRESS_FILE, JSON.stringify(progress, null, 2));
+    // Save progress after each safe and update lastProcessedIndex
+    progress.lastProcessedIndex = i;
+    saveProgress(progress); // Use the new save function
     printAnalytics(progress);
   }
 

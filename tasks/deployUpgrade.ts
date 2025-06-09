@@ -15,6 +15,7 @@ import {
   getSighashes,
   delay,
   verifyContract,
+  getRelayerSigner,
 } from "../scripts/helperFunctions";
 
 import { HardhatRuntimeEnvironment } from "hardhat/types";
@@ -38,6 +39,7 @@ export interface DeployUpgradeTaskArgs {
   initAddress?: string;
   initCalldata?: string;
   rawSigs?: boolean;
+  useRelayer: boolean;
   // updateDiamondABI: boolean;
   freshDeployment?: boolean;
 }
@@ -103,6 +105,7 @@ task(
   )
   .addFlag("useLedger", "Set to true if Ledger should be used for signing")
   .addFlag("freshDeployment", "This is for Diamonds that are freshly deployed ")
+  .addFlag("useRelayer", "Set to true if Relayer should be used for signing")
   // .addFlag("verifyFacets","Set to true if facets should be verified after deployment")
 
   .setAction(
@@ -119,6 +122,7 @@ task(
       const useLedger = taskArgs.useLedger;
       const initAddress = taskArgs.initAddress;
       const initCalldata = taskArgs.initCalldata;
+      const useRelayer = taskArgs.useRelayer;
 
       const branch = require("git-branch");
 
@@ -164,6 +168,9 @@ task(
       ) {
         if (useLedger) {
           signer = new LedgerSigner(hre.ethers.provider, "m/44'/60'/1'/0/0");
+        }
+        if (useRelayer) {
+          signer = await getRelayerSigner(hre);
         } else signer = (await hre.ethers.getSigners())[0];
       }
 
@@ -204,6 +211,8 @@ task(
             deployedFacet.address
           );
           //verify all new facets by default
+          //wait for some time to ensure the contract is deployed
+          await delay(5000);
           await verifyContract(deployedFacet.address);
           deployedFacets.push(deployedFacet);
 

@@ -336,6 +336,30 @@ library LibAavegotchi {
         return string(name);
     }
 
+    function validateAndLowerNameBridge(string memory _name) internal pure returns (string memory c) {
+        bytes memory name = abi.encodePacked(_name);
+        uint256 len = name.length;
+
+        if (len == 0) {
+            c = "";
+        } else {
+            //require(len != 0, "LibAavegotchi: name can't be 0 chars");
+            require(len < 26, "LibAavegotchi: name can't be greater than 25 characters");
+            uint256 char = uint256(uint8(name[0]));
+            require(char != 32, "LibAavegotchi: first char of name can't be a space");
+            char = uint256(uint8(name[len - 1]));
+            require(char != 32, "LibAavegotchi: last char of name can't be a space");
+            for (uint256 i; i < len; i++) {
+                char = uint256(uint8(name[i]));
+                require(char > 31 && char < 127, "LibAavegotchi: invalid character in Aavegotchi name.");
+                if (char < 91 && char > 64) {
+                    name[i] = bytes1(uint8(char + 32));
+                }
+            }
+            c = string(name);
+        }
+    }
+
     function transfer(address _from, address _to, uint256 _tokenId) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();
 
