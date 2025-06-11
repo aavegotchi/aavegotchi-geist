@@ -588,7 +588,9 @@ export async function addERC1155Categories(
   installationDiamondAddress: string,
   tileDiamondAddress: string,
   forgeDiamondAddress: string,
-  fakeGotchiCardDiamondAddress: string
+  fakeGotchiCardDiamondAddress: string,
+  ggSkinsDiamondAddress: string,
+  ggProfilesDiamondAddress: string
 ) {
   console.log("Adding ERC1155 categories");
   const erc1155Categories: ERC1155Category[] = [];
@@ -655,6 +657,24 @@ export async function addERC1155Categories(
       });
     }
   });
+
+  //ggSkins
+  for (let i = 0; i < 8; i++) {
+    erc1155Categories.push({
+      erc1155TokenAddress: ggSkinsDiamondAddress,
+      erc1155TypeId: i,
+      category: 12,
+    });
+  }
+
+  //ggProfiles
+  for (let i = 0; i < 11; i++) {
+    erc1155Categories.push({
+      erc1155TokenAddress: ggProfilesDiamondAddress,
+      erc1155TypeId: i,
+      category: 13,
+    });
+  }
 
   const txAddCategories = await erc1155MarketplaceFacet.setERC1155Categories(
     erc1155Categories

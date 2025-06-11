@@ -32,7 +32,7 @@ contract VrfFacet is Modifiers {
    |            Write Functions        |
    |__________________________________*/
 
-    function openPortals(uint256[] calldata _tokenIds) external onlyPolygonOrTesting {
+    function openPortals(uint256[] calldata _tokenIds) external {
         address owner = LibMeta.msgSender();
         for (uint256 i; i < _tokenIds.length; i++) {
             uint256 tokenId = _tokenIds[i];
@@ -85,5 +85,10 @@ contract VrfFacet is Modifiers {
 
     function setVRFSystem(address _vrfSystem) external onlyDaoOrOwner {
         s.VRFSystem = _vrfSystem;
+    }
+
+    //TESTING
+    function getBaseRandomNumber(uint256 _tokenId) external view returns (uint256) {
+        return s.tokenIdToRandomNumber[_tokenId];
     }
 }

@@ -28,11 +28,13 @@ async function setVarsAfterDeployment() {
   gasused = await addERC1155Categories(
     erc1155MarketplaceFacet,
     BigNumber.from(0),
-    c.ghstStakingDiamond!, //just a laceholder
+    c.ghstStakingDiamond!, //just a placeholder
     c.installationDiamond!,
     c.tileDiamond!,
     c.forgeDiamond!,
-    c.fakeGotchiCardDiamond!
+    c.fakeGotchiCardDiamond!,
+    c.ggSkinsDiamond!,
+    c.ggProfilesDiamond!
   );
 
   ///set realm address
@@ -53,6 +55,7 @@ async function setVarsAfterDeployment() {
     c.aavegotchiDiamond!,
     signer
   );
+
   gasused = await addERC721Categories(
     erc721MarketplaceFacet,
     gasused,
@@ -69,8 +72,10 @@ async function setVarsAfterDeployment() {
     c.tileDiamond!,
     c.fakeGotchiArtDiamond!,
     c.fakeGotchiCardDiamond!,
+    c.ggSkinsDiamond!,
+    c.ggProfilesDiamond!,
   ];
-  const bools = [true, true, true, true, true, true, true];
+  const bools = [true, true, true, true, true, true, true, true, true];
   const daoFacet = await ethers.getContractAt(
     "DAOFacet",
     c.aavegotchiDiamond!,

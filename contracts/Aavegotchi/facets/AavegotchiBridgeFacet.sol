@@ -61,6 +61,8 @@ contract AavegotchiBridgeFacet is Modifiers {
     // Event for processed historical Aavegotchi data
     event AavegotchiHistory(AavegotchiHistoricalRecord data);
 
+    event ClaimedAt(uint256 _tokenId, uint256 _claimedAt);
+
     function batchMintItems(MintItemsBridged[] calldata _mintItemsBridged) external onlyItemManager {
         for (uint256 i; i < _mintItemsBridged.length; i++) {
             address sender = LibMeta.msgSender();
@@ -221,6 +223,12 @@ contract AavegotchiBridgeFacet is Modifiers {
     function resyncAavegotchis(uint256[] calldata _tokenIds) external onlyOwner {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             emit ResyncAavegotchis(_tokenIds[i]);
+        }
+    }
+
+    function emitClaimedEvent(uint256[] calldata _tokenIds, uint256[] calldata _claimedAtBlocks) external onlyOwner {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            emit ClaimedAt(_tokenIds[i], _claimedAtBlocks[i]);
         }
     }
 }

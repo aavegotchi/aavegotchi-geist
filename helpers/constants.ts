@@ -94,6 +94,8 @@ interface NetworkAddresses {
   fakeGotchiCardDiamond?: string;
   fakeGotchiArtDiamond?: string;
   ghstStakingDiamond?: string;
+  ggSkinsDiamond?: string;
+  ggProfilesDiamond?: string;
 }
 
 // export const vrfVars: Record<number, VRFVars> = {
@@ -168,6 +170,8 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     fakeGotchiCardDiamond: "0xE4E508dab5D7d98f4c06aB6D24bB225588036C9D",
     fakeGotchiArtDiamond: "0xD0dCC1d1E22D490e5270631787E1866E773b16C7",
     ghstStakingDiamond: "0xD0dCC1d1E22D490e5270631787E1866E773b16C7",
+    ggSkinsDiamond: "0xab1e7e320f02107bf2748179ed0c0bcfd5532e4a",
+    ggProfilesDiamond: "0x15517138573ce459943da529c9530ef76a22b713",
   },
 
   8453: {

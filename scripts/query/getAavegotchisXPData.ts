@@ -30,7 +30,14 @@ interface XPProof {
   proof: string[];
 }
 
-export const rootPath = "scripts/airdrops/xpDrops/";
+//we now include the network in the path
+//@ts-ignore
+const networkName = hre.network.name;
+if (!networkName) {
+  throw new Error("Network name not found");
+}
+
+export const rootPath = `scripts/airdrops/xpDrops/${networkName}/`;
 
 export async function queryAllAavegotchis(
   blockTag: number,

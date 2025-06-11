@@ -20,10 +20,15 @@ const HISTORICAL_PROGRESS_FILE = path.join(
   PROCESSED_PATH,
   "historical-records-progress.json"
 );
+const CLAIMED_AT_EVENTS_PROGRESS_FILE = path.join(
+  PROCESSED_PATH,
+  "claimed-at-events-progress.json"
+);
 
 const MAX_RETRIES = 3;
 const BATCH_SIZE_SUBGRAPH = 30; // Reduced due to potential object size
 const BATCH_SIZE_HISTORICAL = 300; // Reduced due to oversized data error
+const BATCH_SIZE_CLAIMED_AT = 1000; // Batch size for emitting ClaimedAt events
 const RETRY_DELAY_MS = 2000;
 
 // === GraphQL Configuration ===
@@ -186,6 +191,11 @@ interface ContractAavegotchiHistoricalRecord {
   historicalPrices: BigNumber[];
   timesTraded: BigNumber;
   activeListing: BigNumber;
+}
+
+interface ContractClaimedAtEventData {
+  tokenId: BigNumber;
+  claimedAtBlock: BigNumber;
 }
 
 // === Interfaces: Progress Tracking ===
@@ -488,6 +498,15 @@ function transformHistoricalEntryToContractFormat(
   };
 }
 
+function transformPortalToClaimedAtEvent(
+  entry: SubgraphAavegotchiOrPortalData_Json
+): ContractClaimedAtEventData {
+  return {
+    tokenId: safeStringToBigNumber(entry.id),
+    claimedAtBlock: safeStringToBigNumber(entry.claimedAt, BigNumber.from(0)),
+  };
+}
+
 // === Generic Processing Logic ===
 
 type ContractCallFunction<ContractType> = (
@@ -604,13 +623,29 @@ async function processFile<
             "Function processHistoricalAavegotchiData does not exist on the contract instance."
           );
         }
+        if (
+          logPrefix === "ClaimedAtEvents" &&
+          !contractInstance.functions.emitClaimedEvent
+        ) {
+          throw new Error(
+            "Function emitClaimedEvent does not exist on the contract instance."
+          );
+        }
 
-        const tx = await contractCall(batch);
-        console.log(
-          `[${logPrefix}] Batch ${i + 1} transaction sent: ${
-            tx.hash
-          }. Waiting for confirmation...`
-        );
+        if (logPrefix === "SubgraphDump" || logPrefix === "HistoricalRecords") {
+          console.log(
+            `[${logPrefix}] SKIPPING transaction for batch ${
+              i + 1
+            } as requested.`
+          );
+        } else {
+          const tx = await contractCall(batch);
+          console.log(
+            `[${logPrefix}] Batch ${i + 1} transaction sent: ${
+              tx.hash
+            }. Waiting for confirmation...`
+          );
+        }
 
         console.log(`[${logPrefix}] Batch ${i + 1} transaction confirmed.`);
         successInCurrentBatchAttempt = true;
@@ -747,32 +782,27 @@ function getDefaultHistoricalProgress(): ProcessingProgress {
   };
 }
 
+function getDefaultClaimedAtEventsProgress(): ProcessingProgress {
+  // For ClaimedAt event emission
+  return {
+    totalEntriesInSource: 0,
+    processedEntryIds: [],
+    lastAttemptedBatchIndex: -1,
+    lastSuccessfullyProcessedBatchIndex: -1,
+    failedBatchDetails: [],
+    currentRunFailedBatchIndexes: [],
+    startTime: 0,
+    completed: false,
+    completedAt: null,
+  };
+}
+
 // === Specific Processing Functions ===
 
-async function processSubgraphDumpData( // Renamed conceptually: This is now for Portal Data
-  contract: AavegotchiBridgeFacet
+async function processSubgraphDumpData(
+  contract: AavegotchiBridgeFacet,
+  portalDataJson: SubgraphAavegotchiOrPortalData_Json[]
 ): Promise<boolean> {
-  console.log("[PortalData] Fetching Portal data from subgraph...");
-  let portalDataJson: SubgraphAavegotchiOrPortalData_Json[];
-  try {
-    portalDataJson =
-      await fetchPaginatedGraphQLData<SubgraphAavegotchiOrPortalData_Json>(
-        GET_PORTALS_QUERY,
-        "portals", // entity name in the GraphQL response
-        "id", // orderBy field
-        "asc" // orderDirection
-      );
-    console.log(
-      `[PortalData] Successfully fetched ${portalDataJson.length} portal entries.`
-    );
-  } catch (error: any) {
-    console.error(
-      "[PortalData] CRITICAL: Failed to fetch Portal data from subgraph:",
-      error.message || error
-    );
-    return false;
-  }
-
   const contractCall: ContractCallFunction<
     ContractAavegotchiSubgraphPortalData
   > = (batch) => {
@@ -795,7 +825,7 @@ async function processSubgraphDumpData( // Renamed conceptually: This is now for
   );
 }
 
-async function processHistoricalAavegotchiDataRecords( // For Aavegotchi Data
+async function processHistoricalAavegotchiDataRecords(
   contract: AavegotchiBridgeFacet
 ): Promise<boolean> {
   console.log(
@@ -844,6 +874,44 @@ async function processHistoricalAavegotchiDataRecords( // For Aavegotchi Data
   );
 }
 
+async function processClaimedAtEvents(
+  contract: AavegotchiBridgeFacet,
+  portalDataJson: SubgraphAavegotchiOrPortalData_Json[]
+): Promise<boolean> {
+  console.log(
+    "[ClaimedAtEvents] Using pre-fetched portal data for emitting ClaimedAt events..."
+  );
+
+  // Filter for portals that are claimed (claimedAt is not null)
+  const claimedPortalsJson = portalDataJson.filter((p) => p.claimedAt !== null);
+  console.log(
+    `[ClaimedAtEvents] Found ${claimedPortalsJson.length} claimed portals to process.`
+  );
+
+  const contractCall: ContractCallFunction<ContractClaimedAtEventData> = (
+    batch
+  ) => {
+    const tokenIds = batch.map((b) => b.tokenId);
+    const claimedAtBlocks = batch.map((b) => b.claimedAtBlock);
+    return contract.emitClaimedEvent(tokenIds, claimedAtBlocks);
+  };
+
+  return processFile<
+    SubgraphAavegotchiOrPortalData_Json, // input json type
+    ContractClaimedAtEventData, // contract data type
+    ProcessingProgress
+  >(
+    claimedPortalsJson, // Pass filtered data
+    CLAIMED_AT_EVENTS_PROGRESS_FILE,
+    getDefaultClaimedAtEventsProgress,
+    transformPortalToClaimedAtEvent,
+    contractCall,
+    BATCH_SIZE_CLAIMED_AT,
+    "ClaimedAtEvents", // New log prefix
+    contract
+  );
+}
+
 // === Main Orchestration Function ===
 async function main() {
   console.log(
@@ -861,9 +929,6 @@ async function main() {
     );
     throw new Error("GraphQL endpoint URL is not configured.");
   }
-
-  // const accounts = await ethers.getSigners();
-  // const deployer = accounts[0];
 
   // @ts-ignore
   const signer = await getRelayerSigner(hre);
@@ -893,13 +958,36 @@ async function main() {
   )) as AavegotchiBridgeFacet;
   console.log(`Attached to AavegotchiBridgeFacet at ${bridgeFacet.address}`);
 
+  console.log("[Main] Fetching all Portal data once...");
+  let portalDataJson: SubgraphAavegotchiOrPortalData_Json[];
+  try {
+    portalDataJson =
+      await fetchPaginatedGraphQLData<SubgraphAavegotchiOrPortalData_Json>(
+        GET_PORTALS_QUERY,
+        "portals",
+        "id",
+        "asc"
+      );
+    console.log(
+      `[Main] Successfully fetched ${portalDataJson.length} total portal entries.`
+    );
+  } catch (error: any) {
+    console.error(
+      "[Main] CRITICAL: Failed to fetch Portal data. Aborting script.",
+      error.message || error
+    );
+    process.exit(1); // Exit if initial fetch fails
+  }
+
   let portalDataSuccess = false;
   try {
     console.log(
-      "--- Starting Portal Data Processing (Fetched from Subgraph) ---"
+      "--- Starting Portal Data Processing (Using pre-fetched data) ---"
     );
-    // processSubgraphDumpData now handles portal data fetching internally
-    portalDataSuccess = await processSubgraphDumpData(bridgeFacet);
+    portalDataSuccess = await processSubgraphDumpData(
+      bridgeFacet,
+      portalDataJson
+    );
     if (portalDataSuccess) {
       console.log("--- Portal Data Processing Completed Successfully ---");
     } else {
@@ -916,13 +1004,14 @@ async function main() {
     portalDataSuccess = false; // Ensure it's marked as failed
   }
 
+  let historicalSuccess = false;
   if (portalDataSuccess) {
     try {
       console.log(
         "--- Starting Aavegotchi Historical Records Processing (Fetched from Subgraph) ---"
       );
-      // processHistoricalAavegotchiDataRecords now handles Aavegotchi data fetching internally
-      const historicalSuccess = await processHistoricalAavegotchiDataRecords(
+      // Historical data is fetched inside this function as it's a different query
+      historicalSuccess = await processHistoricalAavegotchiDataRecords(
         bridgeFacet
       );
       if (historicalSuccess) {
@@ -940,10 +1029,40 @@ async function main() {
         error.message || error,
         error.stack
       );
+      historicalSuccess = false;
     }
   } else {
     console.warn(
       "Skipping Aavegotchi Historical Records Processing due to failure in Portal Data Processing."
+    );
+  }
+
+  if (historicalSuccess) {
+    try {
+      console.log(
+        "--- Starting Emission of ClaimedAt Events (Using pre-fetched data) ---"
+      );
+      const claimedAtSuccess = await processClaimedAtEvents(
+        bridgeFacet,
+        portalDataJson
+      );
+      if (claimedAtSuccess) {
+        console.log("--- ClaimedAt Event Emission Completed Successfully ---");
+      } else {
+        console.error(
+          "--- ClaimedAt Event Emission Failed or Partially Completed ---"
+        );
+      }
+    } catch (error: any) {
+      console.error(
+        "CRITICAL ERROR during ClaimedAt Event Emission:",
+        error.message || error,
+        error.stack
+      );
+    }
+  } else {
+    console.warn(
+      "Skipping ClaimedAt Event Emission due to failure in a previous step."
     );
   }
 
