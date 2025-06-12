@@ -54,15 +54,9 @@ contract ERC721MarketplaceFacet is Modifiers {
             uint256 category = _categories[i].category;
             address tokenAddress = _categories[i].erc721TokenAddress;
 
-            //Categories should be above 4 to prevent interference w/ Gotchi diamond
-            require(category > 3, "ERC721Marketplace: Added category should be above 3");
-
-            if (tokenAddress != address(this)) {
-                require(s.categoryToTokenAddress[category] == address(0), "ERC721Marketplace: Category has already been set");
-            }
+            if (tokenAddress != address(this)) revert("ERC721Marketplace: Not callable on Aavegotchi contract");
 
             s.erc721Categories[tokenAddress][0] = category;
-            s.categoryToTokenAddress[category] = tokenAddress;
         }
     }
 
