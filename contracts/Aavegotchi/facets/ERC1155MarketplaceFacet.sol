@@ -119,6 +119,10 @@ contract ERC1155MarketplaceFacet is Modifiers {
     ) internal {
         address seller = LibMeta.msgSender();
         uint256 category = LibSharedMarketplace.getERC1155Category(_erc1155TokenAddress, _erc1155TypeId);
+        require(
+            !LibSharedMarketplace.isERC1155ListingExcluded(_erc1155TokenAddress, _erc1155TypeId),
+            "ERC1155Marketplace: token excluded"
+        );
 
         IERC1155 erc1155Token = IERC1155(_erc1155TokenAddress);
         require(erc1155Token.balanceOf(seller, _erc1155TypeId) >= _quantity, "ERC1155Marketplace: Not enough ERC1155 token");

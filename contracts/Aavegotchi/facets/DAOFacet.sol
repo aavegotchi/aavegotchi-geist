@@ -35,6 +35,7 @@ contract DAOFacet is Modifiers {
     event ItemGeistBridgeUpdate(address _newBridge);
     event GHSTContractUpdate(address _newGHSTContract);
     event BaazaarTradingAllowlistUpdate(address _contract, bool _allow);
+    event ERC1155ListingExclusionUpdate(address indexed token, uint256 indexed id, bool excluded);
     event WearableDiamondUpdate(address _wearableDiamond);
     event ForgeDiamondUpdate(address _forgeDiamond);
     /***********************************|
@@ -464,6 +465,14 @@ contract DAOFacet is Modifiers {
 
     function getBaazaarTradingAllowlist(address _contract) external view returns (bool) {
         return s.baazaarTradingAllowlist[_contract];
+    }
+
+    function setERC1155ListingExclusions(address token, uint256[] calldata ids, bool[] calldata flags) external onlyDaoOrOwner {
+        require(ids.length == flags.length, "DAOFacet: ids and flags mismatch");
+        for (uint256 i; i < ids.length; i++) {
+            s.erc1155ListingExclusions[token][ids[i]] = flags[i];
+            emit ERC1155ListingExclusionUpdate(token, ids[i], flags[i]);
+        }
     }
 
     function setWearableDiamond(address _wearableDiamond) external onlyDaoOrOwner {
