@@ -58,11 +58,10 @@ contract ERC721MarketplaceFacet is Modifiers {
             require(category > 3, "ERC721Marketplace: Added category should be above 3");
 
             if (tokenAddress != address(this)) {
-                require(s.categoryToTokenAddress[category] == address(0), "ERC721Marketplace: Category has already been set");
+                // duplicate categories are allowed, legacy check removed
             }
 
             s.erc721Categories[tokenAddress][0] = category;
-            s.categoryToTokenAddress[category] = tokenAddress;
         }
     }
 
