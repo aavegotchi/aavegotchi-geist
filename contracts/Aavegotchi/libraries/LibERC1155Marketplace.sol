@@ -11,11 +11,10 @@ library LibERC1155Marketplace {
 
     function cancelERC1155Listing(uint256 _listingId, address _owner) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();
-        ListingListItem storage listingItem = s.erc1155ListingListItem["listed"][_listingId];
-        if (listingItem.listingId == 0) {
+        ERC1155Listing storage listing = s.erc1155Listings[_listingId];
+        if (listing.timeCreated == 0) {
             return;
         }
-        ERC1155Listing storage listing = s.erc1155Listings[_listingId];
         if (listing.cancelled == true || listing.sold == true) {
             return;
         }
@@ -25,75 +24,23 @@ library LibERC1155Marketplace {
         removeERC1155ListingItem(_listingId, _owner);
     }
 
-    function addERC1155ListingItem(address _owner, uint256 _category, string memory _sort, uint256 _listingId) internal {
-        AppStorage storage s = LibAppStorage.diamondStorage();
-        uint256 headListingId = s.erc1155OwnerListingHead[_owner][_category][_sort];
-        if (headListingId != 0) {
-            ListingListItem storage headListingItem = s.erc1155OwnerListingListItem[_sort][headListingId];
-            headListingItem.parentListingId = _listingId;
-        }
-        ListingListItem storage listingItem = s.erc1155OwnerListingListItem[_sort][_listingId];
-        listingItem.childListingId = headListingId;
-        s.erc1155OwnerListingHead[_owner][_category][_sort] = _listingId;
-        listingItem.listingId = _listingId;
-
-        headListingId = s.erc1155ListingHead[_category][_sort];
-        if (headListingId != 0) {
-            ListingListItem storage headListingItem = s.erc1155ListingListItem[_sort][headListingId];
-            headListingItem.parentListingId = _listingId;
-        }
-        listingItem = s.erc1155ListingListItem[_sort][_listingId];
-        listingItem.childListingId = headListingId;
-        s.erc1155ListingHead[_category][_sort] = _listingId;
-        listingItem.listingId = _listingId;
+    function addERC1155ListingItem(
+        address _erc1155TokenAddress,
+        address _owner,
+        uint256 _category,
+        string memory _sort,
+        uint256 _listingId
+    ) internal {
+        // Deprecated: On-chain views are replaced by subgraphs
     }
 
     function removeERC1155ListingItem(uint256 _listingId, address _owner) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();
-        ListingListItem storage listingItem = s.erc1155ListingListItem["listed"][_listingId];
-        if (listingItem.listingId == 0) {
-            return;
-        }
-        uint256 parentListingId = listingItem.parentListingId;
-        if (parentListingId != 0) {
-            ListingListItem storage parentListingItem = s.erc1155ListingListItem["listed"][parentListingId];
-            parentListingItem.childListingId = listingItem.childListingId;
-        }
-        uint256 childListingId = listingItem.childListingId;
-        if (childListingId != 0) {
-            ListingListItem storage childListingItem = s.erc1155ListingListItem["listed"][childListingId];
-            childListingItem.parentListingId = listingItem.parentListingId;
-        }
         ERC1155Listing storage listing = s.erc1155Listings[_listingId];
-        if (s.erc1155ListingHead[listing.category]["listed"] == _listingId) {
-            s.erc1155ListingHead[listing.category]["listed"] = listingItem.childListingId;
+        if (listing.timeCreated != 0) {
+            s.erc1155TokenToListingId[listing.erc1155TokenAddress][listing.erc1155TypeId][_owner] = 0;
+            emit ERC1155ListingRemoved(_listingId, listing.category, block.timestamp);
         }
-        listingItem.listingId = 0;
-        listingItem.parentListingId = 0;
-        listingItem.childListingId = 0;
-
-        listingItem = s.erc1155OwnerListingListItem["listed"][_listingId];
-
-        parentListingId = listingItem.parentListingId;
-        if (parentListingId != 0) {
-            ListingListItem storage parentListingItem = s.erc1155OwnerListingListItem["listed"][parentListingId];
-            parentListingItem.childListingId = listingItem.childListingId;
-        }
-        childListingId = listingItem.childListingId;
-        if (childListingId != 0) {
-            ListingListItem storage childListingItem = s.erc1155OwnerListingListItem["listed"][childListingId];
-            childListingItem.parentListingId = listingItem.parentListingId;
-        }
-        listing = s.erc1155Listings[_listingId];
-        if (s.erc1155OwnerListingHead[_owner][listing.category]["listed"] == _listingId) {
-            s.erc1155OwnerListingHead[_owner][listing.category]["listed"] = listingItem.childListingId;
-        }
-        listingItem.listingId = 0;
-        listingItem.parentListingId = 0;
-        listingItem.childListingId = 0;
-        s.erc1155TokenToListingId[listing.erc1155TokenAddress][listing.erc1155TypeId][_owner] = 0;
-
-        emit ERC1155ListingRemoved(_listingId, listing.category, block.timestamp);
     }
 
     function updateERC1155Listing(address _erc1155TokenAddress, uint256 _erc1155TypeId, address _owner) internal {

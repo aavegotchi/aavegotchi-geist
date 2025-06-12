@@ -41,6 +41,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
     function placeERC1155BuyOrder(
         address _erc1155TokenAddress,
         uint256 _erc1155TokenId,
+        uint256 _category,
         uint256 _priceInWei,
         uint256 _quantity,
         uint256 _duration
@@ -48,8 +49,9 @@ contract ERC1155BuyOrderFacet is Modifiers {
         uint256 cost = _quantity * _priceInWei;
         require(cost >= 1e15, "ERC1155BuyOrder: cost should be 0.001 GHST or larger");
 
+        require(LibSharedMarketplace.isContractWhitelisted(_erc1155TokenAddress), "ERC1155BuyOrder: contract not whitelisted");
+
         address sender = LibMeta.msgSender();
-        uint256 category = LibSharedMarketplace.getERC1155Category(_erc1155TokenAddress, _erc1155TokenId);
         uint256 ghstBalance = IERC20(s.ghstContract).balanceOf(sender);
 
         // New order
@@ -66,6 +68,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
             buyer: sender,
             erc1155TokenAddress: _erc1155TokenAddress,
             erc1155TokenId: _erc1155TokenId,
+            category: _category,
             priceInWei: _priceInWei,
             quantity: _quantity,
             timeCreated: block.timestamp,
@@ -79,7 +82,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
             sender,
             _erc1155TokenAddress,
             _erc1155TokenId,
-            category,
+            _category,
             _priceInWei,
             _quantity,
             _duration,
@@ -109,6 +112,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
         uint256 _buyOrderId,
         address _erc1155TokenAddress,
         uint256 _erc1155TokenId,
+        uint256 _category,
         uint256 _priceInWei,
         uint256 _quantity
     ) external {
@@ -118,6 +122,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
         require(erc1155BuyOrder.timeCreated != 0, "ERC1155BuyOrder: ERC1155 buyOrder does not exist");
         require(erc1155BuyOrder.erc1155TokenAddress == _erc1155TokenAddress, "ERC1155BuyOrder: ERC1155 token address not matched");
         require(erc1155BuyOrder.erc1155TokenId == _erc1155TokenId, "ERC1155BuyOrder: ERC1155 token id not matched");
+        require(erc1155BuyOrder.category == _category, "ERC1155BuyOrder: ERC1155 category not matched");
         require(erc1155BuyOrder.priceInWei == _priceInWei, "ERC1155BuyOrder: Price not matched");
         require(erc1155BuyOrder.buyer != sender, "ERC1155BuyOrder: Buyer can't be seller");
         require((erc1155BuyOrder.cancelled == false) && (erc1155BuyOrder.completed == false), "ERC1155BuyOrder: Already processed");
@@ -183,7 +188,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
             sender,
             erc1155BuyOrder.erc1155TokenAddress,
             erc1155BuyOrder.erc1155TokenId,
-            LibSharedMarketplace.getERC1155Category(erc1155BuyOrder.erc1155TokenAddress, erc1155BuyOrder.erc1155TokenId),
+            _category,
             erc1155BuyOrder.priceInWei,
             _quantity,
             block.timestamp

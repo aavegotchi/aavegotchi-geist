@@ -253,6 +253,7 @@ struct ERC1155BuyOrder {
     address buyer;
     address erc1155TokenAddress;
     uint256 erc1155TokenId;
+    uint256 category;
     uint256 priceInWei;
     uint256 quantity;
     uint256 timeCreated;
@@ -311,14 +312,6 @@ struct AppStorage {
     // erc1155 category => erc1155Order
     //ERC1155Order[] erc1155MarketOrders;
     mapping(uint256 => ERC1155Listing) erc1155Listings;
-    // category => ("listed" or purchased => first listingId)
-    //mapping(uint256 => mapping(string => bytes32[])) erc1155MarketListingIds;
-    mapping(uint256 => mapping(string => uint256)) erc1155ListingHead;
-    // "listed" or purchased => (listingId => ListingListItem)
-    mapping(string => mapping(uint256 => ListingListItem)) erc1155ListingListItem;
-    mapping(address => mapping(uint256 => mapping(string => uint256))) erc1155OwnerListingHead;
-    // "listed" or purchased => (listingId => ListingListItem)
-    mapping(string => mapping(uint256 => ListingListItem)) erc1155OwnerListingListItem;
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc1155TokenToListingId;
     uint256 listingFeeInWei;
     // erc1155Token => (erc1155TypeId => category)
@@ -326,14 +319,6 @@ struct AppStorage {
     uint256 nextERC721ListingId;
     //ERC1155Order[] erc1155MarketOrders;
     mapping(uint256 => ERC721Listing) erc721Listings;
-    // listingId => ListingListItem
-    mapping(uint256 => ListingListItem) erc721ListingListItem;
-    mapping(uint256 => mapping(string => uint256)) erc721ListingHead;
-    // user address => category => sort => listingId => ListingListItem
-    mapping(uint256 => ListingListItem) erc721OwnerListingListItem;
-    mapping(address => mapping(uint256 => mapping(string => uint256))) erc721OwnerListingHead;
-    // erc1155Token => (erc1155TypeId => category)
-    // not really in use now, for the future
     mapping(address => mapping(uint256 => uint256)) erc721Categories;
     // erc721 token address, erc721 tokenId, user address => listingId
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc721TokenToListingId;

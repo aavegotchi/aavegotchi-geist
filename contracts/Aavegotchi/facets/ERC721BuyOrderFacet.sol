@@ -104,6 +104,7 @@ contract ERC721BuyOrderFacet is Modifiers {
     function placeERC721BuyOrder(
         address _erc721TokenAddress,
         uint256 _erc721TokenId,
+        uint256 _category,
         uint256 _priceInWei,
         uint256 _duration,
         bool[] calldata _validationOptions // 0: BRS, 1: GHST, 2: skill points
@@ -114,8 +115,14 @@ contract ERC721BuyOrderFacet is Modifiers {
         uint256 ghstBalance = IERC20(s.ghstContract).balanceOf(sender);
         require(ghstBalance >= _priceInWei, "ERC721BuyOrder: Not enough GHST!");
 
-        uint256 category = LibSharedMarketplace.getERC721Category(_erc721TokenAddress, _erc721TokenId);
-        require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721BuyOrder: Cannot buy a portal that is pending VRF");
+        uint256 category;
+        if (_erc721TokenAddress == address(this)) {
+            category = LibAavegotchi.getAavegotchi(s.aavegotchis[_erc721TokenId]).status;
+            require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721BuyOrder: Cannot buy a portal that is pending VRF");
+        } else {
+            category = _category;
+        }
+
         require(sender != IERC721(_erc721TokenAddress).ownerOf(_erc721TokenId), "ERC721BuyOrder: Owner can't be buyer");
         if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
             require(_validationOptions.length == 3, "ERC721BuyOrder: Not enough validation options for aavegotchi");
@@ -205,7 +212,7 @@ contract ERC721BuyOrderFacet is Modifiers {
 
         if (erc721BuyOrder.erc721TokenAddress == address(this)) {
             // disable for gotchi in lending
-            uint256 category = LibSharedMarketplace.getERC721Category(_erc721TokenAddress, _erc721TokenId);
+            uint256 category = LibAavegotchi.getAavegotchi(s.aavegotchis[_erc721TokenId]).status;
             if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
                 require(!LibGotchiLending.isAavegotchiLent(uint32(_erc721TokenId)), "ERC721BuyOrder: Not supported for aavegotchi in lending");
             }

@@ -50,37 +50,44 @@ contract ERC1155MarketplaceFacet is Modifiers {
         emit ChangedListingFee(s.listingFeeInWei);
     }
 
-    struct Category {
-        address erc1155TokenAddress;
-        uint256 erc1155TypeId;
-        uint256 category;
-    }
+    // struct Category {
+    //     address erc1155TokenAddress;
+    //     uint256 erc1155TypeId;
+    //     uint256 category;
+    // }
 
-    ///@notice Allow the aavegotchi diamond owner or DAO to set the category details for multiple ERC1155 NFTs
-    ///@dev This function is deprecated on Geist and will be removed in the future.
-    ///@param _categories An array of structs where each struct contains details about each ERC1155 item //erc1155TokenAddress,erc1155TypeId and category
-    function setERC1155Categories(Category[] calldata _categories) external onlyItemManager {
-        for (uint256 i; i < _categories.length; i++) {
-            s.erc1155Categories[_categories[i].erc1155TokenAddress][_categories[i].erc1155TypeId] = _categories[i].category;
-        }
-    }
+    // ///@notice Allow the aavegotchi diamond owner or DAO to set the category details for multiple ERC1155 NFTs
+    // ///@dev This function is deprecated on Geist and will be removed in the future.
+    // ///@param _categories An array of structs where each struct contains details about each ERC1155 item //erc1155TokenAddress,erc1155TypeId and category
+    // function setERC1155Categories(Category[] calldata _categories) external onlyItemManager {
+    //     for (uint256 i; i < _categories.length; i++) {
+    //         s.erc1155Categories[_categories[i].erc1155TokenAddress][_categories[i].erc1155TypeId] = _categories[i].category;
+    //     }
+    // }
 
-    ///@notice Query the category details of a ERC1155 NFT
-    ///@param _erc1155TokenAddress Contract address of NFT to query
-    ///@param _erc1155TypeId Identifier of the NFT to query
-    ///@return category_ Category of the NFT // 0 is wearable, 1 is badge, 2 is consumable, 3 is tickets
-    function getERC1155Category(address _erc1155TokenAddress, uint256 _erc1155TypeId) public view returns (uint256 category_) {
-        category_ = LibSharedMarketplace.getERC1155Category(_erc1155TokenAddress, _erc1155TypeId);
-    }
+    // ///@notice Query the category details of a ERC1155 NFT
+    // ///@param _erc1155TokenAddress Contract address of NFT to query
+    // ///@param _erc1155TypeId Identifier of the NFT to query
+    // ///@return category_ Category of the NFT // 0 is wearable, 1 is badge, 2 is consumable, 3 is tickets
+    // function getERC1155Category(address _erc1155TokenAddress, uint256 _erc1155TypeId) public view returns (uint256 category_) {
+    //     category_ = LibSharedMarketplace.getERC1155Category(_erc1155TokenAddress, _erc1155TypeId);
+    // }
 
     ///@notice Allow an ERC1155 owner to list his NFTs for sale
     ///@dev If an NFT has been listed before,it cancels it and replaces it with the new one
     ///@param _erc1155TokenAddress The contract address of the NFT to be listed
     ///@param _erc1155TypeId The identifier of the NFT to be listed
     ///@param _quantity The amount of NFTs to be listed
+    ///@param _category The optional category of the NFT to be listed. Defaults to 0 if none is set.
     ///@param _priceInWei The cost price of the NFT individually in $GHST
-    function setERC1155Listing(address _erc1155TokenAddress, uint256 _erc1155TypeId, uint256 _quantity, uint256 _priceInWei) external {
-        createERC1155Listing(_erc1155TokenAddress, _erc1155TypeId, _quantity, _priceInWei, [10000, 0], address(0), 0);
+    function setERC1155Listing(
+        address _erc1155TokenAddress,
+        uint256 _erc1155TypeId,
+        uint256 _quantity,
+        uint256 _category,
+        uint256 _priceInWei
+    ) external {
+        createERC1155Listing(_erc1155TokenAddress, _erc1155TypeId, _quantity, _priceInWei, _category, [10000, 0], address(0), 0);
     }
 
     function setERC1155ListingWithSplit(
@@ -88,10 +95,11 @@ contract ERC1155MarketplaceFacet is Modifiers {
         uint256 _erc1155TypeId,
         uint256 _quantity,
         uint256 _priceInWei,
+        uint256 _category,
         uint16[2] memory _principalSplit,
         address _affiliate
     ) external {
-        createERC1155Listing(_erc1155TokenAddress, _erc1155TypeId, _quantity, _priceInWei, _principalSplit, _affiliate, 0);
+        createERC1155Listing(_erc1155TokenAddress, _erc1155TypeId, _quantity, _priceInWei, _category, _principalSplit, _affiliate, 0);
     }
 
     //@dev Not implemented in UI yet. Do not use unless you don't want anyone purchasing your NFT.
@@ -101,11 +109,12 @@ contract ERC1155MarketplaceFacet is Modifiers {
         uint256 _erc1155TypeId,
         uint256 _quantity,
         uint256 _priceInWei,
+        uint256 _category,
         uint16[2] memory _principalSplit,
         address _affiliate,
         uint32 _whitelistId
     ) external {
-        createERC1155Listing(_erc1155TokenAddress, _erc1155TypeId, _quantity, _priceInWei, _principalSplit, _affiliate, _whitelistId);
+        createERC1155Listing(_erc1155TokenAddress, _erc1155TypeId, _quantity, _priceInWei, _category, _principalSplit, _affiliate, _whitelistId);
     }
 
     function createERC1155Listing(
@@ -113,16 +122,16 @@ contract ERC1155MarketplaceFacet is Modifiers {
         uint256 _erc1155TypeId,
         uint256 _quantity,
         uint256 _priceInWei,
+        uint256 _category,
         uint16[2] memory _principalSplit,
         address _affiliate,
         uint32 _whitelistId
     ) internal {
         address seller = LibMeta.msgSender();
-        uint256 category = LibSharedMarketplace.getERC1155Category(_erc1155TokenAddress, _erc1155TypeId);
-        require(
-            !LibSharedMarketplace.isERC1155ListingExcluded(_erc1155TokenAddress, _erc1155TypeId),
-            "ERC1155Marketplace: token excluded"
-        );
+
+        require(LibSharedMarketplace.isContractWhitelisted(_erc1155TokenAddress), "ERC1155Marketplace: contract not whitelisted");
+
+        require(!LibSharedMarketplace.isERC1155ListingExcluded(_erc1155TokenAddress, _erc1155TypeId), "ERC1155Marketplace: token excluded");
 
         IERC1155 erc1155Token = IERC1155(_erc1155TokenAddress);
         require(erc1155Token.balanceOf(seller, _erc1155TypeId) >= _quantity, "ERC1155Marketplace: Not enough ERC1155 token");
@@ -148,7 +157,7 @@ contract ERC1155MarketplaceFacet is Modifiers {
                 seller: seller,
                 erc1155TokenAddress: _erc1155TokenAddress,
                 erc1155TypeId: _erc1155TypeId,
-                category: category,
+                category: _category,
                 quantity: _quantity,
                 priceInWei: _priceInWei,
                 timeCreated: block.timestamp,
@@ -160,9 +169,8 @@ contract ERC1155MarketplaceFacet is Modifiers {
                 affiliate: _affiliate,
                 whitelistId: _whitelistId
             });
-            LibERC1155Marketplace.addERC1155ListingItem(seller, category, "listed", listingId);
 
-            emit ERC1155ListingAdd(listingId, seller, _erc1155TokenAddress, _erc1155TypeId, category, _quantity, _priceInWei, block.timestamp);
+            emit ERC1155ListingAdd(listingId, seller, _erc1155TokenAddress, _erc1155TypeId, _category, _quantity, _priceInWei, block.timestamp);
 
             if (_affiliate != address(0)) {
                 emit ERC1155ListingSplit(listingId, _principalSplit, _affiliate);
@@ -316,7 +324,6 @@ contract ERC1155MarketplaceFacet is Modifiers {
                 affiliate: listing.affiliate,
                 whitelistId: listing.whitelistId
             });
-            LibERC1155Marketplace.addERC1155ListingItem(seller, listing.category, "purchased", purchaseListingId);
             if (listing.quantity == 0) {
                 listing.sold = true;
                 LibERC1155Marketplace.removeERC1155ListingItem(_listingId, seller);
