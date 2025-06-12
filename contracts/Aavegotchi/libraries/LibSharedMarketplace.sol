@@ -141,4 +141,9 @@ library LibSharedMarketplace {
             require(s.itemTypes[_erc1155TypeId].maxQuantity > 0, "ERC1155Marketplace: erc1155 item not supported");
         }
     }
+
+    function isERC1155ListingExcluded(address _erc1155TokenAddress, uint256 _id) internal view returns (bool) {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        return s.erc1155ListingExclusions[_erc1155TokenAddress][_id];
+    }
 }

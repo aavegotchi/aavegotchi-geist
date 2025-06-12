@@ -395,6 +395,8 @@ struct AppStorage {
     uint256 nextERC1155BuyOrderId;
     mapping(uint256 => ERC1155BuyOrder) erc1155BuyOrders; // buyOrderId => data
     mapping(address => bool) baazaarTradingAllowlist; // allowlist for baazaar trading
+    // tokenAddress => tokenId => isExcluded
+    mapping(address => mapping(uint256 => bool)) erc1155ListingExclusions;
     //proofofplay vrf
     address VRFSystem;
 }
