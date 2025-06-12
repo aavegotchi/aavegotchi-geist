@@ -51,6 +51,8 @@ contract ERC1155BuyOrderFacet is Modifiers {
 
         require(LibSharedMarketplace.isContractWhitelisted(_erc1155TokenAddress), "ERC1155BuyOrder: contract not whitelisted");
 
+        require(LibSharedMarketplace.isERC1155ListingExcluded(_erc1155TokenAddress, _erc1155TokenId), "ERC1155BuyOrder: token excluded");
+
         address sender = LibMeta.msgSender();
         uint256 ghstBalance = IERC20(s.ghstContract).balanceOf(sender);
 
