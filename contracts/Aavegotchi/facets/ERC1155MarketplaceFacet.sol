@@ -50,29 +50,6 @@ contract ERC1155MarketplaceFacet is Modifiers {
         emit ChangedListingFee(s.listingFeeInWei);
     }
 
-    // struct Category {
-    //     address erc1155TokenAddress;
-    //     uint256 erc1155TypeId;
-    //     uint256 category;
-    // }
-
-    // ///@notice Allow the aavegotchi diamond owner or DAO to set the category details for multiple ERC1155 NFTs
-    // ///@dev This function is deprecated on Geist and will be removed in the future.
-    // ///@param _categories An array of structs where each struct contains details about each ERC1155 item //erc1155TokenAddress,erc1155TypeId and category
-    // function setERC1155Categories(Category[] calldata _categories) external onlyItemManager {
-    //     for (uint256 i; i < _categories.length; i++) {
-    //         s.erc1155Categories[_categories[i].erc1155TokenAddress][_categories[i].erc1155TypeId] = _categories[i].category;
-    //     }
-    // }
-
-    // ///@notice Query the category details of a ERC1155 NFT
-    // ///@param _erc1155TokenAddress Contract address of NFT to query
-    // ///@param _erc1155TypeId Identifier of the NFT to query
-    // ///@return category_ Category of the NFT // 0 is wearable, 1 is badge, 2 is consumable, 3 is tickets
-    // function getERC1155Category(address _erc1155TokenAddress, uint256 _erc1155TypeId) public view returns (uint256 category_) {
-    //     category_ = LibSharedMarketplace.getERC1155Category(_erc1155TokenAddress, _erc1155TypeId);
-    // }
-
     ///@notice Allow an ERC1155 owner to list his NFTs for sale
     ///@dev If an NFT has been listed before,it cancels it and replaces it with the new one
     ///@param _erc1155TokenAddress The contract address of the NFT to be listed
