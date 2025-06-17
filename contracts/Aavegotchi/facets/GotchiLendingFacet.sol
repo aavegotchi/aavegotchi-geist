@@ -59,7 +59,7 @@ contract GotchiLendingFacet is Modifiers {
             lender == sender || s.lendingOperators[lender][sender][lending.erc721TokenId],
             "GotchiLending: Only the lender or lending operator can cancel the lending"
         );
-        LibGotchiLending.cancelGotchiLending(_listingId, lender);
+        LibGotchiLending.cancelGotchiLending(_listingId);
     }
 
     ///@notice Allow a borrower to agree an lending for the NFT

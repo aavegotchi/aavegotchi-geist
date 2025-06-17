@@ -204,12 +204,6 @@ struct GotchiLending {
     uint256 permissions; //0=none, 1=channelling
 }
 
-struct LendingListItem {
-    uint32 parentListingId;
-    uint256 listingId;
-    uint32 childListingId;
-}
-
 struct Whitelist {
     address owner;
     string name;
@@ -335,12 +329,8 @@ struct AppStorage {
     uint32 nextGotchiListingId;
     mapping(uint32 => GotchiLending) gotchiLendings;
     mapping(uint32 => uint32) aavegotchiToListingId;
-    mapping(address => uint32[]) lentTokenIds;
-    mapping(address => mapping(uint32 => uint32)) lentTokenIdIndexes; // address => lent token id => index
-    mapping(bytes32 => mapping(uint32 => LendingListItem)) gotchiLendingListItem; // ("listed" or "agreed") => listingId => LendingListItem
-    mapping(bytes32 => uint32) gotchiLendingHead; // ("listed" or "agreed") => listingId
-    mapping(bytes32 => mapping(uint32 => LendingListItem)) aavegotchiLenderLendingListItem; // ("listed" or "agreed") => listingId => LendingListItem
-    mapping(address => mapping(bytes32 => uint32)) aavegotchiLenderLendingHead; // user address => ("listed" or "agreed") => listingId => LendingListItem
+    // mapping(address => uint32[]) lentTokenIds;
+
     Whitelist[] whitelists;
     // If zero, then the user is not whitelisted for the given whitelist ID. Otherwise, this represents the position of the user in the whitelist + 1
     mapping(uint32 => mapping(address => uint256)) isWhitelisted; // whitelistId => whitelistAddress => isWhitelisted

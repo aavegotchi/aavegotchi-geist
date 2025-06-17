@@ -132,68 +132,68 @@ contract LendingGetterAndSetterFacet is Modifiers {
         return s.aavegotchiToListingId[_erc721TokenId];
     }
 
-    ///@notice Query a certain amount of aavegotchi lending listings created by an address
-    ///@param _lender Creator of the listings to query
-    ///@param _status Status of the listings to query, "listed" or "agreed"
-    ///@param _length How many aavegotchi listings to return
-    ///@return listings_ An array of lending
-    function getOwnerGotchiLendings(address _lender, bytes32 _status, uint256 _length) external view returns (GotchiLending[] memory listings_) {
-        uint32 listingId = s.aavegotchiLenderLendingHead[_lender][_status];
-        listings_ = new GotchiLending[](_length);
-        uint256 listIndex;
-        for (; listingId != 0 && listIndex < _length; ) {
-            listings_[listIndex] = LibGotchiLending.getListing(listingId);
-            listingId = s.aavegotchiLenderLendingListItem[_status][listingId].childListingId;
-            unchecked {
-                ++listIndex;
-            }
-        }
-        assembly {
-            mstore(listings_, listIndex)
-        }
-    }
+    // ///@notice Query a certain amount of aavegotchi lending listings created by an address
+    // ///@param _lender Creator of the listings to query
+    // ///@param _status Status of the listings to query, "listed" or "agreed"
+    // ///@param _length How many aavegotchi listings to return
+    // ///@return listings_ An array of lending
+    // function getOwnerGotchiLendings(address _lender, bytes32 _status, uint256 _length) external view returns (GotchiLending[] memory listings_) {
+    //     uint32 listingId = s.aavegotchiLenderLendingHead[_lender][_status];
+    //     listings_ = new GotchiLending[](_length);
+    //     uint256 listIndex;
+    //     for (; listingId != 0 && listIndex < _length; ) {
+    //         listings_[listIndex] = LibGotchiLending.getListing(listingId);
+    //         listingId = s.aavegotchiLenderLendingListItem[_status][listingId].childListingId;
+    //         unchecked {
+    //             ++listIndex;
+    //         }
+    //     }
+    //     assembly {
+    //         mstore(listings_, listIndex)
+    //     }
+    // }
 
-    ///@notice Query a certain amount of aavegotchi lending listings created by an address
-    ///@dev We don't care that this can loop forever since it's just an external view function
-    function getOwnerGotchiLendingsLength(address _lender, bytes32 _status) external view returns (uint256) {
-        uint32 listingId = s.aavegotchiLenderLendingHead[_lender][_status];
-        uint256 length = 0;
-        for (; listingId != 0; ) {
-            listingId = s.aavegotchiLenderLendingListItem[_status][listingId].childListingId;
-            unchecked {
-                ++length;
-            }
-        }
-        return length;
-    }
+    // ///@notice Query a certain amount of aavegotchi lending listings created by an address
+    // ///@dev We don't care that this can loop forever since it's just an external view function
+    // function getOwnerGotchiLendingsLength(address _lender, bytes32 _status) external view returns (uint256) {
+    //     uint32 listingId = s.aavegotchiLenderLendingHead[_lender][_status];
+    //     uint256 length = 0;
+    //     for (; listingId != 0; ) {
+    //         listingId = s.aavegotchiLenderLendingListItem[_status][listingId].childListingId;
+    //         unchecked {
+    //             ++length;
+    //         }
+    //     }
+    //     return length;
+    // }
 
-    ///@notice Query a certain amount of aavegotchi lending listings
-    ///@param _status Status of the listings to query, "listed" or "agreed"
-    ///@param _length How many listings to return
-    ///@return listings_ An array of lending
-    function getGotchiLendings(bytes32 _status, uint256 _length) external view returns (GotchiLending[] memory listings_) {
-        uint32 listingId = s.gotchiLendingHead[_status];
-        listings_ = new GotchiLending[](_length);
-        uint256 listIndex;
-        for (; listingId != 0 && listIndex < _length; ) {
-            listings_[listIndex] = LibGotchiLending.getListing(listingId);
-            listingId = s.gotchiLendingListItem[_status][listingId].childListingId;
-            unchecked {
-                ++listIndex;
-            }
-        }
-        assembly {
-            mstore(listings_, listIndex)
-        }
-    }
+    // ///@notice Query a certain amount of aavegotchi lending listings
+    // ///@param _status Status of the listings to query, "listed" or "agreed"
+    // ///@param _length How many listings to return
+    // ///@return listings_ An array of lending
+    // function getGotchiLendings(bytes32 _status, uint256 _length) external view returns (GotchiLending[] memory listings_) {
+    //     uint32 listingId = s.gotchiLendingHead[_status];
+    //     listings_ = new GotchiLending[](_length);
+    //     uint256 listIndex;
+    //     for (; listingId != 0 && listIndex < _length; ) {
+    //         listings_[listIndex] = LibGotchiLending.getListing(listingId);
+    //         listingId = s.gotchiLendingListItem[_status][listingId].childListingId;
+    //         unchecked {
+    //             ++listIndex;
+    //         }
+    //     }
+    //     assembly {
+    //         mstore(listings_, listIndex)
+    //     }
+    // }
 
-    function getLentTokenIdsOfLender(address _lender) external view returns (uint32[] memory tokenIds_) {
-        tokenIds_ = s.lentTokenIds[_lender];
-    }
+    // function getLentTokenIdsOfLender(address _lender) external view returns (uint32[] memory tokenIds_) {
+    //     tokenIds_ = s.lentTokenIds[_lender];
+    // }
 
-    function balanceOfLentGotchis(address _lender) external view returns (uint256 balance_) {
-        balance_ = s.lentTokenIds[_lender].length;
-    }
+    // function balanceOfLentGotchis(address _lender) external view returns (uint256 balance_) {
+    //     balance_ = s.lentTokenIds[_lender].length;
+    // }
 
     function getGotchiLendingsLength() external view returns (uint256) {
         return s.nextGotchiListingId;
