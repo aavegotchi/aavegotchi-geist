@@ -308,12 +308,9 @@ struct AppStorage {
     mapping(uint256 => ERC1155Listing) erc1155Listings;
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc1155TokenToListingId;
     uint256 listingFeeInWei;
-    // erc1155Token => (erc1155TypeId => category)
-    mapping(address => mapping(uint256 => uint256)) erc1155Categories;
     uint256 nextERC721ListingId;
     //ERC1155Order[] erc1155MarketOrders;
     mapping(uint256 => ERC721Listing) erc721Listings;
-    mapping(address => mapping(uint256 => uint256)) erc721Categories;
     // erc721 token address, erc721 tokenId, user address => listingId
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc721TokenToListingId;
     mapping(uint256 => uint256) sleeves;

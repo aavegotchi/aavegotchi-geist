@@ -94,8 +94,6 @@ export interface DeploymentConfig {
       [id: string]: boolean;
     };
   };
-  // erc721CategoriesAdded: boolean;
-  // erc1155CategoriesAdded: boolean;
   // realmAddressSet: boolean;
   wearableSets: Record<string, boolean>;
   sideViewDimensions: Record<string, string>;
@@ -129,8 +127,7 @@ export function loadDeploymentConfig(
       sideViewDimensionsAdded: false,
       sideViewExceptionsAdded: false,
       svgsUploaded: {},
-      //erc721CategoriesAdded: false,
-      //   erc1155CategoriesAdded: false,
+
       // realmAddressSet: false,
       itemManagers: undefined,
     };
@@ -154,8 +151,6 @@ export function loadDeploymentConfig(
       sideViewDimensions: {},
       sideViewExceptions: {},
       itemManagers: undefined,
-      erc721CategoriesAdded: false,
-      erc1155CategoriesAdded: false,
       realmAddressSet: false,
       svgsUploaded: {},
       sideViewDimensionsAdded: false,
@@ -714,38 +709,6 @@ export async function setRealmAddress(
     "Realm diamond set:" + strDisplay(receipt.gasUsed) + ` (tx: ${tx.hash})`
   );
   totalGasUsed = totalGasUsed.add(receipt.gasUsed);
-  return totalGasUsed;
-}
-
-export async function addERC721Categories(
-  erc721MarketplaceFacet: ERC721MarketplaceFacet,
-  totalGasUsed: BigNumber,
-  realmDiamondAddress: string,
-  fakeGotchiArtDiamondAddress: string
-) {
-  console.log("Adding ERC721 categories");
-  const erc721Categories = [
-    {
-      erc721TokenAddress: realmDiamondAddress,
-      category: 4,
-    },
-    {
-      erc721TokenAddress: fakeGotchiArtDiamondAddress,
-      category: 5,
-    },
-  ];
-  // const tx = await erc721MarketplaceFacet.setERC721Categories(erc721Categories);
-  // const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
-  // if (receipt.status !== 1) {
-  //   throw new Error(`Adding ERC721 categories failed. Tx: ${tx.hash}`);
-  // }
-
-  // console.log(
-  //   "Adding ERC721 categories gas used::" +
-  //     strDisplay(receipt.gasUsed) +
-  //     ` (tx: ${tx.hash})`
-  // );
-  // totalGasUsed = totalGasUsed.add(receipt.gasUsed);
   return totalGasUsed;
 }
 
