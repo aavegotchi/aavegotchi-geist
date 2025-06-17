@@ -30,11 +30,13 @@ interface BatchDetail {
   attemptTimestamp: number;
 }
 
+type ProcessedBalances = Record<string, Record<string, number>>; // owner -> itemId -> qty minted
+
 interface MintingProgress {
   startTime: number;
   lastProcessedBatchIndexInLastRun: number;
   failedBatchIndexesInLastRun: number[];
-  processedOwnerItems: Record<string, Set<string>>;
+  processedOwnerBalances: ProcessedBalances;
   batchDetails: BatchDetail[];
 }
 
@@ -48,14 +50,14 @@ async function loadProgress(): Promise<MintingProgress> {
       parsedData.lastBatchIndex !== undefined
     ) {
       console.log("Old wearables progress file format detected. Migrating...");
-      const migratedProcessedOwnerItems: Record<string, Set<string>> = {};
+      const migratedProcessedOwnerBalances: ProcessedBalances = {};
       if (parsedData.processedAddresses) {
         for (const owner in parsedData.processedAddresses) {
-          if (parsedData.processedAddresses[owner].itemIds) {
-            migratedProcessedOwnerItems[owner] = new Set(
-              parsedData.processedAddresses[owner].itemIds
-            );
-          }
+          migratedProcessedOwnerBalances[owner] = {};
+          parsedData.processedAddresses[owner].itemIds.forEach((id: string) => {
+            migratedProcessedOwnerBalances[owner][id] =
+              parsedData.processedAddresses[owner].balance ?? 1;
+          });
         }
       }
       return {
@@ -64,17 +66,16 @@ async function loadProgress(): Promise<MintingProgress> {
           ? parsedData.lastBatchIndex - 1
           : -1,
         failedBatchIndexesInLastRun: parsedData.failedBatches || [],
-        processedOwnerItems: migratedProcessedOwnerItems,
+        processedOwnerBalances: migratedProcessedOwnerBalances,
         batchDetails: [],
       };
     }
 
-    const processedOwnerItems: Record<string, Set<string>> = {};
-    if (parsedData.processedOwnerItems) {
-      for (const owner in parsedData.processedOwnerItems) {
-        processedOwnerItems[owner] = new Set(
-          parsedData.processedOwnerItems[owner]
-        );
+    const processedOwnerBalances: ProcessedBalances = {};
+    if (parsedData.processedOwnerBalances) {
+      for (const owner in parsedData.processedOwnerBalances) {
+        processedOwnerBalances[owner] =
+          parsedData.processedOwnerBalances[owner];
       }
     }
 
@@ -85,7 +86,7 @@ async function loadProgress(): Promise<MintingProgress> {
           ? -1
           : parsedData.lastProcessedBatchIndexInLastRun,
       failedBatchIndexesInLastRun: parsedData.failedBatchIndexesInLastRun || [],
-      processedOwnerItems: processedOwnerItems,
+      processedOwnerBalances: processedOwnerBalances,
       batchDetails: parsedData.batchDetails || [],
     };
   } catch (error: any) {
@@ -95,7 +96,7 @@ async function loadProgress(): Promise<MintingProgress> {
         startTime: Date.now(),
         lastProcessedBatchIndexInLastRun: -1,
         failedBatchIndexesInLastRun: [],
-        processedOwnerItems: {},
+        processedOwnerBalances: {},
         batchDetails: [],
       };
       if (!fs.existsSync(PROCESSED_PATH)) {
@@ -115,12 +116,7 @@ function saveProgress(progress: MintingProgress) {
   try {
     const serializableProgress = {
       ...progress,
-      processedOwnerItems: Object.fromEntries(
-        Object.entries(progress.processedOwnerItems).map(([owner, itemSet]) => [
-          owner,
-          Array.from(itemSet),
-        ])
-      ),
+      processedOwnerBalances: progress.processedOwnerBalances,
     };
     fs.writeFileSync(
       tempProgressFile,
@@ -144,7 +140,7 @@ function saveProgress(progress: MintingProgress) {
 
 function createBatches(
   allWearablesData: Record<string, WearableBalance[]>,
-  processedOwnerItems: Record<string, Set<string>>
+  processedOwnerBalances: ProcessedBalances
 ): MintBatch[] {
   console.log(
     "Creating batches with dynamic strategy (max 400 entries per batch)..."
@@ -157,12 +153,12 @@ function createBatches(
   for (const owner in allWearablesData) {
     if (Object.prototype.hasOwnProperty.call(allWearablesData, owner)) {
       const allBalancesForOwner = allWearablesData[owner];
-      const processedItemsForThisOwner =
-        processedOwnerItems[owner] || new Set<string>();
+      const already = processedOwnerBalances[owner] || {};
 
-      const remainingBalancesForOwner = allBalancesForOwner.filter(
-        (wb) => !processedItemsForThisOwner.has(wb.itemId)
-      );
+      const remainingBalancesForOwner = allBalancesForOwner.filter((wb) => {
+        const minted = already[wb.itemId] || 0;
+        return minted < wb.balance;
+      });
 
       if (remainingBalancesForOwner.length > 0) {
         remainingOwnerEntries.push([owner, remainingBalancesForOwner]);
@@ -403,7 +399,7 @@ function printAnalytics(
   );
   console.log(
     `Total Processed Addresses (cumulative from successful batches): ${
-      Object.keys(progress.processedOwnerItems).length
+      Object.keys(progress.processedOwnerBalances).length
     }`
   );
   console.log(
@@ -441,19 +437,53 @@ export async function mintWearables() {
     fs.mkdirSync(PROCESSED_PATH, { recursive: true });
   }
 
+  /* ----------------------------------------------------------------
+     SINGLETON LOCK: prevent two instances running concurrently.
+     ---------------------------------------------------------------- */
+  const LOCK_PATH = path.join(PROCESSED_PATH, "wearables.lock");
+  try {
+    fs.mkdirSync(PROCESSED_PATH, { recursive: true });
+    const lockFd = fs.openSync(LOCK_PATH, "wx");
+    process.on("exit", () => {
+      try {
+        fs.closeSync(lockFd);
+        fs.unlinkSync(LOCK_PATH);
+      } catch {}
+    });
+  } catch {
+    console.error(
+      "❌ Another mintWearables instance appears to be running (lockfile exists). Exiting."
+    );
+    process.exit(1);
+  }
+
   const rawWearablesData: Record<string, any[]> = JSON.parse(
     fs.readFileSync(WEARABLES_FILE, "utf8")
   );
 
   const allWearablesData: Record<string, WearableBalance[]> = {};
+  // Detect duplicates in the source file – same owner & itemId twice
+  const dupGuard = new Map<string, Set<string>>();
   for (const owner in rawWearablesData) {
     if (Object.prototype.hasOwnProperty.call(rawWearablesData, owner)) {
       allWearablesData[owner] = rawWearablesData[owner].map((item) => ({
         itemId: item.tokenId,
         balance: item.balance,
       }));
+
+      for (const wb of allWearablesData[owner]) {
+        const set = dupGuard.get(owner) || new Set<string>();
+        if (set.has(wb.itemId)) {
+          throw new Error(
+            `Duplicate entry detected in input JSON for owner ${owner}, item ${wb.itemId}`
+          );
+        }
+        set.add(wb.itemId);
+        dupGuard.set(owner, set);
+      }
     }
   }
+
   const progress = await loadProgress();
 
   console.log("Loaded Wearables data:");
@@ -472,7 +502,10 @@ export async function mintWearables() {
     signer
   )) as AavegotchiBridgeFacet;
 
-  const batches = createBatches(allWearablesData, progress.processedOwnerItems);
+  const batches = createBatches(
+    allWearablesData,
+    progress.processedOwnerBalances
+  );
 
   if (batches.length === 0) {
     console.log("No new wearable items to process based on progress file.");
@@ -503,11 +536,13 @@ export async function mintWearables() {
     if (success) {
       batch.owners.forEach((owner, ownerIdx) => {
         const itemsInBatchForOwner = batch.itemBalances[ownerIdx];
-        if (!progress.processedOwnerItems[owner]) {
-          progress.processedOwnerItems[owner] = new Set<string>();
+        if (!progress.processedOwnerBalances[owner]) {
+          progress.processedOwnerBalances[owner] = {};
         }
         itemsInBatchForOwner.forEach((itemBalance) => {
-          progress.processedOwnerItems[owner].add(itemBalance.itemId);
+          progress.processedOwnerBalances[owner][itemBalance.itemId] =
+            (progress.processedOwnerBalances[owner][itemBalance.itemId] || 0) +
+            itemBalance.balance;
         });
       });
     } else {
