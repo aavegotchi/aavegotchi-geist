@@ -119,8 +119,8 @@ contract ERC721BuyOrderFacet is Modifiers {
         if (_erc721TokenAddress == address(this)) {
             AavegotchiInfo memory aavegotchiInfo = LibAavegotchi.getAavegotchi(_erc721TokenId);
             uint256 category = aavegotchiInfo.status;
-            require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721BuyOrder: Cannot buy a portal that is pending VRF");
             require(category == _category, "ERC721BuyOrder: Category mismatch");
+            require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721BuyOrder: Cannot buy a portal that is pending VRF");
 
             if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
                 require(_validationOptions.length == 3, "ERC721BuyOrder: Not enough validation options for aavegotchi");
