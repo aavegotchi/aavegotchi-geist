@@ -175,7 +175,6 @@ library LibGotchiLending {
             permissions: _listing.permissions
         });
 
-        // addLendingListItem(_listing.lender, listingId, "listed");
         s.aavegotchis[_listing.tokenId].locked = true;
 
         emit GotchiLendingAdd(listingId);
@@ -273,8 +272,6 @@ library LibGotchiLending {
         }
         require(lending.timeAgreed == 0, "LibGotchiLending: Listing already agreed");
         lending.canceled = true;
-
-        // removeLendingListItem(_lender, _listingId, "listed");
 
         //Unlock Aavegotchis when lending is created
         s.aavegotchis[lending.erc721TokenId].locked = false;
@@ -384,8 +381,6 @@ library LibGotchiLending {
         lending.completed = true;
         s.aavegotchiToListingId[tokenId] = 0;
 
-        // removeLentAavegotchi(tokenId, lender);
-        // removeLendingListItem(lender, lending.listingId, "agreed");
         // scope to avoid stack too deep
         {
             EnumerableSet.UintSet storage whitelistBorrowerGotchiSet = s.whitelistGotchiBorrows[lending.whitelistId][lending.borrower];
@@ -512,73 +507,4 @@ library LibGotchiLending {
 
         return true;
     }
-
-    // function addLendingListItem(address _lender, uint32 _listingId, bytes32 _status) internal {
-    //     AppStorage storage s = LibAppStorage.diamondStorage();
-
-    //     uint32 headListingId = s.aavegotchiLenderLendingHead[_lender][_status];
-    //     if (headListingId != 0) {
-    //         LendingListItem storage headLendingItem = s.aavegotchiLenderLendingListItem[_status][headListingId];
-    //         headLendingItem.parentListingId = _listingId;
-    //     }
-    //     LendingListItem storage lendingItem = s.aavegotchiLenderLendingListItem[_status][_listingId];
-    //     lendingItem.childListingId = headListingId;
-    //     s.aavegotchiLenderLendingHead[_lender][_status] = _listingId;
-    //     lendingItem.listingId = _listingId;
-
-    //     headListingId = s.gotchiLendingHead[_status];
-    //     if (headListingId != 0) {
-    //         LendingListItem storage headLendingItem = s.gotchiLendingListItem[_status][headListingId];
-    //         headLendingItem.parentListingId = _listingId;
-    //     }
-    //     lendingItem = s.gotchiLendingListItem[_status][_listingId];
-    //     lendingItem.childListingId = headListingId;
-    //     s.gotchiLendingHead[_status] = _listingId;
-    //     lendingItem.listingId = _listingId;
-    // }
-
-    // function removeLendingListItem(address _lender, uint32 _listingId, bytes32 _status) internal {
-    //     AppStorage storage s = LibAppStorage.diamondStorage();
-
-    //     LendingListItem storage lendingItem = s.gotchiLendingListItem[_status][_listingId];
-    //     if (lendingItem.listingId == 0) {
-    //         return;
-    //     }
-    //     uint32 parentListingId = lendingItem.parentListingId;
-    //     if (parentListingId != 0) {
-    //         LendingListItem storage parentLendingItem = s.gotchiLendingListItem[_status][parentListingId];
-    //         parentLendingItem.childListingId = lendingItem.childListingId;
-    //     }
-    //     uint32 childListingId = lendingItem.childListingId;
-    //     if (childListingId != 0) {
-    //         LendingListItem storage childLendingItem = s.gotchiLendingListItem[_status][childListingId];
-    //         childLendingItem.parentListingId = lendingItem.parentListingId;
-    //     }
-
-    //     if (s.gotchiLendingHead[_status] == _listingId) {
-    //         s.gotchiLendingHead[_status] = lendingItem.childListingId;
-    //     }
-    //     lendingItem.listingId = 0;
-    //     lendingItem.parentListingId = 0;
-    //     lendingItem.childListingId = 0;
-
-    //     lendingItem = s.aavegotchiLenderLendingListItem[_status][_listingId];
-    //     parentListingId = lendingItem.parentListingId;
-    //     if (parentListingId != 0) {
-    //         LendingListItem storage parentLendingItem = s.aavegotchiLenderLendingListItem[_status][parentListingId];
-    //         parentLendingItem.childListingId = lendingItem.childListingId;
-    //     }
-    //     childListingId = lendingItem.childListingId;
-    //     if (childListingId != 0) {
-    //         LendingListItem storage childLendingItem = s.aavegotchiLenderLendingListItem[_status][childListingId];
-    //         childLendingItem.parentListingId = lendingItem.parentListingId;
-    //     }
-
-    //     if (s.aavegotchiLenderLendingHead[_lender][_status] == _listingId) {
-    //         s.aavegotchiLenderLendingHead[_lender][_status] = lendingItem.childListingId;
-    //     }
-    //     lendingItem.listingId = 0;
-    //     lendingItem.parentListingId = 0;
-    //     lendingItem.childListingId = 0;
-    // }
 }
