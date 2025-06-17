@@ -677,25 +677,25 @@ export async function addERC1155Categories(
     });
   }
 
-  const txAddCategories = await erc1155MarketplaceFacet.setERC1155Categories(
-    erc1155Categories
-  );
-  const receipt = await ethers.provider.waitForTransaction(
-    txAddCategories.hash,
-    1
-  );
-  if (receipt.status !== 1) {
-    throw new Error(
-      `Adding ERC1155 categories failed. Tx: ${txAddCategories.hash}`
-    );
-  }
+  // const txAddCategories = await erc1155MarketplaceFacet.setERC1155Categories(
+  //   erc1155Categories
+  // );
+  // const receipt = await ethers.provider.waitForTransaction(
+  //   txAddCategories.hash,
+  //   1
+  // );
+  // if (receipt.status !== 1) {
+  //   throw new Error(
+  //     `Adding ERC1155 categories failed. Tx: ${txAddCategories.hash}`
+  //   );
+  // }
 
-  console.log(
-    "Adding ERC1155 categories gas used::" +
-      strDisplay(receipt.gasUsed) +
-      ` (tx: ${txAddCategories.hash})`
-  );
-  totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+  // console.log(
+  //   "Adding ERC1155 categories gas used::" +
+  //     strDisplay(receipt.gasUsed) +
+  //     ` (tx: ${txAddCategories.hash})`
+  // );
+  // totalGasUsed = totalGasUsed.add(receipt.gasUsed);
   return totalGasUsed;
 }
 
@@ -734,18 +734,18 @@ export async function addERC721Categories(
       category: 5,
     },
   ];
-  const tx = await erc721MarketplaceFacet.setERC721Categories(erc721Categories);
-  const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
-  if (receipt.status !== 1) {
-    throw new Error(`Adding ERC721 categories failed. Tx: ${tx.hash}`);
-  }
+  // const tx = await erc721MarketplaceFacet.setERC721Categories(erc721Categories);
+  // const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
+  // if (receipt.status !== 1) {
+  //   throw new Error(`Adding ERC721 categories failed. Tx: ${tx.hash}`);
+  // }
 
-  console.log(
-    "Adding ERC721 categories gas used::" +
-      strDisplay(receipt.gasUsed) +
-      ` (tx: ${tx.hash})`
-  );
-  totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+  // console.log(
+  //   "Adding ERC721 categories gas used::" +
+  //     strDisplay(receipt.gasUsed) +
+  //     ` (tx: ${tx.hash})`
+  // );
+  // totalGasUsed = totalGasUsed.add(receipt.gasUsed);
   return totalGasUsed;
 }
 

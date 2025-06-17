@@ -40,26 +40,6 @@ contract ERC721MarketplaceFacet is Modifiers {
     ///@dev Is sent in tandem with ERC721ExecutedListing
     event ERC721ExecutedToRecipient(uint256 indexed listingId, address indexed buyer, address indexed recipient);
 
-    struct Category {
-        address erc721TokenAddress;
-        uint256 category; // 0,1,2,3 == Aavegotchi diamond, 4 == Realm diamond.
-        // uint256 status; can add this in later if necessary
-    }
-
-    ///@notice Allow the aavegotchi diamond owner or DAO to set the category details for different types of ERC721 NFTs
-    ///@dev This function is deprecated on Geist and will be removed in the future.
-    ///@param _categories An array of structs where each struct contains details about each ERC721 category //erc721TokenAddress and category
-    function setERC721Categories(Category[] calldata _categories) external onlyOwnerOrItemManager {
-        for (uint256 i; i < _categories.length; i++) {
-            uint256 category = _categories[i].category;
-            address tokenAddress = _categories[i].erc721TokenAddress;
-
-            if (tokenAddress != address(this)) revert("ERC721Marketplace: Not callable on Aavegotchi contract");
-
-            s.erc721Categories[tokenAddress][0] = category;
-        }
-    }
-
     ///@notice Allow an ERC721 owner to list his NFT for sale
     ///@dev If the NFT has been listed before,it cancels it and replaces it with the new one
     ///@dev NFTs that are listed are immediately locked

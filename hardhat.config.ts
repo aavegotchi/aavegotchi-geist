@@ -42,33 +42,13 @@ export default {
   etherscan: {
     apiKey: {
       // matic: process.env.POLYGON_API_KEY,
-      polter: "empty",
-      geist: "empty",
       baseSepolia: process.env.BASE_API_KEY,
     },
-    customChains: [
-      {
-        network: "polter",
-        chainId: 631571,
-        urls: {
-          apiURL: "https://polter-testnet.explorer.alchemy.com/api",
-          browserURL: "https://polter-testnet.explorer.alchemy.com",
-        },
-      },
-      {
-        network: "geist",
-        chainId: 63157,
-        urls: {
-          apiURL: "https://geist-mainnet.explorer.alchemy.com/api",
-          browserURL: "https://geist-mainnet.explorer.alchemy.com",
-        },
-      },
-    ],
   },
   networks: {
     hardhat: {
       forking: {
-        url: process.env.GEIST_URL,
+        url: process.env.BASE_SEPOLIA_RPC_URL,
         // timeout: 12000000,
         blockNumber: 1743308,
       },
@@ -100,14 +80,6 @@ export default {
     },
     amoy: {
       url: process.env.AMOY_URL,
-      accounts: [process.env.SECRET],
-    },
-    polter: {
-      url: process.env.POLTER_TESTNET_URL,
-      accounts: [process.env.SECRET],
-    },
-    geist: {
-      url: process.env.GEIST_URL,
       accounts: [process.env.SECRET],
     },
     baseSepolia: {
