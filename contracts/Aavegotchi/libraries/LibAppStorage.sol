@@ -329,8 +329,6 @@ struct AppStorage {
     uint32 nextGotchiListingId;
     mapping(uint32 => GotchiLending) gotchiLendings;
     mapping(uint32 => uint32) aavegotchiToListingId;
-    // mapping(address => uint32[]) lentTokenIds;
-
     Whitelist[] whitelists;
     // If zero, then the user is not whitelisted for the given whitelist ID. Otherwise, this represents the position of the user in the whitelist + 1
     mapping(uint32 => mapping(address => uint256)) isWhitelisted; // whitelistId => whitelistAddress => isWhitelisted
