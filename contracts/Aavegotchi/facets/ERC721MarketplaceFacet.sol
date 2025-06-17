@@ -54,24 +54,10 @@ contract ERC721MarketplaceFacet is Modifiers {
             uint256 category = _categories[i].category;
             address tokenAddress = _categories[i].erc721TokenAddress;
 
-            //Categories should be above 4 to prevent interference w/ Gotchi diamond
-            require(category > 3, "ERC721Marketplace: Added category should be above 3");
-
-            if (tokenAddress != address(this)) {
-                require(s.categoryToTokenAddress[category] == address(0), "ERC721Marketplace: Category has already been set");
-            }
+            if (tokenAddress != address(this)) revert("ERC721Marketplace: Not callable on Aavegotchi contract");
 
             s.erc721Categories[tokenAddress][0] = category;
-            s.categoryToTokenAddress[category] = tokenAddress;
         }
-    }
-
-    ///@notice Query the category of an NFT
-    ///@param _erc721TokenAddress The contract address of the NFT to query
-    ///@param _erc721TokenId The identifier of the NFT to query
-    ///@return category_ Category of the NFT // 0 == portal, 1 == vrf pending, 2 == open portal, 3 == Aavegotchi 4 == Realm.
-    function getERC721Category(address _erc721TokenAddress, uint256 _erc721TokenId) public view returns (uint256 category_) {
-        category_ = LibSharedMarketplace.getERC721Category(_erc721TokenAddress, _erc721TokenId);
     }
 
     ///@notice Allow an ERC721 owner to list his NFT for sale
@@ -121,6 +107,7 @@ contract ERC721MarketplaceFacet is Modifiers {
     function createERC721Listing(
         address _erc721TokenAddress,
         uint256 _erc721TokenId,
+        uint256 _category,
         uint256 _priceInWei,
         uint16[2] memory _principalSplit,
         address _affiliate,
@@ -155,7 +142,13 @@ contract ERC721MarketplaceFacet is Modifiers {
         s.nextERC721ListingId++;
         uint256 listingId = s.nextERC721ListingId;
 
-        uint256 category = LibSharedMarketplace.getERC721Category(_erc721TokenAddress, _erc721TokenId);
+        uint256 category;
+        if (_erc721TokenAddress == address(this)) {
+            category = LibAavegotchi.getAavegotchi(s.aavegotchis[_erc721TokenId]).status;
+        } else {
+            category = _category;
+        }
+
         require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721Marketplace: Cannot list a portal that is pending VRF");
 
         uint256 oldListingId = s.erc721TokenToListingId[_erc721TokenAddress][_erc721TokenId][msgSender];
@@ -178,7 +171,6 @@ contract ERC721MarketplaceFacet is Modifiers {
             whitelistId: _whitelistId
         });
 
-        LibERC721Marketplace.addERC721ListingItem(msgSender, category, "listed", listingId);
         emit ERC721ListingAdd(listingId, msgSender, _erc721TokenAddress, _erc721TokenId, category, _priceInWei);
 
         if (_affiliate != address(0)) {
@@ -306,7 +298,6 @@ contract ERC721MarketplaceFacet is Modifiers {
 
         listing.timePurchased = block.timestamp;
         LibERC721Marketplace.removeERC721ListingItem(_listingId, seller);
-        LibERC721Marketplace.addERC721ListingItem(seller, listing.category, "purchased", _listingId);
 
         address[] memory royalties;
         uint256[] memory royaltyShares;
