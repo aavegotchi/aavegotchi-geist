@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.1;
 
-import {LibAavegotchi} from "../libraries/LibAavegotchi.sol";
+import {LibAavegotchi, AavegotchiInfo} from "../libraries/LibAavegotchi.sol";
 import {IERC721} from "../../shared/interfaces/IERC721.sol";
 import {IERC20} from "../../shared/interfaces/IERC20.sol";
 import {IERC165} from "../../shared/interfaces/IERC165.sol";
@@ -68,8 +68,8 @@ contract ERC721MarketplaceFacet is Modifiers {
     ///@param _erc721TokenId The identifier of the NFT to be listed
     ///@param _priceInWei The cost price of the NFT in $GHST
 
-    function addERC721Listing(address _erc721TokenAddress, uint256 _erc721TokenId, uint256 _priceInWei) external {
-        createERC721Listing(_erc721TokenAddress, _erc721TokenId, _priceInWei, [10000, 0], address(0), 0);
+    function addERC721Listing(address _erc721TokenAddress, uint256 _erc721TokenId, uint256 _category, uint256 _priceInWei) external {
+        createERC721Listing(_erc721TokenAddress, _erc721TokenId, _category, _priceInWei, [10000, 0], address(0), 0);
     }
 
     ///@notice Allow an ERC721 owner to list his NFT for sale
@@ -84,11 +84,12 @@ contract ERC721MarketplaceFacet is Modifiers {
     function addERC721ListingWithSplit(
         address _erc721TokenAddress,
         uint256 _erc721TokenId,
+        uint256 _category,
         uint256 _priceInWei,
         uint16[2] memory _principalSplit,
         address _affiliate
     ) external {
-        createERC721Listing(_erc721TokenAddress, _erc721TokenId, _priceInWei, _principalSplit, _affiliate, 0);
+        createERC721Listing(_erc721TokenAddress, _erc721TokenId, _category, _priceInWei, _principalSplit, _affiliate, 0);
     }
 
     //@dev Not implemented in UI yet. Do not use unless you don't want anyone purchasing your NFT.
@@ -96,12 +97,13 @@ contract ERC721MarketplaceFacet is Modifiers {
     function addERC721ListingWithWhitelist(
         address _erc721TokenAddress,
         uint256 _erc721TokenId,
+        uint256 _category,
         uint256 _priceInWei,
         uint16[2] memory _principalSplit,
         address _affiliate,
         uint32 _whitelistId
     ) external {
-        createERC721Listing(_erc721TokenAddress, _erc721TokenId, _priceInWei, _principalSplit, _affiliate, _whitelistId);
+        createERC721Listing(_erc721TokenAddress, _erc721TokenId, _category, _priceInWei, _principalSplit, _affiliate, _whitelistId);
     }
 
     function createERC721Listing(
@@ -144,7 +146,8 @@ contract ERC721MarketplaceFacet is Modifiers {
 
         uint256 category;
         if (_erc721TokenAddress == address(this)) {
-            category = LibAavegotchi.getAavegotchi(s.aavegotchis[_erc721TokenId]).status;
+            AavegotchiInfo memory aavegotchiInfo = LibAavegotchi.getAavegotchi(_erc721TokenId);
+            category = aavegotchiInfo.status;
         } else {
             category = _category;
         }
@@ -376,8 +379,9 @@ contract ERC721MarketplaceFacet is Modifiers {
     function cancelERC721Listings(uint256[] calldata _listingIds) external onlyOwner {
         for (uint256 i; i < _listingIds.length; i++) {
             uint256 listingId = _listingIds[i];
-            ListingListItem storage listingItem = s.erc721ListingListItem[listingId];
-            require(listingItem.listingId != 0, "ERC721Marketplace: listingId does not exist");
+            // ListingListItem storage listingItem = s.erc721ListingListItem[listingId];
+            // require(listingItem.listingId != 0, "ERC721Marketplace: listingId does not exist");
+            require(s.erc721Listings[listingId].timeCreated != 0, "ERC721Marketplace: listingId does not exist");
             ERC721Listing storage listing = s.erc721Listings[listingId];
             listing.cancelled = true;
             emit LibERC721Marketplace.ERC721ListingCancelled(listingId, listing.category, block.number);

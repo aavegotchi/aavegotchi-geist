@@ -13,12 +13,12 @@ library LibERC721Marketplace {
 
     function cancelERC721Listing(uint256 _listingId, address _owner) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();
-        ListingListItem storage listingItem = s.erc721ListingListItem[_listingId];
-        if (listingItem.listingId == 0) {
-            return;
-        }
+        // ListingListItem storage listingItem = s.erc721ListingListItem[_listingId];
+        // if (listingItem.listingId == 0) {
+        // return;
+        // }
         ERC721Listing storage listing = s.erc721Listings[_listingId];
-        if (listing.cancelled == true || listing.timePurchased != 0) {
+        if (listing.cancelled == true || listing.timePurchased != 0 || listing.timeCreated == 0) {
             return;
         }
         require(listing.seller == _owner, "Marketplace: owner not seller");

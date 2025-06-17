@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.1;
 
-import {LibAavegotchi} from "../libraries/LibAavegotchi.sol";
+import {LibAavegotchi, AavegotchiInfo} from "../libraries/LibAavegotchi.sol";
 import {LibBuyOrder} from "../libraries/LibBuyOrder.sol";
 import {LibERC721Marketplace} from "../libraries/LibERC721Marketplace.sol";
 import {LibERC20} from "../../shared/libraries/LibERC20.sol";
@@ -115,18 +115,19 @@ contract ERC721BuyOrderFacet is Modifiers {
         uint256 ghstBalance = IERC20(s.ghstContract).balanceOf(sender);
         require(ghstBalance >= _priceInWei, "ERC721BuyOrder: Not enough GHST!");
 
-        uint256 category;
+        // Aavegotchi-specific validation
         if (_erc721TokenAddress == address(this)) {
-            category = LibAavegotchi.getAavegotchi(s.aavegotchis[_erc721TokenId]).status;
+            AavegotchiInfo memory aavegotchiInfo = LibAavegotchi.getAavegotchi(_erc721TokenId);
+            uint256 category = aavegotchiInfo.status;
             require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721BuyOrder: Cannot buy a portal that is pending VRF");
-        } else {
-            category = _category;
+            require(category == _category, "ERC721BuyOrder: Category mismatch");
+
+            if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
+                require(_validationOptions.length == 3, "ERC721BuyOrder: Not enough validation options for aavegotchi");
+            }
         }
 
         require(sender != IERC721(_erc721TokenAddress).ownerOf(_erc721TokenId), "ERC721BuyOrder: Owner can't be buyer");
-        if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
-            require(_validationOptions.length == 3, "ERC721BuyOrder: Not enough validation options for aavegotchi");
-        }
 
         uint256 oldBuyOrderId = s.buyerToBuyOrderId[_erc721TokenAddress][_erc721TokenId][sender];
         if (oldBuyOrderId != 0) {
@@ -170,7 +171,7 @@ contract ERC721BuyOrderFacet is Modifiers {
             sender,
             _erc721TokenAddress,
             _erc721TokenId,
-            category,
+            _category,
             _priceInWei,
             _duration,
             _validationHash,
@@ -212,7 +213,8 @@ contract ERC721BuyOrderFacet is Modifiers {
 
         if (erc721BuyOrder.erc721TokenAddress == address(this)) {
             // disable for gotchi in lending
-            uint256 category = LibAavegotchi.getAavegotchi(s.aavegotchis[_erc721TokenId]).status;
+            AavegotchiInfo memory aavegotchiInfo = LibAavegotchi.getAavegotchi(_erc721TokenId);
+            uint256 category = aavegotchiInfo.status;
             if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
                 require(!LibGotchiLending.isAavegotchiLent(uint32(_erc721TokenId)), "ERC721BuyOrder: Not supported for aavegotchi in lending");
             }
