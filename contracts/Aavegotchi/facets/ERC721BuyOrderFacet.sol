@@ -82,25 +82,6 @@ contract ERC721BuyOrderFacet is Modifiers {
         }
     }
 
-    function getERC721BuyOrderIdsByTokenId(
-        address _erc721TokenAddress,
-        uint256 _erc721TokenId
-    ) external view returns (uint256[] memory buyOrderIds_) {
-        buyOrderIds_ = s.erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId];
-    }
-
-    function getERC721BuyOrdersByTokenId(
-        address _erc721TokenAddress,
-        uint256 _erc721TokenId
-    ) external view returns (ERC721BuyOrder[] memory buyOrders_) {
-        uint256[] memory buyOrderIds = s.erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId];
-        uint256 length = buyOrderIds.length;
-        buyOrders_ = new ERC721BuyOrder[](length);
-        for (uint256 i; i < length; i++) {
-            buyOrders_[i] = s.erc721BuyOrders[buyOrderIds[i]];
-        }
-    }
-
     function placeERC721BuyOrder(
         address _erc721TokenAddress,
         uint256 _erc721TokenId,
@@ -147,9 +128,6 @@ contract ERC721BuyOrderFacet is Modifiers {
         s.nextERC721BuyOrderId++;
         uint256 buyOrderId = s.nextERC721BuyOrderId;
 
-        s.erc721TokenToBuyOrderIdIndexes[_erc721TokenAddress][_erc721TokenId][buyOrderId] = s
-        .erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId].length;
-        s.erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId].push(buyOrderId);
         s.buyerToBuyOrderId[_erc721TokenAddress][_erc721TokenId][sender] = buyOrderId;
 
         bytes32 _validationHash = LibBuyOrder.generateValidationHash(_erc721TokenAddress, _erc721TokenId, _validationOptions);
