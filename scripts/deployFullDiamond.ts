@@ -110,7 +110,7 @@ const CONFIG_PATH = path.join(__dirname, "../deployment-config.json");
 // Load the deployment configuration specific to the current chainId
 export function loadDeploymentConfig(
   chainId: number,
-  useFreshDeploy: boolean = false
+  useFreshDeploy: boolean = true
 ): DeploymentConfig {
   if (useFreshDeploy) {
     return {
@@ -558,6 +558,7 @@ async function uploadAllSvgs(
   }
 
   console.log("Associating sleeves svgs with body wearable svgs.");
+
   const tx = await svgFacet.setSleeves(sleevesInput);
   const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
   if (receipt.status !== 1) {
@@ -780,33 +781,33 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
     chainId = 31337;
   }
 
-  const deploymentConfig = loadDeploymentConfig(chainId, false);
+  const deploymentConfig = loadDeploymentConfig(chainId, true);
 
   if (deploymentConfig.chainId === undefined) {
     deploymentConfig.chainId = chainId;
   }
 
-  const ghstStakingDiamondAddress =
-    deploymentConfig.ghstStakingDiamondAddress ||
-    "0xae83d5fc564Ef58224e934ba4Df72a100d5082a0";
-  const realmDiamondAddress =
-    deploymentConfig.realmDiamondAddress ||
-    "0x5a4faEb79951bAAa0866B72fD6517E693c8E4620";
-  const installationDiamondAddress =
-    deploymentConfig.installationDiamondAddress ||
-    "0x514b7c55FB3DFf3533B58D85CD25Ba04bb30612D";
-  const tileDiamondAddress =
-    deploymentConfig.tileDiamondAddress ||
-    "0xCa6F4Ef19a1Beb9BeF12f64b395087E5680bcB22";
-  const fakeGotchiArtDiamondAddress =
-    deploymentConfig.fakeGotchiArtDiamondAddress ||
-    "0x330088c3372f4F78cF023DF16E1e1564109191dc";
-  const fakeGotchiCardDiamondAddress =
-    deploymentConfig.fakeGotchiCardDiamondAddress ||
-    "0x9E282FE4a0be6A0C4B9f7d9fEF10547da35c52EA";
+  // const ghstStakingDiamondAddress =
+  //   deploymentConfig.ghstStakingDiamondAddress ||
+  //   "0xae83d5fc564Ef58224e934ba4Df72a100d5082a0";
+  // const realmDiamondAddress =
+  //   deploymentConfig.realmDiamondAddress ||
+  //   "0x5a4faEb79951bAAa0866B72fD6517E693c8E4620";
+  // const installationDiamondAddress =
+  //   deploymentConfig.installationDiamondAddress ||
+  //   "0x514b7c55FB3DFf3533B58D85CD25Ba04bb30612D";
+  // const tileDiamondAddress =
+  //   deploymentConfig.tileDiamondAddress ||
+  //   "0xCa6F4Ef19a1Beb9BeF12f64b395087E5680bcB22";
+  // const fakeGotchiArtDiamondAddress =
+  //   deploymentConfig.fakeGotchiArtDiamondAddress ||
+  //   "0x330088c3372f4F78cF023DF16E1e1564109191dc";
+  // const fakeGotchiCardDiamondAddress =
+  //   deploymentConfig.fakeGotchiCardDiamondAddress ||
+  //   "0x9E282FE4a0be6A0C4B9f7d9fEF10547da35c52EA";
 
-  const name = "Test";
-  const symbol = "TEST";
+  // const name = "Test";
+  // const symbol = "TEST";
 
   const signer = await getRelayerSigner(hre);
   const ownerAddress = await signer.getAddress();

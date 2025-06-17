@@ -2,6 +2,7 @@ import { SideDimensions, Dimensions } from "../scripts/itemTypeHelpers";
 
 import { sideViewDimensions as forge1 } from "../data/itemTypes/forgewearablesSideViews";
 import { sideViewDimensions as forge2 } from "../data/itemTypes/forgewearablesSideViews2";
+import { sideViewDimensions as raffle6 } from "../data/itemTypes/raffle6wearablesSideViews";
 import { sideViewDimensions as gotchigangSideviews } from "../data/itemTypes/gotchigangwearableSideViews";
 export const sideViewDimensions1: SideDimensions[] = [
   {
@@ -6395,6 +6396,8 @@ export let allSideViewDimensions: SideDimensions[] = sideViewDimensions1.concat(
   sideViewDimensions7,
   sideViewDimensions8,
   sideViewDimensions9,
+  raffle6,
+  gotchigangSideviews,
   forge1,
   forge2
 );

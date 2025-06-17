@@ -280,6 +280,7 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
   }
 
   if (testing) {
+    xpRelayer = xpRelayerAddress;
     if (hre.network.config.chainId !== 31337) {
       console.log("Using Hardhat");
 

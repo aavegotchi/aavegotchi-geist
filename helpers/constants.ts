@@ -96,6 +96,11 @@ interface NetworkAddresses {
   ghstStakingDiamond?: string;
   ggSkinsDiamond?: string;
   ggProfilesDiamond?: string;
+  //REALM
+  fud?: string;
+  fomo?: string;
+  alpha?: string;
+  kek?: string;
 }
 
 // export const vrfVars: Record<number, VRFVars> = {
@@ -172,6 +177,10 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     ghstStakingDiamond: "0xD0dCC1d1E22D490e5270631787E1866E773b16C7",
     ggSkinsDiamond: "0xab1e7e320f02107bf2748179ed0c0bcfd5532e4a",
     ggProfilesDiamond: "0x15517138573ce459943da529c9530ef76a22b713",
+    fud: "0x98810DD548cd39213A609ef373c7eBD5524b32F8",
+    fomo: "0xe67A189A9efF5B72B236ECf7B1Ac249d3496e31E",
+    alpha: "0x48bAC15D5561a92E232523ed3660A884C21E93c3",
+    kek: "0x03f2D8689177d2ebc9686C01065818c02C053f6a",
   },
 
   8453: {

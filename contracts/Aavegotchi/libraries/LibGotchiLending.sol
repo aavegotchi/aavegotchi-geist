@@ -247,8 +247,7 @@ library LibGotchiLending {
         whitelistBorrowerGotchiSet.add(_erc721TokenId);
 
         if (lending.initialCost > 0) {
-            (bool success, ) = payable(lender).call{value: _initialCost}("");
-            require(success, "ETH transfer to lender failed");
+            LibERC20.transferFrom(s.ghstContract, _borrower, lender, _initialCost);
         }
 
         emit GotchiLendingExecute(_listingId);

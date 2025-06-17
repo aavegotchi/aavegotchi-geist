@@ -29,7 +29,7 @@ export const wearablesSvgs = [
   bodyWearable("22_CaptainAaveSuit"), // bodyWearable("22_CaptainAaveSuit"),
   wearable("23_CaptainAaveShield"),
   wearable("24_ThaaveHelmet"),
-  bodyWearable("25_ThaaveSuit"), // bodyWearable("25_ThaaveSuit"),
+  wearable("25_ThaaveSuit"), // bodyWearable("25_ThaaveSuit"),
   wearable("26_ThaaveHammer"),
   wearable("27_MarcHair"),
   bodyWearable("28_MarcOutfit"), // bodyWearable("28_MarcOutfit"),
@@ -438,7 +438,7 @@ export const wearablesSvgs = [
 ];
 
 export const sleeveSvgs = [
-  "0_VoidRight",
+  //"0_VoidRight",
   // '1_CamoHatRight',
   // '2_CamoPantsRight', // body but doesn't have sleeves
   // '3_MK2GrenadeRight',
@@ -446,7 +446,7 @@ export const sleeveSvgs = [
   // "5_SnowCamoPantsRight", // body but no sleeves
   // '6_M67GrenadeRight',
   // '7_MarineCapRight',
-  // sleeves("8_MarineJacket"), // sleeves("8_MarineJacket"),
+  sleeves("8_MarineJacket"), // sleeves("8_MarineJacket"),
   // '9_WalkieTalkie',
   // '10_LinkWhiteHatRight',
   sleeves("11_MessDress"), // sleeves("11_MessDress"),
@@ -463,7 +463,7 @@ export const sleeveSvgs = [
   sleeves("22_CaptainAaveSuit"), // sleeves("22_CaptainAaveSuit"),
   // '23_CaptainAaveShieldRight',
   // '24_ThaaveHelmetRight',
-  // sleeves("25_ThaaveSuit"),
+  //sleeves("25_ThaaveSuit"),
   // '26_ThaaveHammerRight',
   // '27_MarcHairRight',
   sleeves("28_MarcOutfit"), // sleeves("28_MarcOutfit"),
@@ -629,8 +629,8 @@ export const sleeveSvgs = [
   sleeves("307_FairyWings"),
   sleeves("310_PlateArmor"),
   sleeves("314_YoroiArmor"),
-  "sleeves gap",
-  "sleeves gap",
+  //"sleeves gap",
+  // "sleeves gap",
   sleeves("316_MarineJacket"),
   sleeves("317_ThaaveSuit"),
   sleeves("318_TrackSuit"),
@@ -696,9 +696,9 @@ function sleeves(name: string) {
 }
 
 export const allSleeves: Array<BigNumberish> = [
-  8, 11, 15, 16, 19, 22, 25, 28, 31, 37, 43, 46, 50, 54, 56, 74, 85, 91, 102,
-  105, 109, 112, 114, 115, 125, 135, 138, 150, 160, 162, 203, 213, 220, 222,
-  231, 234, 241, 244, 248, 250, 253, 256, 258, 293, 297, 303, 307, 310, 314,
-  316, 317, 318, 350, 362, 366, 372, 373, 383,
+  8, 11, 15, 16, 19, 22, 28, 31, 37, 43, 46, 50, 54, 56, 74, 85, 91, 102, 105,
+  109, 112, 114, 115, 125, 135, 138, 150, 160, 162, 203, 213, 220, 222, 231,
+  234, 241, 244, 248, 250, 253, 256, 258, 293, 297, 303, 307, 310, 314, 316,
+  317, 318, 350, 362, 366, 372, 373, 383,
 ];
 /* exports.wearablesSvgs = wearablesSvgs */

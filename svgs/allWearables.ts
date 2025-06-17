@@ -130,8 +130,8 @@ export function getWearables() {
     "returning",
     wearables.length,
     "total wearables and",
-    //sleeves has 2 gaps onchain
-    sleeves.length + 2,
+    //sleeves has 2 gaps onchain but not for new deployments
+    sleeves.length,
     "total sleeves and",
     wearablesRightSvgs.length,
     "total side views"

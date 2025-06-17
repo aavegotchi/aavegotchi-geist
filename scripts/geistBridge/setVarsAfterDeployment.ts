@@ -88,6 +88,15 @@ async function setVarsAfterDeployment() {
   const tx = await whitelistTx.wait();
   gasused = gasused.add(tx.gasUsed);
 
+  //set revenue token for lendings
+  const lendingGetterAndSetterFacet = await ethers.getContractAt(
+    "LendingGetterAndSetterFacet",
+    c.aavegotchiDiamond!,
+    signer
+  );
+  const revenueTokens = [c.fud!, c.fomo!, c.alpha!, c.kek!];
+  await lendingGetterAndSetterFacet.allowRevenueTokens(revenueTokens);
+
   console.log("Total gas used: " + strDisplay(gasused));
 
   console.log("Done");
