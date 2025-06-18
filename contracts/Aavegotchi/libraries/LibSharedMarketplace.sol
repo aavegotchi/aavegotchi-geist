@@ -111,7 +111,7 @@ library LibSharedMarketplace {
 
         //other contracts can only support 1 category
         if (_erc721TokenAddress != address(this)) {
-            category_ = s.erc721Categories[_erc721TokenAddress][0];
+            category_ = 0;
         } else {
             category_ = s.aavegotchis[_erc721TokenId].status; // 0 == portal, 1 == vrf pending, 2 == open portal, 3 == Aavegotchi
         }

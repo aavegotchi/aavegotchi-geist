@@ -105,15 +105,6 @@ contract ERC721MarketplaceFacet is Modifiers {
             "ERC721Marketplace: Not approved for transfer"
         );
 
-        //Only unlocked Aavegotchis can be listed
-        if (_erc721TokenAddress == address(this)) {
-            require(s.aavegotchis[_erc721TokenId].locked == false, "ERC721Marketplace: Only callable on unlocked Aavegotchis");
-            require(
-                s.gotchiEquippedDepositsInfo[_erc721TokenId].equippedDelegatedWearablesCount == 0,
-                "ERC721Marketplace: Only callable on Aavegotchis with no delegated wearables equipped"
-            );
-        }
-
         require(_priceInWei >= 1e18, "ERC721Marketplace: price should be 1 GHST or larger");
 
         require(_principalSplit[0] + _principalSplit[1] == 10000, "ERC721Marketplace: Sum of principal splits not 10000");
@@ -124,15 +115,20 @@ contract ERC721MarketplaceFacet is Modifiers {
         s.nextERC721ListingId++;
         uint256 listingId = s.nextERC721ListingId;
 
-        uint256 category;
         if (_erc721TokenAddress == address(this)) {
             AavegotchiInfo memory aavegotchiInfo = LibAavegotchi.getAavegotchi(_erc721TokenId);
-            category = aavegotchiInfo.status;
-        } else {
-            category = _category;
-        }
+            uint256 category = aavegotchiInfo.status;
 
-        require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721Marketplace: Cannot list a portal that is pending VRF");
+            require(_category == aavegotchiInfo.status, "ERC721Marketplace: Category mismatch");
+
+            require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721Marketplace: Cannot list a portal that is pending VRF");
+
+            require(s.aavegotchis[_erc721TokenId].locked == false, "ERC721Marketplace: Only callable on unlocked Aavegotchis");
+            require(
+                s.gotchiEquippedDepositsInfo[_erc721TokenId].equippedDelegatedWearablesCount == 0,
+                "ERC721Marketplace: Only callable on Aavegotchis with no delegated wearables equipped"
+            );
+        }
 
         uint256 oldListingId = s.erc721TokenToListingId[_erc721TokenAddress][_erc721TokenId][msgSender];
         if (oldListingId != 0) {
@@ -144,7 +140,7 @@ contract ERC721MarketplaceFacet is Modifiers {
             seller: msgSender,
             erc721TokenAddress: _erc721TokenAddress,
             erc721TokenId: _erc721TokenId,
-            category: category,
+            category: _category,
             priceInWei: _priceInWei,
             timeCreated: block.timestamp,
             timePurchased: 0,
@@ -154,7 +150,7 @@ contract ERC721MarketplaceFacet is Modifiers {
             whitelistId: _whitelistId
         });
 
-        emit ERC721ListingAdd(listingId, msgSender, _erc721TokenAddress, _erc721TokenId, category, _priceInWei);
+        emit ERC721ListingAdd(listingId, msgSender, _erc721TokenAddress, _erc721TokenId, _category, _priceInWei);
 
         if (_affiliate != address(0)) {
             emit ERC721ListingSplit(listingId, _principalSplit, _affiliate);

@@ -204,12 +204,6 @@ struct GotchiLending {
     uint256 permissions; //0=none, 1=channelling
 }
 
-struct LendingListItem {
-    uint32 parentListingId;
-    uint256 listingId;
-    uint32 childListingId;
-}
-
 struct Whitelist {
     address owner;
     string name;
@@ -314,12 +308,9 @@ struct AppStorage {
     mapping(uint256 => ERC1155Listing) erc1155Listings;
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc1155TokenToListingId;
     uint256 listingFeeInWei;
-    // erc1155Token => (erc1155TypeId => category)
-    mapping(address => mapping(uint256 => uint256)) erc1155Categories;
     uint256 nextERC721ListingId;
     //ERC1155Order[] erc1155MarketOrders;
     mapping(uint256 => ERC721Listing) erc721Listings;
-    mapping(address => mapping(uint256 => uint256)) erc721Categories;
     // erc721 token address, erc721 tokenId, user address => listingId
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc721TokenToListingId;
     mapping(uint256 => uint256) sleeves;
@@ -335,12 +326,6 @@ struct AppStorage {
     uint32 nextGotchiListingId;
     mapping(uint32 => GotchiLending) gotchiLendings;
     mapping(uint32 => uint32) aavegotchiToListingId;
-    mapping(address => uint32[]) lentTokenIds;
-    mapping(address => mapping(uint32 => uint32)) lentTokenIdIndexes; // address => lent token id => index
-    mapping(bytes32 => mapping(uint32 => LendingListItem)) gotchiLendingListItem; // ("listed" or "agreed") => listingId => LendingListItem
-    mapping(bytes32 => uint32) gotchiLendingHead; // ("listed" or "agreed") => listingId
-    mapping(bytes32 => mapping(uint32 => LendingListItem)) aavegotchiLenderLendingListItem; // ("listed" or "agreed") => listingId => LendingListItem
-    mapping(address => mapping(bytes32 => uint32)) aavegotchiLenderLendingHead; // user address => ("listed" or "agreed") => listingId => LendingListItem
     Whitelist[] whitelists;
     // If zero, then the user is not whitelisted for the given whitelist ID. Otherwise, this represents the position of the user in the whitelist + 1
     mapping(uint32 => mapping(address => uint256)) isWhitelisted; // whitelistId => whitelistAddress => isWhitelisted
@@ -359,8 +344,7 @@ struct AppStorage {
     // states for buy orders
     uint256 nextERC721BuyOrderId;
     mapping(uint256 => ERC721BuyOrder) erc721BuyOrders; // buyOrderId => data
-    mapping(address => mapping(uint256 => uint256[])) erc721TokenToBuyOrderIds; // erc721 token address => erc721TokenId => buyOrderIds
-    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) erc721TokenToBuyOrderIdIndexes; // erc721 token address => erc721TokenId => buyOrderId => index
+    //we definitely need this one
     mapping(address => mapping(uint256 => mapping(address => uint256))) buyerToBuyOrderId; // erc721 token address => erc721TokenId => sender => buyOrderId
     // respec
     // mapping(uint32 => uint256) gotchiRespecCount;
