@@ -450,7 +450,8 @@ export function getItemTypes(
 ): ItemTypeOutput[] {
   const result = [];
   for (const itemType of itemTypes) {
-    let maxQuantity: number = rarityLevelToMaxQuantity(itemType.rarityLevel);
+    //wesould not dynamically compu this for new deployments
+    // let maxQuantity: number = rarityLevelToMaxQuantity(itemType.rarityLevel);
 
     let itemTypeOut: ItemTypeOutput = {
       ...itemType,
@@ -458,8 +459,8 @@ export function getItemTypes(
       ghstPrice: ethers.utils.parseEther(
         rarityLevelToGhstPrice(itemType.rarityLevel)
       ),
-      rarityScoreModifier: calculateRarityScoreModifier(maxQuantity),
-      maxQuantity: maxQuantity,
+      rarityScoreModifier: calculateRarityScoreModifier(itemType.maxQuantity!),
+      maxQuantity: itemType.maxQuantity!,
       totalQuantity: 0, //New items always start at 0
       name: itemType.name.trim(), //Trim the name to remove empty spaces
     };

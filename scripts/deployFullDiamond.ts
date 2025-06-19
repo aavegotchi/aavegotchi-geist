@@ -571,128 +571,128 @@ async function uploadAllSvgs(
   return totalGasUsed;
 }
 
-interface ERC1155Category {
-  erc1155TokenAddress: string;
-  erc1155TypeId: BigNumberish;
-  category: number;
-}
+// interface ERC1155Category {
+//   erc1155TokenAddress: string;
+//   erc1155TypeId: BigNumberish;
+//   category: number;
+// }
 
-export async function addERC1155Categories(
-  erc1155MarketplaceFacet: ERC1155MarketplaceFacet,
-  totalGasUsed: BigNumber,
-  ghstStakingDiamondAddress: string,
-  installationDiamondAddress: string,
-  tileDiamondAddress: string,
-  forgeDiamondAddress: string,
-  fakeGotchiCardDiamondAddress: string,
-  ggSkinsDiamondAddress: string,
-  ggProfilesDiamondAddress: string
-) {
-  console.log("Adding ERC1155 categories");
-  const erc1155Categories: ERC1155Category[] = [];
-  for (let i = 0; i < 6; i++) {
-    erc1155Categories.push({
-      erc1155TokenAddress: ghstStakingDiamondAddress,
-      erc1155TypeId: i,
-      category: 3,
-    });
-  }
-  [
-    1, 141, 142, 143, 144, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
-    156,
-  ].forEach((id) => {
-    erc1155Categories.push({
-      erc1155TokenAddress: installationDiamondAddress,
-      erc1155TypeId: id,
-      category: 4,
-    });
-  });
-  Array.from({ length: 31 }, (_, index) => index + 1).forEach((id) => {
-    erc1155Categories.push({
-      erc1155TokenAddress: tileDiamondAddress,
-      erc1155TypeId: id,
-      category: 5,
-    });
-  });
-  erc1155Categories.push({
-    erc1155TokenAddress: fakeGotchiCardDiamondAddress,
-    erc1155TypeId: 0,
-    category: 6,
-  });
+// export async function addERC1155Categories(
+//   erc1155MarketplaceFacet: ERC1155MarketplaceFacet,
+//   totalGasUsed: BigNumber,
+//   ghstStakingDiamondAddress: string,
+//   installationDiamondAddress: string,
+//   tileDiamondAddress: string,
+//   forgeDiamondAddress: string,
+//   fakeGotchiCardDiamondAddress: string,
+//   ggSkinsDiamondAddress: string,
+//   ggProfilesDiamondAddress: string
+// ) {
+//   console.log("Adding ERC1155 categories");
+//   const erc1155Categories: ERC1155Category[] = [];
+//   for (let i = 0; i < 6; i++) {
+//     erc1155Categories.push({
+//       erc1155TokenAddress: ghstStakingDiamondAddress,
+//       erc1155TypeId: i,
+//       category: 3,
+//     });
+//   }
+//   [
+//     1, 141, 142, 143, 144, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
+//     156,
+//   ].forEach((id) => {
+//     erc1155Categories.push({
+//       erc1155TokenAddress: installationDiamondAddress,
+//       erc1155TypeId: id,
+//       category: 4,
+//     });
+//   });
+//   Array.from({ length: 31 }, (_, index) => index + 1).forEach((id) => {
+//     erc1155Categories.push({
+//       erc1155TokenAddress: tileDiamondAddress,
+//       erc1155TypeId: id,
+//       category: 5,
+//     });
+//   });
+//   erc1155Categories.push({
+//     erc1155TokenAddress: fakeGotchiCardDiamondAddress,
+//     erc1155TypeId: 0,
+//     category: 6,
+//   });
 
-  const offset = 1_000_000_000;
-  const alloyCategory = 7;
-  const geodesCategory = 9;
-  const essenceCategory = 10;
-  const coresCategory = 11;
-  const alloyIds = [offset];
-  const essenceIds = [offset + 1];
-  const geodeIds = [];
-  for (let i = offset + 2; i < offset + 8; i++) {
-    geodeIds.push(i);
-  }
-  const coreIds = [];
-  for (let i = offset + 8; i < offset + 44; i++) {
-    coreIds.push(i);
-  }
-  const forgeFinalArray = [
-    [alloyCategory, alloyIds],
-    [geodesCategory, geodeIds],
-    [essenceCategory, essenceIds],
-    [coresCategory, coreIds],
-  ];
-  forgeFinalArray.forEach((el) => {
-    const category = el[0] as number;
-    const toAdd = el[1] as number[];
+//   const offset = 1_000_000_000;
+//   const alloyCategory = 7;
+//   const geodesCategory = 9;
+//   const essenceCategory = 10;
+//   const coresCategory = 11;
+//   const alloyIds = [offset];
+//   const essenceIds = [offset + 1];
+//   const geodeIds = [];
+//   for (let i = offset + 2; i < offset + 8; i++) {
+//     geodeIds.push(i);
+//   }
+//   const coreIds = [];
+//   for (let i = offset + 8; i < offset + 44; i++) {
+//     coreIds.push(i);
+//   }
+//   const forgeFinalArray = [
+//     [alloyCategory, alloyIds],
+//     [geodesCategory, geodeIds],
+//     [essenceCategory, essenceIds],
+//     [coresCategory, coreIds],
+//   ];
+//   forgeFinalArray.forEach((el) => {
+//     const category = el[0] as number;
+//     const toAdd = el[1] as number[];
 
-    for (let index = 0; index < toAdd.length; index++) {
-      erc1155Categories.push({
-        erc1155TokenAddress: forgeDiamondAddress,
-        erc1155TypeId: toAdd[index],
-        category: category,
-      });
-    }
-  });
+//     for (let index = 0; index < toAdd.length; index++) {
+//       erc1155Categories.push({
+//         erc1155TokenAddress: forgeDiamondAddress,
+//         erc1155TypeId: toAdd[index],
+//         category: category,
+//       });
+//     }
+//   });
 
-  //ggSkins
-  for (let i = 0; i < 8; i++) {
-    erc1155Categories.push({
-      erc1155TokenAddress: ggSkinsDiamondAddress,
-      erc1155TypeId: i,
-      category: 12,
-    });
-  }
+//   //ggSkins
+//   for (let i = 0; i < 8; i++) {
+//     erc1155Categories.push({
+//       erc1155TokenAddress: ggSkinsDiamondAddress,
+//       erc1155TypeId: i,
+//       category: 12,
+//     });
+//   }
 
-  //ggProfiles
-  for (let i = 0; i < 11; i++) {
-    erc1155Categories.push({
-      erc1155TokenAddress: ggProfilesDiamondAddress,
-      erc1155TypeId: i,
-      category: 13,
-    });
-  }
+//   //ggProfiles
+//   for (let i = 0; i < 11; i++) {
+//     erc1155Categories.push({
+//       erc1155TokenAddress: ggProfilesDiamondAddress,
+//       erc1155TypeId: i,
+//       category: 13,
+//     });
+//   }
 
-  // const txAddCategories = await erc1155MarketplaceFacet.setERC1155Categories(
-  //   erc1155Categories
-  // );
-  // const receipt = await ethers.provider.waitForTransaction(
-  //   txAddCategories.hash,
-  //   1
-  // );
-  // if (receipt.status !== 1) {
-  //   throw new Error(
-  //     `Adding ERC1155 categories failed. Tx: ${txAddCategories.hash}`
-  //   );
-  // }
+//   const txAddCategories = await erc1155MarketplaceFacet.setERC1155Categories(
+//     erc1155Categories
+//   );
+//   const receipt = await ethers.provider.waitForTransaction(
+//     txAddCategories.hash,
+//     1
+//   );
+//   if (receipt.status !== 1) {
+//     throw new Error(
+//       `Adding ERC1155 categories failed. Tx: ${txAddCategories.hash}`
+//     );
+//   }
 
-  // console.log(
-  //   "Adding ERC1155 categories gas used::" +
-  //     strDisplay(receipt.gasUsed) +
-  //     ` (tx: ${txAddCategories.hash})`
-  // );
-  // totalGasUsed = totalGasUsed.add(receipt.gasUsed);
-  return totalGasUsed;
-}
+//   console.log(
+//     "Adding ERC1155 categories gas used::" +
+//       strDisplay(receipt.gasUsed) +
+//       ` (tx: ${txAddCategories.hash})`
+//   );
+//   totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+//   return totalGasUsed;
+// }
 
 export async function setRealmAddress(
   aavegotchiGameFacet: AavegotchiGameFacet,

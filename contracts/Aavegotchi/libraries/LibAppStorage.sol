@@ -439,9 +439,9 @@ contract Modifiers {
         _;
     }
 
-    modifier onlyPolygonOrTesting() {
-        // enabled for polygon only
-        require(block.chainid == 137, "LibAppStorage: Disabled function");
-        _;
-    }
+    // modifier onlyPolygonOrTesting() {
+    //     // enabled for polygon only
+    //     require(block.chainid == 137, "LibAppStorage: Disabled function");
+    //     _;
+    // }
 }

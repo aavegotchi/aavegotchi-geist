@@ -226,12 +226,8 @@ contract AavegotchiGameFacet is Modifiers {
     ///@dev If the NFT(Portal) with identifier `_tokenId` is listed for sale on the baazaar while it is being unlocked, that listing is cancelled
     ///@param _tokenId The identifier of NFT to claim an Aavegotchi from
     ///@param _option The index of the aavegotchi to claim(1-10)
-    ///@param _stakeAmount Minimum amount of collateral tokens needed to be sent to the new aavegotchi escrow contract
-    function claimAavegotchi(
-        uint256 _tokenId,
-        uint256 _option,
-        uint256 _stakeAmount
-    ) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) onlyPolygonOrTesting {
+
+    function claimAavegotchi(uint256 _tokenId, uint256 _option) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
         Aavegotchi storage aavegotchi = s.aavegotchis[_tokenId];
         require(aavegotchi.status == LibAavegotchi.STATUS_OPEN_PORTAL, "AavegotchiGameFacet: Portal not open");
         require(_option < PORTAL_AAVEGOTCHIS_NUM, "AavegotchiGameFacet: Only 10 aavegotchi options available");
@@ -247,15 +243,12 @@ contract AavegotchiGameFacet is Modifiers {
         aavegotchi.interactionCount = 50;
         aavegotchi.claimTime = uint40(block.timestamp);
 
-        // require(_stakeAmount >= option.minimumStake, "AavegotchiGameFacet: _stakeAmount less than minimum stake");
-
         aavegotchi.status = LibAavegotchi.STATUS_AAVEGOTCHI;
         emit ClaimAavegotchi(_tokenId);
 
         address escrow = address(new CollateralEscrow(address(this), _tokenId));
         aavegotchi.escrow = escrow;
         address owner = LibMeta.msgSender();
-        LibERC20.transferFrom(option.collateralType, owner, escrow, _stakeAmount);
         LibERC721Marketplace.cancelERC721Listing(address(this), _tokenId, owner);
     }
 
@@ -265,10 +258,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@param _tokenId the identifier if the NFT to name
     ///@param _name Preferred name to give the claimed aavegotchi
 
-    function setAavegotchiName(
-        uint256 _tokenId,
-        string calldata _name
-    ) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) onlyPolygonOrTesting {
+    function setAavegotchiName(uint256 _tokenId, string calldata _name) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
         require(s.aavegotchis[_tokenId].status == LibAavegotchi.STATUS_AAVEGOTCHI, "AavegotchiGameFacet: Must claim Aavegotchi before setting name");
         string memory lowerName = LibAavegotchi.validateAndLowerName(_name);
         string memory existingName = s.aavegotchis[_tokenId].name;
@@ -378,7 +368,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@notice Allow the current owner of a gotchi to reassign all spent skill points
     ///@dev Reverts if user doesn't have enough Essence to pay for the respec
     ///@param _tokenId Id of the Gotchi to respec
-    function resetSkillPoints(uint32 _tokenId) public onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) onlyPolygonOrTesting {
+    function resetSkillPoints(uint32 _tokenId) public onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
         if (s.aavegotchis[_tokenId].respecCount > 0) {
             ForgeTokenFacet forgeTokenFacet = ForgeTokenFacet(s.forgeDiamond);
             uint256 ESSENCE = 1_000_000_001;

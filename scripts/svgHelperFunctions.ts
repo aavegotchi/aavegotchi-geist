@@ -287,17 +287,17 @@ export async function uploadSvgs(
       console.log(`${svgType} not uploaded, uploading`);
 
       let tx = await svgFacet.storeSvg(svg, svgTypesAndSizes);
-      console.log("tx:", tx.hash);
-      let receipt = await tx.wait();
+      // console.log("tx:", tx.hash);
+      // let receipt = await tx.wait();
 
       //todo:
       deploymentConfig.svgsUploaded![svgType][
         `${svgItemsStart}_${svgItemsEnd}`
       ] = true;
 
-      if (!receipt.status) {
-        throw Error(`Error:: ${tx.hash}`);
-      }
+      // if (!receipt.status) {
+      //   throw Error(`Error:: ${tx.hash}`);
+      // }
     }
 
     // console.log(svgItemsEnd, svg.length);

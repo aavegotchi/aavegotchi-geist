@@ -222,7 +222,7 @@ contract DAOFacet is Modifiers {
     //May overload the block gas limit but worth trying
     ///@notice allow an item manager to create a new Haunt, also uploagding the collateral types,collateral svgs,eyeshape types and eyeshape svgs all in one transaction
     ///@param _payload A struct containing all details needed to be uploaded for a new Haunt
-    function createHauntWithPayload(CreateHauntPayload calldata _payload) external onlyDaoOrOwner onlyPolygonOrTesting returns (uint256 hauntId_) {
+    function createHauntWithPayload(CreateHauntPayload calldata _payload) external onlyDaoOrOwner returns (uint256 hauntId_) {
         uint256 currentHauntId = s.currentHauntId;
         // require(
         //     s.haunts[currentHauntId].totalCount == s.haunts[currentHauntId].hauntMaxSize,

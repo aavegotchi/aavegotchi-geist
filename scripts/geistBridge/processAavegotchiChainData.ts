@@ -632,20 +632,13 @@ async function processFile<
           );
         }
 
-        if (logPrefix === "SubgraphDump" || logPrefix === "HistoricalRecords") {
-          console.log(
-            `[${logPrefix}] SKIPPING transaction for batch ${
-              i + 1
-            } as requested.`
-          );
-        } else {
-          const tx = await contractCall(batch);
-          console.log(
-            `[${logPrefix}] Batch ${i + 1} transaction sent: ${
-              tx.hash
-            }. Waiting for confirmation...`
-          );
-        }
+        const tx = await contractCall(batch);
+        console.log(
+          `[${logPrefix}] Batch ${i + 1} transaction sent: ${
+            tx.hash
+          }. Waiting for confirmation...`
+        );
+        await tx.wait();
 
         console.log(`[${logPrefix}] Batch ${i + 1} transaction confirmed.`);
         successInCurrentBatchAttempt = true;
@@ -958,6 +951,42 @@ async function main() {
   )) as AavegotchiBridgeFacet;
   console.log(`Attached to AavegotchiBridgeFacet at ${bridgeFacet.address}`);
 
+  // Execution Order: 1. Aavegotchi History, 2. Portal Data, 3. ClaimedAt Events
+
+  let historicalSuccess = false;
+  try {
+    console.log(
+      "--- Starting Aavegotchi Historical Records Processing (Fetched from Subgraph) ---"
+    );
+    // Historical data is fetched inside this function as it's a different query
+    historicalSuccess = await processHistoricalAavegotchiDataRecords(
+      bridgeFacet
+    );
+    if (historicalSuccess) {
+      console.log(
+        "--- Aavegotchi Historical Records Processing Completed Successfully ---"
+      );
+    } else {
+      console.error(
+        "--- Aavegotchi Historical Records Processing Failed or Partially Completed ---"
+      );
+    }
+  } catch (error: any) {
+    console.error(
+      "CRITICAL ERROR during Aavegotchi Historical Records Processing:",
+      error.message || error,
+      error.stack
+    );
+    historicalSuccess = false;
+  }
+
+  if (!historicalSuccess) {
+    console.warn(
+      "Skipping further processing due to failure in Aavegotchi Historical Records Processing."
+    );
+    process.exit(1);
+  }
+
   console.log("[Main] Fetching all Portal data once...");
   let portalDataJson: SubgraphAavegotchiOrPortalData_Json[];
   try {
@@ -1004,40 +1033,7 @@ async function main() {
     portalDataSuccess = false; // Ensure it's marked as failed
   }
 
-  let historicalSuccess = false;
   if (portalDataSuccess) {
-    try {
-      console.log(
-        "--- Starting Aavegotchi Historical Records Processing (Fetched from Subgraph) ---"
-      );
-      // Historical data is fetched inside this function as it's a different query
-      historicalSuccess = await processHistoricalAavegotchiDataRecords(
-        bridgeFacet
-      );
-      if (historicalSuccess) {
-        console.log(
-          "--- Aavegotchi Historical Records Processing Completed Successfully ---"
-        );
-      } else {
-        console.error(
-          "--- Aavegotchi Historical Records Processing Failed or Partially Completed ---"
-        );
-      }
-    } catch (error: any) {
-      console.error(
-        "CRITICAL ERROR during Aavegotchi Historical Records Processing:",
-        error.message || error,
-        error.stack
-      );
-      historicalSuccess = false;
-    }
-  } else {
-    console.warn(
-      "Skipping Aavegotchi Historical Records Processing due to failure in Portal Data Processing."
-    );
-  }
-
-  if (historicalSuccess) {
     try {
       console.log(
         "--- Starting Emission of ClaimedAt Events (Using pre-fetched data) ---"

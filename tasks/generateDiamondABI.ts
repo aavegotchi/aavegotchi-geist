@@ -12,8 +12,11 @@ task(
 ).setAction(async () => {
   let files = fs.readdirSync("." + basePath);
   let abi: AbiCoder[] = [];
-  for (const file of files) {
-    const jsonFile = file.replace("sol", "json");
+  for (let file of files) {
+    let jsonFile = file.replace("sol", "json");
+    if (file.includes("VRF")) {
+      jsonFile = "VrfFacet.json";
+    }
     let json = fs.readFileSync(`./artifacts/${basePath}${file}/${jsonFile}`);
     json = JSON.parse(json);
     abi.push(...json.abi);
