@@ -101,6 +101,8 @@ interface NetworkAddresses {
   fomo?: string;
   alpha?: string;
   kek?: string;
+  gltrAddress?: string;
+  aavegotchiDaoAddress?: string;
 }
 
 // export const vrfVars: Record<number, VRFVars> = {
@@ -181,6 +183,8 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     fomo: "0xe67A189A9efF5B72B236ECf7B1Ac249d3496e31E",
     alpha: "0x48bAC15D5561a92E232523ed3660A884C21E93c3",
     kek: "0x03f2D8689177d2ebc9686C01065818c02C053f6a",
+    gltrAddress: "0x0dBFBABa88b32a96ee2c9b60007ddc03D0F1F379",
+    aavegotchiDaoAddress: "0x0000000000000000000000000000000000000000",
   },
 
   8453: {

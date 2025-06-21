@@ -208,6 +208,7 @@ async function deployForgeDiamond(
       "ForgeTokenFacet",
       "ForgeVRFFacet",
       "ForgeDAOFacet",
+      "ForgeWriteFacet",
     ],
     signer,
     args: [
@@ -1136,7 +1137,11 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
 
   if (!deploymentConfig.forgePropertiesSet) {
     console.log("Setting Forge Properties");
-    await setForgeProperties(forgeDiamond.address, signer);
+    await setForgeProperties(
+      forgeDiamond.address,
+      aavegotchiDiamond.address,
+      signer
+    );
     deploymentConfig.forgePropertiesSet = true;
     saveDeploymentConfig(deploymentConfig);
     console.log("Forge properties set.");

@@ -6,6 +6,8 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { uploadOrUpdateSvg } from "../scripts/svgHelperFunctions";
 import { SvgFacet } from "../typechain";
 import { getRelayerSigner } from "../scripts/helperFunctions";
+import { loadDeploymentConfig } from "../scripts/deployFullDiamond";
+import { varsForNetwork } from "../helpers/constants";
 
 export interface UpdateSvgsTaskArgs {
   svgIds: string;
@@ -20,6 +22,7 @@ task("updateSvgs", "Updates SVGs, given svgType and a list of IDs")
 
   .setAction(
     async (taskArgs: UpdateSvgsTaskArgs, hre: HardhatRuntimeEnvironment) => {
+      const c = await varsForNetwork(hre.ethers);
       const svgIDs: string[] = taskArgs.svgIds
         .split(",")
         .filter((str) => str.length > 0);
@@ -32,7 +35,7 @@ task("updateSvgs", "Updates SVGs, given svgType and a list of IDs")
 
       const svgFacet = (await hre.ethers.getContractAt(
         "SvgFacet",
-        maticDiamondAddress,
+        c.aavegotchiDiamond!,
         signer
       )) as SvgFacet;
 

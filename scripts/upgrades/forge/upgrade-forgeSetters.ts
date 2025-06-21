@@ -42,6 +42,8 @@ const skillPts = {
 
 export async function setForgeProperties(
   forgeDiamondAddress: string,
+  aavegotchiDiamondAddress: string,
+
   signer: Signer
 ) {
   // const owner = await diamondOwner(forgeDiamondAddress, ethers);
@@ -143,6 +145,9 @@ export async function setForgeProperties(
   await forgeDaoFacet.setForgeTimeCostInBlocks(timeCost);
   await forgeDaoFacet.setSkillPointsEarnedFromForge(skillPts);
   await forgeDaoFacet.setSmeltingSkillPointReductionFactorBips(5000);
+
+  await forgeDaoFacet.setAavegotchiDiamondAddress(aavegotchiDiamondAddress);
+
   // }
 
   console.log("Finished setForgeProperties.");

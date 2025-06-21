@@ -66,6 +66,11 @@ contract ForgeFacet is Modifiers {
         facet = LendingGetterAndSetterFacet(ForgeLibDiamond.aavegotchiDiamond());
     }
 
+    function getVars() public view returns (address wearableDiamond, address aavegotchiDiamond) {
+        wearableDiamond = address(wearablesFacet());
+        aavegotchiDiamond = address(aavegotchiFacet());
+    }
+
     function gltrContract() internal view returns (IERC20 token) {
         token = IERC20(s.gltr);
     }
