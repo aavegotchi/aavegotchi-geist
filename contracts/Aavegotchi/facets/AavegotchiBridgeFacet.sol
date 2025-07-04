@@ -86,14 +86,16 @@ contract AavegotchiBridgeFacet is Modifiers {
                     _mintItemsBridged[i].itemBalances[j].itemId,
                     _mintItemsBridged[i].itemBalances[j].quantity
                 );
-                LibERC1155.onERC1155Received(
-                    sender,
-                    address(0),
-                    _mintItemsBridged[i].to,
-                    _mintItemsBridged[i].itemBalances[j].itemId,
-                    _mintItemsBridged[i].itemBalances[j].quantity,
-                    ""
-                );
+                if (_mintItemsBridged[i].to.code.length > 0) {
+                    LibERC1155.onERC1155Received(
+                        sender,
+                        address(0),
+                        _mintItemsBridged[i].to,
+                        _mintItemsBridged[i].itemBalances[j].itemId,
+                        _mintItemsBridged[i].itemBalances[j].quantity,
+                        ""
+                    );
+                }
             }
         }
     }
@@ -117,16 +119,21 @@ contract AavegotchiBridgeFacet is Modifiers {
         for (uint256 i = 0; i < _params.length; i++) {
             MintAavegotchiParams memory param = _params[i];
             for (uint256 j = 0; j < param.tokenIds.length; j++) {
+                //hasn't been minted before
                 uint256 tokenId = param.tokenIds[j];
                 s.ownerTokenIdIndexes[param.owner][tokenId] = s.ownerTokenIds[param.owner].length;
                 s.ownerTokenIds[param.owner].push(uint32(tokenId));
                 s.aavegotchis[tokenId].owner = param.owner;
+                //global storage
+                s.tokenIds.push(uint32(tokenId));
+                s.tokenIdIndexes[tokenId] = s.tokenIds.length;
                 emit LibERC721.Transfer(address(0), param.owner, tokenId);
+                s.tokenIdCounter++;
             }
         }
     }
 
-    struct AavegotchiBridged {
+    struct AavegotchiBridgedIO {
         uint16[EQUIPPED_WEARABLE_SLOTS] equippedWearables; //The currently equipped wearables of the Aavegotchi
         // [Experience, Rarity Score, Kinship, Eye Color, Eye Shape, Brain Size, Spookiness, Aggressiveness, Energy]
         int8[NUMERIC_TRAITS_NUM] temporaryTraitBoosts;
@@ -150,7 +157,7 @@ contract AavegotchiBridgeFacet is Modifiers {
         uint256 baseRandomNumber;
     }
 
-    function setMetadata(uint256[] calldata _tokenIds, AavegotchiBridged[] calldata _aavegotchis) external onlyOwner {
+    function setMetadata(uint256[] calldata _tokenIds, AavegotchiBridgedIO[] calldata _aavegotchis) external onlyOwner {
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             _setMetadata(_tokenIds[i], _aavegotchis[i]);
         }
@@ -159,14 +166,25 @@ contract AavegotchiBridgeFacet is Modifiers {
     function setAavegotchi998Data(Aavegotchi998Data[] calldata _data) external onlyOwner {
         for (uint256 i = 0; i < _data.length; i++) {
             uint256 tokenId = _data[i].tokenId;
+            address sender = LibMeta.msgSender();
             for (uint256 j = 0; j < _data[i].balances.length; j++) {
                 LibItems.addToParent(address(this), tokenId, _data[i].balances[j].itemid, _data[i].balances[j].balance);
                 emit LibERC1155.TransferToParent(address(this), tokenId, _data[i].balances[j].itemid, _data[i].balances[j].balance);
+                //phantom event and writes for ERC1155
+                //increase the total quantity of the item type
+                s.itemTypes[_data[i].balances[j].itemid].totalQuantity += _data[i].balances[j].balance;
+                IEventHandlerFacet(s.wearableDiamond).emitTransferSingleEvent(
+                    sender,
+                    address(0),
+                    address(this),
+                    _data[i].balances[j].itemid,
+                    _data[i].balances[j].balance
+                );
             }
         }
     }
 
-    function _setMetadata(uint256 _tokenId, AavegotchiBridged memory _aavegotchi) internal {
+    function _setMetadata(uint256 _tokenId, AavegotchiBridgedIO memory _aavegotchi) internal {
         //set it individually
         s.aavegotchis[_tokenId].equippedWearables = _aavegotchi.equippedWearables;
         s.aavegotchis[_tokenId].temporaryTraitBoosts = _aavegotchi.temporaryTraitBoosts;
@@ -191,7 +209,6 @@ contract AavegotchiBridgeFacet is Modifiers {
         s.aavegotchis[_tokenId].respecCount = _aavegotchi.respecCount;
         //set in storage
         s.aavegotchiNamesUsed[LibAavegotchi.validateAndLowerNameBridge(_aavegotchi.name)] = true;
-        //TO-DO whether to set onchain block-Age
     }
 
     /**

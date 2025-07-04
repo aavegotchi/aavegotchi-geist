@@ -4,6 +4,7 @@ import { maticForgeDiamondAddress, getRelayerSigner } from "../helperFunctions";
 import { BigNumber } from "ethers";
 import { varsForNetwork } from "../../helpers/constants";
 import fs from "fs";
+import { writeMiscProgress } from "./paths";
 
 async function main() {
   const itemAltDataPath = `${FORGE_ITEMS_DIR}/forgeAltData.json`;
@@ -127,6 +128,8 @@ async function main() {
     await ethers.provider.waitForTransaction(tx.hash, 1);
     console.log(`tx: ${tx.hash} confirmed`);
   }
+
+  writeMiscProgress("setForgeProperties", true);
 }
 
 if (require.main === module) {

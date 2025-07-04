@@ -1,21 +1,14 @@
 import { ethers } from "hardhat";
 import fs from "fs";
 import path from "path";
-import { AavegotchiBridgeFacet, AavegotchiFacet } from "../../typechain";
-import {
-  maticDiamondAddress as defaultMaticDiamondAddress,
-  getRelayerSigner,
-} from "../helperFunctions";
+import { AavegotchiBridgeFacet } from "../../typechain";
+import { getRelayerSigner } from "../helperFunctions";
 import { varsForNetwork } from "../../helpers/constants";
 import { DATA_PATH, PROCESSED_PATH } from "./paths";
 
 // === Configuration ===
 const MAX_RETRIES = 3;
-const MINT_DIR_AAVEGOTCHI = path.join(
-  PROCESSED_PATH,
-  "aavegotchi",
-  "processed"
-);
+
 const PROGRESS_FILE = path.join(
   PROCESSED_PATH,
   "aavegotchi_minting_progress.json"
@@ -42,6 +35,39 @@ interface MintingProgress {
 interface MintBatch {
   owners: string[];
   tokenIdsByOwner: string[][];
+}
+
+// Helper: split a failed batch into two smaller batches
+function splitBatch(batch: MintBatch): MintBatch[] {
+  // If more than one owner, split by owners
+  if (batch.owners.length > 1) {
+    const mid = Math.floor(batch.owners.length / 2);
+    return [
+      {
+        owners: batch.owners.slice(0, mid),
+        tokenIdsByOwner: batch.tokenIdsByOwner.slice(0, mid),
+      },
+      {
+        owners: batch.owners.slice(mid),
+        tokenIdsByOwner: batch.tokenIdsByOwner.slice(mid),
+      },
+    ];
+  }
+
+  // Single owner but many tokenIds – split that owner's tokens
+  const owner = batch.owners[0];
+  const tokens = batch.tokenIdsByOwner[0];
+  const midTok = Math.floor(tokens.length / 2);
+  return [
+    {
+      owners: [owner],
+      tokenIdsByOwner: [tokens.slice(0, midTok)],
+    },
+    {
+      owners: [owner],
+      tokenIdsByOwner: [tokens.slice(midTok)],
+    },
+  ];
 }
 
 async function loadProgress(): Promise<MintingProgress> {
@@ -87,7 +113,7 @@ function createBatches(
   aavegotchiData: Record<string, string[]>,
   processedAddresses: MintingProgress["processedAddresses"]
 ): MintBatch[] {
-  const MAX_TOKENS_PER_BATCH = 300;
+  const MAX_TOKENS_PER_BATCH = 250;
   const finalBatches: MintBatch[] = [];
 
   // Step 1: Determine remaining tokens to be processed
@@ -226,13 +252,22 @@ async function processBatch(
     console.log(
       `Transaction sent for batch ${batchIndex}. Waiting for confirmation...`
     );
-    // await tx.wait();
+    const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
+    if (!receipt || receipt.status !== 1) {
+      throw new Error(
+        `Transaction ${tx.hash} for batch ${batchIndex} reverted on-chain.`
+      );
+    }
     console.log(`Transaction confirmed for batch ${batchIndex}.`);
 
     // Record successful mint
     batch.owners.forEach((owner, i) => {
-      progress.processedAddresses[owner] = {
-        tokenIds: batch.tokenIdsByOwner[i],
+      const lower = owner.toLowerCase();
+      const prev = progress.processedAddresses[lower];
+      const already: Set<string> = new Set(prev ? prev.tokenIds : []);
+      batch.tokenIdsByOwner[i].forEach((id) => already.add(id));
+      progress.processedAddresses[lower] = {
+        tokenIds: Array.from(already),
         timestamp: Date.now(),
       };
     });
@@ -292,10 +327,6 @@ function printAnalytics(progress: MintingProgress, totalBatches: number) {
 
 export async function mintAavegotchis() {
   const c = await varsForNetwork(ethers);
-  // Create directory if it doesn't exist
-  if (!fs.existsSync(MINT_DIR_AAVEGOTCHI)) {
-    fs.mkdirSync(MINT_DIR_AAVEGOTCHI, { recursive: true });
-  }
 
   let aavegotchiData: Record<string, string[]>;
   // @ts-ignore
@@ -352,20 +383,42 @@ export async function mintAavegotchis() {
     progress.lastBatchIndex = 0; // Reset to start from the beginning of the new batch set
   }
 
-  for (let i = progress.lastBatchIndex; i < batches.length; i++) {
+  let i = progress.lastBatchIndex;
+  while (i < batches.length) {
     const batch = batches[i];
     console.log(
-      `Processing batch ${i + 1}/${batches.length} for first owner address${
+      `Processing batch ${i + 1}/${batches.length} for first owner address ${
         batch.owners[0]
       }`
     );
 
     const success = await processBatch(contract, batch, progress, i);
-    progress.totalProcessed++;
-    progress.lastBatchIndex = i + 1;
-
-    if (!success) {
-      progress.failedBatches.push(i);
+    if (success) {
+      progress.totalProcessed++;
+      progress.lastBatchIndex = i + 1; // advance cursor
+      // remove any record of previous failure for this index
+      const failIdx = progress.failedBatches.indexOf(i);
+      if (failIdx !== -1) progress.failedBatches.splice(failIdx, 1);
+      i++; // move to next batch
+    } else {
+      console.warn(`Batch ${i + 1} failed. Will attempt to split and retry.`);
+      // avoid infinite loop: if batch size is 1 owner & 1 token, record failure and skip
+      const totalTokensInBatch = batch.tokenIdsByOwner.reduce(
+        (acc, arr) => acc + arr.length,
+        0
+      );
+      if (totalTokensInBatch === 1) {
+        if (!progress.failedBatches.includes(i)) progress.failedBatches.push(i);
+        i++; // skip this single-token batch
+      } else {
+        // split and insert new smaller batches at current position
+        const smaller = splitBatch(batch);
+        // replace current batch with first half, insert second half right after
+        batches.splice(i, 1, smaller[0], smaller[1]);
+        console.log(
+          `Batch split into two smaller batches. Batches array length now ${batches.length}.`
+        );
+      }
     }
 
     saveProgress(progress);

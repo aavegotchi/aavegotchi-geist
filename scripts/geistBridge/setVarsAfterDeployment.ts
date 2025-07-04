@@ -1,11 +1,6 @@
 import { ethers } from "hardhat";
 
-import {
-  // addERC1155Categories,
-  // addERC721Categories,
-  setRealmAddress,
-  strDisplay,
-} from "../deployFullDiamond";
+import { setRealmAddress, strDisplay } from "../deployFullDiamond";
 import { varsForNetwork } from "../../helpers/constants";
 import { getRelayerSigner } from "../helperFunctions";
 import { BigNumber } from "ethers";

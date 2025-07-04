@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.1;
 
-import {LibAavegotchi, AavegotchiInfo} from "../libraries/LibAavegotchi.sol";
+import {LibAavegotchi, AavegotchiInfo, AavegotchiBridged} from "../libraries/LibAavegotchi.sol";
 import {LibItems} from "../libraries/LibItems.sol";
 
 import {LibStrings} from "../../shared/libraries/LibStrings.sol";
@@ -40,6 +40,13 @@ contract AavegotchiFacet is Modifiers {
     ///@return aavegotchiInfo_ a struct containing all details about
     function getAavegotchi(uint256 _tokenId) external view returns (AavegotchiInfo memory aavegotchiInfo_) {
         aavegotchiInfo_ = LibAavegotchi.getAavegotchi(_tokenId);
+    }
+
+    function batchGetBridgedAavegotchi(uint256[] calldata _tokenIds) external view returns (AavegotchiBridged[] memory aavegotchiInfos_) {
+        aavegotchiInfos_ = new AavegotchiBridged[](_tokenIds.length);
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            aavegotchiInfos_[i] = LibAavegotchi.getAavegotchiBridged(_tokenIds[i]);
+        }
     }
 
     ///@notice returns the time an NFT was claimed

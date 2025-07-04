@@ -264,7 +264,7 @@ export interface RelayerInfo {
 
 export const xpRelayerAddress = "0xb6384935d68e9858f8385ebeed7db84fc93b1420";
 export const xpRelayerAddressBaseSepolia =
-  "0x9343363e8e6518ba7166ce702a7589e7bbd1fd81";
+  "0x39e86c0e02076E83694083e2eb48B510B3a96E4e";
 export const xpRelayerAddressBase = "";
 
 export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
@@ -307,7 +307,7 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
 
     const provider = new DefenderRelayProvider(credentials);
     return new DefenderRelaySigner(credentials, provider, {
-      speed: "safeLow",
+      speed: "average",
       validForSeconds: 7200,
     });
   } else if (hre.network.name === "baseSepolia") {
@@ -319,7 +319,7 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
 
     const provider = new DefenderRelayProvider(credentials);
     return new DefenderRelaySigner(credentials, provider, {
-      speed: "safeLow",
+      speed: "average",
       validForSeconds: 180,
     });
   } else if (

@@ -10,7 +10,7 @@ import { PROCESSED_PATH, DATA_PATH } from "./paths";
 // === Configuration ===
 const MAX_RETRIES = 3;
 // const BATCH_SIZE = 100; // Removed: Number of Aavegotchis (parent tokenIds) to process per transaction
-const MAX_ITEM_ENTRIES_PER_BATCH = 300; // New dynamic batching limit
+const MAX_ITEM_ENTRIES_PER_BATCH = 250; // New dynamic batching limit
 const INPUT_JSON_FILE = path.join(
   DATA_PATH,
   "aavegotchi",

@@ -168,7 +168,7 @@ async function processBatch(
         })),
       }))
     );
-    //    await tx.wait();
+    await ethers.provider.waitForTransaction(tx.hash, 1);
 
     // Record successful mint
     batch.owners.forEach((owner, i) => {

@@ -155,10 +155,16 @@ function createBatches(
       const allBalancesForOwner = allWearablesData[owner];
       const already = processedOwnerBalances[owner] || {};
 
-      const remainingBalancesForOwner = allBalancesForOwner.filter((wb) => {
-        const minted = already[wb.itemId] || 0;
-        return minted < wb.balance;
-      });
+      const remainingBalancesForOwner = allBalancesForOwner
+        .map((wb) => {
+          const minted = already[wb.itemId] || 0;
+          const remainingBalance = wb.balance - minted;
+          if (remainingBalance > 0) {
+            return { ...wb, balance: remainingBalance };
+          }
+          return null;
+        })
+        .filter((wb): wb is WearableBalance => wb !== null);
 
       if (remainingBalancesForOwner.length > 0) {
         remainingOwnerEntries.push([owner, remainingBalancesForOwner]);
@@ -216,10 +222,6 @@ function createBatches(
 
       ownerItemsInThisBatch.add(wearableBalance.itemId);
       itemsAddedToCurrentBatchFromOwner.set(owner, ownerItemsInThisBatch);
-
-      if (currentBatchTotalEntries >= MAX_ENTRIES_PER_BATCH) {
-        break;
-      }
     }
     if (
       currentBatchTotalEntries >= MAX_ENTRIES_PER_BATCH &&

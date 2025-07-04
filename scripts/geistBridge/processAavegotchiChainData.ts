@@ -10,7 +10,7 @@ import axios from "axios"; // Added for GraphQL requests
 import { AavegotchiBridgeFacet } from "../../typechain"; // Ensure typechain is generated correctly
 import { varsForNetwork } from "../../helpers/constants";
 import { getRelayerSigner } from "../helperFunctions";
-import { PROCESSED_PATH } from "./paths";
+import { getAavegotchiBlockNumber, PROCESSED_PATH } from "./paths";
 
 const SUBGRAPH_PROGRESS_FILE = path.join(
   PROCESSED_PATH,
@@ -33,6 +33,7 @@ const RETRY_DELAY_MS = 2000;
 
 // === GraphQL Configuration ===
 const AAVEGOTCHI_SUBGRAPH_URL = process.env.SUBGRAPH_CORE_MATIC;
+const AAVEGOTCHI_BLOCK_NUMBER = getAavegotchiBlockNumber();
 
 const GRAPHQL_PAGE_SIZE = 10000; // Max items per GraphQL query page
 const MAX_TOTAL_FETCH_LIMIT = 26000; // Safety limit for total items to fetch (e.g., 25000 Aavegotchis + buffer)
@@ -44,7 +45,7 @@ const GET_PORTALS_QUERY = `
     $orderBy: Portal_orderBy
     $orderDirection: OrderDirection
   ) {
-    portals(first: $first, skip: $skip, orderBy: $orderBy, orderDirection: $orderDirection) {
+    portals(first: $first, block: {number:${AAVEGOTCHI_BLOCK_NUMBER}}, skip: $skip, orderBy: $orderBy, orderDirection: $orderDirection) {
       id
       gotchiId
       buyer { id }
@@ -78,7 +79,7 @@ const GET_AAVEGOTCHIS_QUERY = `
     $orderBy: Aavegotchi_orderBy
     $orderDirection: OrderDirection
   ) {
-    aavegotchis(first: $first, skip: $skip, orderBy: $orderBy, orderDirection: $orderDirection) {
+    aavegotchis(first: $first, block: {number:${AAVEGOTCHI_BLOCK_NUMBER}}, skip: $skip, orderBy: $orderBy, orderDirection: $orderDirection) {
       id
       name
       createdAt
@@ -382,8 +383,11 @@ function loadProgress<T extends ProcessingProgress>(
           `Progress file ${filePath} is missing processedEntryIds or it's not an array. Resetting relevant fields.`
         );
         progress.processedEntryIds = [];
-        progress.lastSuccessfullyProcessedBatchIndex = -1;
       }
+      // Reset ephemeral, run-specific state. Only processedEntryIds should persist for resumption.
+      progress.lastSuccessfullyProcessedBatchIndex = -1;
+      progress.lastAttemptedBatchIndex = -1;
+      progress.failedBatchDetails = [];
       progress.currentRunFailedBatchIndexes = [];
       return progress;
     }

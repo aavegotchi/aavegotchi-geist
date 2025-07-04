@@ -38,6 +38,30 @@ struct AavegotchiInfo {
     ItemTypeIO[] items;
 }
 
+struct AavegotchiBridged {
+    uint16[EQUIPPED_WEARABLE_SLOTS] equippedWearables;
+    int8[NUMERIC_TRAITS_NUM] temporaryTraitBoosts;
+    int16[NUMERIC_TRAITS_NUM] numericTraits;
+    string name;
+    uint256 randomNumber;
+    uint256 experience;
+    uint256 minimumStake;
+    uint256 usedSkillPoints;
+    uint256 interactionCount;
+    address collateralType;
+    uint40 claimTime;
+    uint40 lastTemporaryBoost;
+    uint16 hauntId;
+    address owner;
+    uint8 status;
+    uint40 lastInteracted;
+    bool locked;
+    address escrow;
+    uint256[] items;
+    uint256 respecCount;
+    uint256 baseRandomNumber;
+}
+
 struct PortalAavegotchiTraitsIO {
     uint256 randomNumber;
     int16[NUMERIC_TRAITS_NUM] numericTraits;
@@ -171,6 +195,32 @@ library LibAavegotchi {
             aavegotchiInfo_.locked = s.aavegotchis[_tokenId].locked;
             aavegotchiInfo_.items = LibItems.itemBalancesOfTokenWithTypes(address(this), _tokenId);
         }
+    }
+
+    function getAavegotchiBridged(uint256 _tokenId) internal view returns (AavegotchiBridged memory aavegotchiInfo_) {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        Aavegotchi storage aavegotchi = s.aavegotchis[_tokenId];
+        aavegotchiInfo_.equippedWearables = aavegotchi.equippedWearables;
+        aavegotchiInfo_.temporaryTraitBoosts = aavegotchi.temporaryTraitBoosts;
+        aavegotchiInfo_.numericTraits = aavegotchi.numericTraits;
+        aavegotchiInfo_.name = aavegotchi.name;
+        aavegotchiInfo_.randomNumber = aavegotchi.randomNumber;
+        aavegotchiInfo_.experience = aavegotchi.experience;
+        aavegotchiInfo_.minimumStake = aavegotchi.minimumStake;
+        aavegotchiInfo_.usedSkillPoints = aavegotchi.usedSkillPoints;
+        aavegotchiInfo_.interactionCount = aavegotchi.interactionCount;
+        aavegotchiInfo_.collateralType = aavegotchi.collateralType;
+        aavegotchiInfo_.claimTime = aavegotchi.claimTime;
+        aavegotchiInfo_.lastTemporaryBoost = aavegotchi.lastTemporaryBoost;
+        aavegotchiInfo_.hauntId = aavegotchi.hauntId;
+        aavegotchiInfo_.owner = aavegotchi.owner;
+        aavegotchiInfo_.status = aavegotchi.status;
+        aavegotchiInfo_.lastInteracted = aavegotchi.lastInteracted;
+        aavegotchiInfo_.locked = aavegotchi.locked;
+        aavegotchiInfo_.escrow = aavegotchi.escrow;
+        aavegotchiInfo_.items = s.nftItems[address(this)][_tokenId];
+        aavegotchiInfo_.respecCount = aavegotchi.respecCount;
+        aavegotchiInfo_.baseRandomNumber = s.tokenIdToRandomNumber[_tokenId];
     }
 
     //Only valid for claimed Aavegotchis
