@@ -191,37 +191,37 @@ export function strDisplay(str: any) {
   return addCommas(str.toString());
 }
 
-async function deployForgeDiamond(
-  ownerAddress: string,
-  aavegotchiDiamondAddress: string,
-  wearableDiamondAddress: string,
-  vrfSystemAddress: string,
-  deploymentConfig: DeploymentConfig,
-  signer: Signer
-) {
-  // Deploy forge facets
+// async function deployForgeDiamond(
+//   ownerAddress: string,
+//   aavegotchiDiamondAddress: string,
+//   wearableDiamondAddress: string,
+//   vrfSystemAddress: string,
+//   deploymentConfig: DeploymentConfig,
+//   signer: Signer
+// ) {
+//   // Deploy forge facets
 
-  const forgeDiamond = await deployWithoutInit({
-    diamondName: "ForgeDiamond",
-    facetNames: [
-      "ForgeFacet",
-      "ForgeTokenFacet",
-      "ForgeVRFFacet",
-      "ForgeDAOFacet",
-      "ForgeWriteFacet",
-    ],
-    signer,
-    args: [
-      ownerAddress,
-      aavegotchiDiamondAddress,
-      wearableDiamondAddress,
-      vrfSystemAddress,
-    ],
-    deploymentConfig,
-  });
+//   const forgeDiamond = await deployWithoutInit({
+//     diamondName: "ForgeDiamond",
+//     facetNames: [
+//       "ForgeFacet",
+//       "ForgeTokenFacet",
+//       "ForgeVRFFacet",
+//       "ForgeDAOFacet",
+//       "ForgeWriteFacet",
+//     ],
+//     signer,
+//     args: [
+//       ownerAddress,
+//       aavegotchiDiamondAddress,
+//       wearableDiamondAddress,
+//       vrfSystemAddress,
+//     ],
+//     deploymentConfig,
+//   });
 
-  return forgeDiamond;
-}
+//   return forgeDiamond;
+// }
 
 async function createHauntWithCollaterals(
   hauntId: number,
@@ -835,6 +835,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
           "ForgeTokenFacet",
           "ForgeVRFFacet",
           "ForgeDAOFacet",
+          "ForgeWriteFacet",
         ],
         signer: signer,
         args: [

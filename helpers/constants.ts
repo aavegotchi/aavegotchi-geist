@@ -149,7 +149,7 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
     // vrfVars: vrfVars[84532],
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
-    aavegotchiDiamond: "0x86e527A5863975d0141514D20248aD17B6BF92D0",
+    aavegotchiDiamond: "0x03A74B3e2DD81F5E8FFA1Fb96bb81B35cF3ed5d2",
     forgeDiamond: "0xf0b0aFA15c61E939dD7Ae2e82Fbe98FFd5598C65",
     wearableDiamond: "0x83FAaC162062524e041dFB43681B0d958eD49Acb",
   },
@@ -168,9 +168,9 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
     // vrfVars: vrfVars[84532],
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
-    aavegotchiDiamond: "0xf28469b81871D924ae70664FEBf5AF626AAe5087",
-    forgeDiamond: "0xec3DD222148b686995b86515C99A772375D691B7",
-    wearableDiamond: "0xAfdfE373C57Ac5CddbD57DEA6f3fF67C36D8ACFE",
+    aavegotchiDiamond: "0x03A74B3e2DD81F5E8FFA1Fb96bb81B35cF3ed5d2",
+    forgeDiamond: "0x40742c1D9dd604889aD45D2f85bE9C9A7609C4cB",
+    wearableDiamond: "0x7e1Df5ad57C011E3bFA029041935aece51f35ccC",
     realmDiamond: "0x37D140074B2f771bEa7ef23288EB87064e45bF8D",
     installationDiamond: "0x5Aefdc5283B24EEa7b50FFBBf7FB8A2bD4537609",
     tileDiamond: "0x96B19Fa954d961fAD4b665e3259C72466ca4C1dA",
@@ -184,14 +184,15 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     alpha: "0x48bAC15D5561a92E232523ed3660A884C21E93c3",
     kek: "0x03f2D8689177d2ebc9686C01065818c02C053f6a",
     gltrAddress: "0x0dBFBABa88b32a96ee2c9b60007ddc03D0F1F379",
-    aavegotchiDaoAddress: "0x0000000000000000000000000000000000000000",
+    aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
   },
 
   8453: {
     ghst: "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb",
     vrfSystem: "",
-    // vrfVars: vrfVars[84532], //TO-DO: Add vrfVars for base
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    //@to-do: update aavegotchiDaoAddress for bsae mainnet
+    aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
   },
 };
 

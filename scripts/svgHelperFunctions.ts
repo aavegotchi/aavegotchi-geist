@@ -113,35 +113,42 @@ export interface BodyWearableOutput {
   sleeves: SleeveObject;
 }
 
+//some wearables do not have front view sleeves so we just return an empty svg
+const sleeveExclusions = [25];
+
 export function bodyWearable(name: string, folder: string): BodyWearableOutput {
   let baseSvg = readSvg(name, folder);
   // console.log(name, svg.length)
   const id = name.slice(0, name.indexOf("_"));
-  const leftSleevesUp =
-    '<g class="gotchi-sleeves gotchi-sleeves-left gotchi-sleeves-up">' +
-    readSvg(`${name}LeftUp`, folder) +
-    "</g>";
-  const leftSleeves =
-    '<g class="gotchi-sleeves gotchi-sleeves-left gotchi-sleeves-down">' +
-    readSvg(`${name}Left`, folder) +
-    "</g>";
-  const rightSleevesUp =
-    '<g class="gotchi-sleeves gotchi-sleeves-right gotchi-sleeves-up">' +
-    readSvg(`${name}RightUp`, folder) +
-    "</g>";
-  const rightSleeves =
-    '<g class="gotchi-sleeves gotchi-sleeves-right gotchi-sleeves-down">' +
-    readSvg(`${name}Right`, folder) +
-    "</g>";
-  let sleevesSvg =
-    "<g>" +
-    leftSleevesUp +
-    leftSleeves +
-    rightSleevesUp +
-    rightSleeves +
-    "</g>";
+  if (sleeveExclusions.includes(Number(id))) {
+    return { wearable: baseSvg, sleeves: { id: id, svg: "" } };
+  } else {
+    const leftSleevesUp =
+      '<g class="gotchi-sleeves gotchi-sleeves-left gotchi-sleeves-up">' +
+      readSvg(`${name}LeftUp`, folder) +
+      "</g>";
+    const leftSleeves =
+      '<g class="gotchi-sleeves gotchi-sleeves-left gotchi-sleeves-down">' +
+      readSvg(`${name}Left`, folder) +
+      "</g>";
+    const rightSleevesUp =
+      '<g class="gotchi-sleeves gotchi-sleeves-right gotchi-sleeves-up">' +
+      readSvg(`${name}RightUp`, folder) +
+      "</g>";
+    const rightSleeves =
+      '<g class="gotchi-sleeves gotchi-sleeves-right gotchi-sleeves-down">' +
+      readSvg(`${name}Right`, folder) +
+      "</g>";
+    let sleevesSvg =
+      "<g>" +
+      leftSleevesUp +
+      leftSleeves +
+      rightSleevesUp +
+      rightSleeves +
+      "</g>";
 
-  return { wearable: baseSvg, sleeves: { id: id, svg: sleevesSvg } };
+    return { wearable: baseSvg, sleeves: { id: id, svg: sleevesSvg } };
+  }
 }
 
 export function bodyWearableBack(name: string, folder: string) {
@@ -243,7 +250,7 @@ export async function uploadSvgs(
   svgs: string[],
   svgType: string,
   ethers: any,
-  deploymentConfig: DeploymentConfig
+  deploymentConfig?: DeploymentConfig
 ) {
   // Check if svgsUploaded exists and if this specific svgType is already uploaded
 
@@ -271,13 +278,13 @@ export async function uploadSvgs(
       ethers
     );
 
-    if (!deploymentConfig.svgsUploaded[svgType]) {
-      deploymentConfig.svgsUploaded[svgType] = {};
+    if (!deploymentConfig?.svgsUploaded[svgType]) {
+      deploymentConfig!.svgsUploaded[svgType] = {};
     }
 
     uniqueId = `${svgItemsStart}_${svgItemsEnd}`;
 
-    isUploaded = deploymentConfig.svgsUploaded?.[svgType]?.[uniqueId];
+    isUploaded = deploymentConfig!.svgsUploaded?.[svgType]?.[uniqueId];
 
     console.log(uniqueId, isUploaded);
 
@@ -291,7 +298,7 @@ export async function uploadSvgs(
       // let receipt = await tx.wait();
 
       //todo:
-      deploymentConfig.svgsUploaded![svgType][
+      deploymentConfig!.svgsUploaded![svgType][
         `${svgItemsStart}_${svgItemsEnd}`
       ] = true;
 
@@ -345,7 +352,7 @@ export async function uploadOrUpdateSvg(
   svgId: number[],
   svgFacet: SvgFacet,
   ethers: any,
-  deploymentConfig: DeploymentConfig
+  deploymentConfig?: DeploymentConfig
 ) {
   // if (typeof svg === "number") svg = [""];
   const idUpload = [];

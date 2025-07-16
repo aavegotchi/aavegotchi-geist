@@ -214,7 +214,7 @@ export async function deploy({
       )}`
     );
   }
-  // await verifyContract(deployedDiamond.address, true, [ownerAddress]);
+  await verifyContract(deployedDiamond.address, true, [ownerAddress]);
 
   console.log(
     "Diamond deploy transaction hash:" + deployedDiamond.deployTransaction.hash

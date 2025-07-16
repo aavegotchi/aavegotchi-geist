@@ -88,7 +88,7 @@ contract ForgeWriteFacet is Modifiers {
         emit SetSkillPointsEarnedFromForge(costs);
     }
 
-    function setSmeltingSkillPointReductionFactorBips(uint256 _reductionFactor) external onlyDaoOrOwner {
+    function setSmeltingSkillPointReductionFactorBipsBridged(uint256 _reductionFactor) external onlyDaoOrOwner {
         require(_reductionFactor <= 10000, "ForgeWriteFacet: Reduction factor cannot exceed 10000");
         s.smeltingSkillPointReductionFactorBips = _reductionFactor;
         emit SetSmeltingSkillPointReductionFactorBips(0, _reductionFactor);

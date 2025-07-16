@@ -8,6 +8,9 @@ import {
   wearablesLeftSvgs,
   wearablesRightSvgs,
   wearablesBackSvgs,
+  wearablesLeftSleeveSvgs,
+  wearablesRightSleeveSvgs,
+  wearablesBackSleeveSvgs,
 } from "../svgs/wearables-sides";
 import { itemTypes } from "../data/itemTypes/itemTypes";
 import { allSleeves } from "./wearables";
@@ -99,8 +102,9 @@ export function getWearables() {
     if (allBadges.includes(Number(itemType.svgId))) {
       wearables.push(badge(Number(itemType.svgId)));
     } else if (
-      itemType.slotPositions === "body" &&
-      allSleeves.includes(itemType.svgId)
+      (itemType.slotPositions === "body" &&
+        allSleeves.includes(itemType.svgId)) ||
+      itemType.svgId == 0
     ) {
       const output: BodyWearableOutput = bodyWearable(
         `${itemType.svgId}_${wearableName}`,
@@ -118,6 +122,12 @@ export function getWearables() {
   console.log(`Left side views length: ${wearablesLeftSvgs.length}`);
   console.log(`Back side views length: ${wearablesBackSvgs.length}`);
 
+  //sleeves
+  console.log(`Right side sleeves length: ${wearablesRightSleeveSvgs.length}`);
+  console.log(`Left side sleeves length: ${wearablesLeftSleeveSvgs.length}`);
+  console.log(`Back side sleeves length: ${wearablesBackSleeveSvgs.length}`);
+  console.log(`Front sleeves length: ${sleeves.length}`);
+
   if (
     [wearablesRightSvgs, wearablesLeftSvgs, wearablesBackSvgs, wearables].some(
       (arr1, index, arrs) =>
@@ -125,6 +135,19 @@ export function getWearables() {
     )
   ) {
     throw new Error("All side views must be the same length.");
+  }
+
+  if (
+    [
+      wearablesRightSleeveSvgs,
+      wearablesLeftSleeveSvgs,
+      wearablesBackSleeveSvgs,
+      sleeves,
+    ].some((arr1, index, arrs) =>
+      arrs.slice(index + 1).some((arr2) => arr1.length !== arr2.length)
+    )
+  ) {
+    throw new Error("All side sleeves must be the same length.");
   }
   console.log(
     "returning",

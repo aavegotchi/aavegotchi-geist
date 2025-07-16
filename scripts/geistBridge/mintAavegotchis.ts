@@ -113,7 +113,7 @@ function createBatches(
   aavegotchiData: Record<string, string[]>,
   processedAddresses: MintingProgress["processedAddresses"]
 ): MintBatch[] {
-  const MAX_TOKENS_PER_BATCH = 250;
+  const MAX_TOKENS_PER_BATCH = 300;
   const finalBatches: MintBatch[] = [];
 
   // Step 1: Determine remaining tokens to be processed

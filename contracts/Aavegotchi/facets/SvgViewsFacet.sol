@@ -318,6 +318,13 @@ contract SvgViewsFacet is Modifiers {
         svg_ = abi.encodePacked(layers.background);
         //[6] pet
         if (s.wearableExceptions[back][equippedWearables[6]][6]) svg_ = abi.encodePacked(svg_, layers.pet);
+
+        // [HEAD EXCEPTION] Render head wearables behind body when a back-side exception is set (e.g. horns 131 & 133)
+        //no need for storage vars since they are very special cases
+        if (s.wearableExceptions[back][equippedWearables[3]][3] && (equippedWearables[3] == 131 || equippedWearables[3] == 133)) {
+            svg_ = abi.encodePacked(svg_, layers.head);
+            delete layers.head; // prevent head from being rendered again later
+        }
         //[4] & [5] handwearables
         if (s.wearableExceptions[back][equippedWearables[4]][4] && s.wearableExceptions[back][equippedWearables[5]][5]) {
             //[0] body
@@ -378,7 +385,8 @@ contract SvgViewsFacet is Modifiers {
                     if (s.wearableExceptions[back][equippedWearables[3]][3] && s.wearableExceptions[back][equippedWearables[1]][1]) {
                         svg_ = abi.encodePacked(svg_, layers.hands, bodySvg, layers.handRight, layers.handLeft, headFace, layers.eyes);
                     } else {
-                        svg_ = abi.encodePacked(svg_, layers.handLeft, layers.hands, bodySvg, layers.handRight);
+                        //normal back view layering
+                        svg_ = abi.encodePacked(svg_, layers.handRight, layers.handLeft, layers.hands, bodySvg);
                         svg_ = abi.encodePacked(svg_, layers.face, layers.eyes, layers.head);
                     }
                 }
@@ -409,7 +417,8 @@ contract SvgViewsFacet is Modifiers {
                     if (s.wearableExceptions[back][equippedWearables[3]][3] && s.wearableExceptions[back][equippedWearables[1]][1]) {
                         svg_ = abi.encodePacked(svg_, layers.hands, bodySvg, layers.handRight, layers.handLeft, headFace, layers.eyes);
                     } else {
-                        svg_ = abi.encodePacked(svg_, layers.handRight, layers.hands, bodySvg, layers.handLeft);
+                        //normal back view layering
+                        svg_ = abi.encodePacked(svg_, layers.handRight, layers.handLeft, layers.hands, bodySvg);
                         svg_ = abi.encodePacked(svg_, layers.face, layers.eyes, layers.head);
                     }
                 }
@@ -479,9 +488,7 @@ contract SvgViewsFacet is Modifiers {
         if (s.wearableExceptions[side][equippedWearables[1]][1]) {
             if (s.wearableExceptions[side][equippedWearables[0]][0]) {
                 if (s.wearableExceptions[side][equippedWearables[2]][2] && s.wearableExceptions[side][equippedWearables[3]][3]) {
-                    if (
-                        equippedWearables[2] == 301 /*alluring eyes*/
-                    ) {
+                    if (equippedWearables[2] == 301 /*alluring eyes*/) {
                         svg_ = abi.encodePacked(svg_, _body, layers.eyes);
                         svg_ = abi.encodePacked(svg_, layers.head, layers.face, layers.bodyWearable);
                     } else {
@@ -493,7 +500,8 @@ contract SvgViewsFacet is Modifiers {
                         svg_ = abi.encodePacked(svg_, _body, layers.eyes);
                         svg_ = abi.encodePacked(svg_, layers.head, layers.face, layers.bodyWearable);
                     } else if (
-                        (s.wearableExceptions[side][equippedWearables[2]][2] && equippedWearables[2] != 301) || equippedWearables[1] == 306 /*flower studs*/
+                        (s.wearableExceptions[side][equippedWearables[2]][2] && equippedWearables[2] != 301) ||
+                        equippedWearables[1] == 306 /*flower studs*/
                     ) {
                         svg_ = abi.encodePacked(svg_, _body, layers.face);
                         svg_ = abi.encodePacked(svg_, layers.eyes, layers.head, layers.bodyWearable);
@@ -504,9 +512,7 @@ contract SvgViewsFacet is Modifiers {
                 }
             } else {
                 if (s.wearableExceptions[side][equippedWearables[2]][2] && s.wearableExceptions[side][equippedWearables[3]][3]) {
-                    if (
-                        equippedWearables[2] == 301 /*alluring eyes*/
-                    ) {
+                    if (equippedWearables[2] == 301 /*alluring eyes*/) {
                         svg_ = abi.encodePacked(svg_, bodySvg, layers.eyes, layers.head, layers.face);
                     } else {
                         svg_ = abi.encodePacked(svg_, bodySvg, layers.head, layers.face, layers.eyes);
@@ -515,7 +521,8 @@ contract SvgViewsFacet is Modifiers {
                     if (s.wearableExceptions[side][equippedWearables[3]][3]) {
                         svg_ = abi.encodePacked(svg_, bodySvg, layers.eyes, layers.head, layers.face);
                     } else if (
-                        (s.wearableExceptions[side][equippedWearables[2]][2] && equippedWearables[2] != 301) || equippedWearables[1] == 306 /*flower studs*/
+                        (s.wearableExceptions[side][equippedWearables[2]][2] && equippedWearables[2] != 301) ||
+                        equippedWearables[1] == 306 /*flower studs*/
                     ) {
                         svg_ = abi.encodePacked(svg_, bodySvg, layers.face, layers.eyes, layers.head);
                     } else {
@@ -543,9 +550,7 @@ contract SvgViewsFacet is Modifiers {
                     equippedWearables[2] != 301 /*alluring eyes*/
                 ) {
                     svg_ = abi.encodePacked(svg_, bodySvg, layers.head, layers.face, layers.eyes);
-                } else if (
-                    equippedWearables[2] == 301 /*alluring eyes*/
-                ) {
+                } else if (equippedWearables[2] == 301 /*alluring eyes*/) {
                     svg_ = abi.encodePacked(svg_, bodySvg, layers.eyes, layers.face, layers.head);
                 } else {
                     svg_ = abi.encodePacked(svg_, bodySvg, layers.face, layers.eyes, layers.head);
@@ -568,6 +573,20 @@ contract SvgViewsFacet is Modifiers {
         svg_ = abi.encodePacked(svg_, layers.pet);
     }
 
+    /// @dev helper to adjust sleeve SVG x/y for special wearables 15,16
+    function adjustSleeveXY(uint8 _x, uint8 _y, bytes memory _sideView, uint256 _wearableId) internal pure returns (uint8 newX, uint8 newY) {
+        newX = _x;
+        newY = _y;
+        if (_wearableId == 15 || _wearableId == 16) {
+            bytes32 viewHash = keccak256(_sideView);
+            if (viewHash == keccak256(bytes("left"))) {
+                newX = _x - 1;
+            } else if (viewHash == keccak256(bytes("right"))) {
+                newX = _x + 1;
+            }
+        }
+    }
+
     function getSideWearableClass(uint256 _slotPosition) internal pure returns (string memory className_) {
         //Wearables
 
@@ -581,11 +600,7 @@ contract SvgViewsFacet is Modifiers {
         if (_slotPosition == LibItems.WEARABLE_SLOT_BG) className_ = "wearable-bg";
     }
 
-    function getWearableSideView(
-        bytes memory _sideView,
-        uint256 _wearableId,
-        uint256 _slotPosition
-    ) internal view returns (bytes memory svg_) {
+    function getWearableSideView(bytes memory _sideView, uint256 _wearableId, uint256 _slotPosition) internal view returns (bytes memory svg_) {
         ItemType storage wearableType = s.itemTypes[_wearableId];
         Dimensions memory dimensions = s.sideViewDimensions[_wearableId][_sideView];
 
@@ -619,11 +634,10 @@ contract SvgViewsFacet is Modifiers {
         }
     }
 
-    function getBodySideWearable(bytes memory _sideView, uint256 _wearableId)
-        internal
-        view
-        returns (bytes memory bodyWearable_, bytes memory sleeves_)
-    {
+    function getBodySideWearable(
+        bytes memory _sideView,
+        uint256 _wearableId
+    ) internal view returns (bytes memory bodyWearable_, bytes memory sleeves_) {
         ItemType storage wearableType = s.itemTypes[_wearableId];
         Dimensions memory dimensions = s.sideViewDimensions[_wearableId][_sideView];
 
@@ -640,20 +654,17 @@ contract SvgViewsFacet is Modifiers {
         uint256 svgId = s.sleeves[_wearableId];
         if (svgId == 0 && _wearableId == 8) {
             sleeves_ = abi.encodePacked(
-                // x
                 LibStrings.strWithUint('"><svg x="', dimensions.x),
-                // y
                 LibStrings.strWithUint('" y="', dimensions.y),
                 '">',
                 LibSvg.getSvg(LibSvg.bytesToBytes32("sleeves-", _sideView), svgId),
                 "</svg>"
             );
         } else if (svgId != 0) {
+            (uint8 newX, uint8 newY) = adjustSleeveXY(dimensions.x, dimensions.y, _sideView, _wearableId);
             sleeves_ = abi.encodePacked(
-                // x
-                LibStrings.strWithUint('"><svg x="', dimensions.x),
-                // y
-                LibStrings.strWithUint('" y="', dimensions.y),
+                LibStrings.strWithUint('"><svg x="', newX),
+                LibStrings.strWithUint('" y="', newY),
                 '">',
                 LibSvg.getSvg(LibSvg.bytesToBytes32("sleeves-", _sideView), svgId),
                 "</svg>"

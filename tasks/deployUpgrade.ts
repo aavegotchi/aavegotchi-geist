@@ -202,7 +202,8 @@ task(
         console.log("facet:", facet);
         if (facet.facetName.length > 0) {
           const factory = (await hre.ethers.getContractFactory(
-            facet.facetName
+            facet.facetName,
+            signer
           )) as ContractFactory;
           const deployedFacet: Contract = await factory.deploy();
           await deployedFacet.deployed();
@@ -212,7 +213,7 @@ task(
           );
           //verify all new facets by default
           //wait for some time to ensure the contract is deployed
-          await delay(5000);
+          await delay(2000);
           await verifyContract(deployedFacet.address);
           deployedFacets.push(deployedFacet);
 

@@ -114,7 +114,7 @@ export async function deploySafe(safeAddress: string): Promise<string | null> {
     const code = await provider.getCode(safeAddress);
     if (code !== "0x") {
       console.log(
-        `Safe ${safeAddress} already exists on Base, skipping deployment...`
+        `Safe ${safeAddress} already exists on ${provider.network.chainId}, skipping deployment...`
       );
       recordDeployedSafe(safeAddress);
       return safeAddress;

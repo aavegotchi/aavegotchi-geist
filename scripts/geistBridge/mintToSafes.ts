@@ -64,7 +64,6 @@ interface MintingProgress {
     wearables: string[];
     forgeItems: string[];
   };
-  lastProcessedIndex: number;
   startTime: number;
 }
 
@@ -145,7 +144,6 @@ const loadProgress = (): MintingProgress => {
         wearables: [],
         forgeItems: [],
       },
-      lastProcessedIndex: -1, // Start with -1 if 0 is a valid index
       startTime: Date.now(),
     };
     // Use saveProgress to initialize to ensure consistency and safety
@@ -249,7 +247,7 @@ async function mintAavegotchisToSafe(
       const tx = await contract.mintAavegotchiBridged([
         {
           owner: safeAddress,
-          tokenIds: unmintedTokens, // Ensure this matches contract expectation (string[] or BigNumber[])
+          tokenIds: unmintedTokens,
         },
       ]);
       await ethers.provider.waitForTransaction(tx.hash, 1);
@@ -267,6 +265,15 @@ async function mintAavegotchisToSafe(
         ...unmintedTokens
       );
       progress.aavegotchis[safeAddress.toLowerCase()].timestamp = Date.now();
+
+      // Clean up failed mints log on success
+      const index = progress.failedMints.aavegotchis.indexOf(
+        safeAddress.toLowerCase()
+      );
+      if (index > -1) {
+        progress.failedMints.aavegotchis.splice(index, 1);
+      }
+
       return true;
     } catch (error: any) {
       console.error(
@@ -283,10 +290,9 @@ async function mintAavegotchisToSafe(
         }
         return false;
       }
-      // Optional: await new Promise(resolve => setTimeout(resolve, 2000)); // Delay before retry
     }
   }
-  return false; // Should not be reached if MAX_RETRIES > 0
+  return false;
 }
 
 async function mintWearablesToSafe(
@@ -337,6 +343,13 @@ async function mintWearablesToSafe(
       }
       progress.wearables[safeAddrLower].minted.push(...unmintedTokens); // Store original TokenData
       progress.wearables[safeAddrLower].timestamp = Date.now();
+
+      // Clean up failed mints log on success
+      const index = progress.failedMints.wearables.indexOf(safeAddrLower);
+      if (index > -1) {
+        progress.failedMints.wearables.splice(index, 1);
+      }
+
       return true;
     } catch (error: any) {
       console.error(
@@ -412,6 +425,13 @@ async function mintForgeItemsToSafe(
       }
       progress.forgeItems[safeAddrLower].minted.push(...unmintedTokens);
       progress.forgeItems[safeAddrLower].timestamp = Date.now();
+
+      // Clean up failed mints log on success
+      const index = progress.failedMints.forgeItems.indexOf(safeAddrLower);
+      if (index > -1) {
+        progress.failedMints.forgeItems.splice(index, 1);
+      }
+
       return true;
     } catch (error: any) {
       console.error(
@@ -441,6 +461,67 @@ async function mintToSafes() {
   // Load all data
   const { aavegotchiSafes, wearableSafes, forgeSafes } = loadSafeData();
   const progress = loadProgress();
+
+  // --- Determine safes to process dynamically, ignoring lastProcessedIndex ---
+  console.log(
+    "--- Dynamically determining which safes require processing... ---"
+  );
+  const allSafesInSource = new Set<string>();
+  aavegotchiSafes.forEach((s) =>
+    allSafesInSource.add(s.safeAddress.toLowerCase())
+  );
+  wearableSafes.forEach((s) =>
+    allSafesInSource.add(s.safeAddress.toLowerCase())
+  );
+  forgeSafes.forEach((s) => allSafesInSource.add(s.safeAddress.toLowerCase()));
+
+  const safesToProcess = new Set<string>();
+
+  for (const safeAddress of allSafesInSource) {
+    const aData = aavegotchiSafes.find(
+      (s) => s.safeAddress.toLowerCase() === safeAddress
+    );
+    const wData = wearableSafes.find(
+      (s) => s.safeAddress.toLowerCase() === safeAddress
+    );
+    const fData = forgeSafes.find(
+      (s) => s.safeAddress.toLowerCase() === safeAddress
+    );
+
+    let needsProcessing = false;
+
+    // Check Aavegotchis
+    if (aData?.tokenIds.length) {
+      const mintedCount = progress.aavegotchis[safeAddress]?.minted.length || 0;
+      if (mintedCount < aData.tokenIds.length) {
+        needsProcessing = true;
+      }
+    }
+
+    // Check Wearables
+    if (wData?.tokens.length) {
+      const mintedCount = progress.wearables[safeAddress]?.minted.length || 0;
+      if (mintedCount < wData.tokens.length) {
+        needsProcessing = true;
+      }
+    }
+
+    // Check Forge Items
+    if (fData?.tokens.length) {
+      const mintedCount = progress.forgeItems[safeAddress]?.minted.length || 0;
+      if (mintedCount < fData.tokens.length) {
+        needsProcessing = true;
+      }
+    }
+
+    if (needsProcessing) {
+      safesToProcess.add(safeAddress);
+    }
+  }
+  const allSafesForProcessing = [...safesToProcess];
+  console.log(
+    `Found ${allSafesForProcessing.length} safes that require processing.`
+  );
 
   // Verify/deploy safes
   const verifiedSafes = await verifySafes(
@@ -527,15 +608,13 @@ async function mintToSafes() {
     signer
   )) as ForgeFacet;
 
-  // Process each verified safe from lastProcessedIndex
-  // Ensure verifiedSafes is an array of strings, and use lastProcessedIndex for resumption
-  const startIndex =
-    progress.lastProcessedIndex > -1 ? progress.lastProcessedIndex : 0;
-
-  for (let i = startIndex; i < verifiedSafes.length; i++) {
-    const safeAddress = verifiedSafes[i];
+  // Process safes from the dynamically generated list
+  for (let i = 0; i < allSafesForProcessing.length; i++) {
+    const safeAddress = allSafesForProcessing[i];
     console.log(
-      `\nProcessing safe ${i + 1}/${verifiedSafes.length}: ${safeAddress}`
+      `\nProcessing safe ${i + 1}/${
+        allSafesForProcessing.length
+      }: ${safeAddress}`
     );
 
     // 1. Mint Aavegotchis
@@ -580,9 +659,8 @@ async function mintToSafes() {
       );
     }
 
-    // Save progress after each safe and update lastProcessedIndex
-    progress.lastProcessedIndex = i;
-    saveProgress(progress); // Use the new save function
+    // Save progress after each safe is attempted
+    saveProgress(progress);
     printAnalytics(progress);
   }
 

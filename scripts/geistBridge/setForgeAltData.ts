@@ -84,7 +84,7 @@ async function main() {
   console.log(`tx: ${tx.hash} confirmed`);
 
   console.log(`setting smeltingSkillPointReductionFactorBips`);
-  tx = await forgeDAOFacet.setSmeltingSkillPointReductionFactorBips(
+  tx = await forgeWriteFacet.setSmeltingSkillPointReductionFactorBipsBridged(
     data.smeltingSkillPointReductionFactorBips
   );
   console.log(`tx: ${tx.hash}`);

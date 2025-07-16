@@ -368,7 +368,17 @@ contract SvgFacet is Modifiers {
     ) internal view returns (bytes memory svg_) {
         bytes32 front = LibSvg.bytesToBytes32("wearables-", "front");
 
-        svg_ = abi.encodePacked(layers.background, _body, layers.bodyWearable, layers.hands);
+        // Heads 131 & 133 should render behind the body on the FRONT view only
+        bool headBehindBody = (equippedWearables[LibItems.WEARABLE_SLOT_HEAD] == 131 || equippedWearables[LibItems.WEARABLE_SLOT_HEAD] == 133);
+
+        if (headBehindBody) {
+            // draw background, then head layer, then body so head is hidden behind
+            svg_ = abi.encodePacked(layers.background, layers.head, _body, layers.bodyWearable, layers.hands);
+            // prevent head from being rendered again later in this routine
+            layers.head = "";
+        } else {
+            svg_ = abi.encodePacked(layers.background, _body, layers.bodyWearable, layers.hands);
+        }
         //eyes and head exceptions
         if (
             s.wearableExceptions[front][equippedWearables[2]][2] &&
@@ -497,6 +507,14 @@ contract SvgFacet is Modifiers {
     function setSleeves(Sleeve[] calldata _sleeves) external onlyItemManager {
         for (uint256 i; i < _sleeves.length; i++) {
             s.sleeves[_sleeves[i].wearableId] = _sleeves[i].sleeveId;
+        }
+    }
+
+    function getSleeveAssociations(uint256[] calldata _itemIds) external view returns (Sleeve[] memory sleeves_) {
+        sleeves_ = new Sleeve[](_itemIds.length);
+        for (uint256 i; i < _itemIds.length; i++) {
+            sleeves_[i].sleeveId = s.sleeves[_itemIds[i]];
+            sleeves_[i].wearableId = _itemIds[i];
         }
     }
 

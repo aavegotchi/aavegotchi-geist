@@ -55,6 +55,7 @@
     "@nomiclabs/hardhat-etherscan": "^3.0.0",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.2",
+    "@openzeppelin/defender-sdk": "^2.6.0",
     "@types/mocha": "^9.0.0",
     "alchemy-sdk": "^2.4.1",
     "axios": "^0.21.1",

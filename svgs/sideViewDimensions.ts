@@ -423,7 +423,7 @@ export const sideViewDimensions1: SideDimensions[] = [
     itemId: 16,
     name: "Blue Plaid",
     side: "left",
-    dimensions: { x: 20, y: 33, width: 24, height: 22 },
+    dimensions: { x: 20, y: 32, width: 24, height: 22 },
   },
   {
     itemId: 16,
