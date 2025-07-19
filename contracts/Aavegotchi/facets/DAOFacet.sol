@@ -483,4 +483,11 @@ contract DAOFacet is Modifiers {
         s.forgeDiamond = _forgeDiamond;
         emit ForgeDiamondUpdate(_forgeDiamond);
     }
+
+    event DiamondPaused(bool _paused);
+
+    function toggleDiamondPaused() external onlyDaoOrOwner {
+        s.diamondPaused = !s.diamondPaused;
+        emit DiamondPaused(s.diamondPaused);
+    }
 }

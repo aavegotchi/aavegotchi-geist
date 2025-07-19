@@ -390,7 +390,7 @@ contract ForgeFacet is Modifiers {
     /// @dev amount expressed in block numbers
     /// @param _gotchiIds An array containing the gotchi ID queues to speed up
     /// @param _amounts An array containing the corresponding amounts of $GLTR tokens to pay for each queue speedup
-    function reduceQueueTime(uint256[] calldata _gotchiIds, uint40[] calldata _amounts) external {
+    function reduceQueueTime(uint256[] calldata _gotchiIds, uint40[] calldata _amounts) external whenNotPaused {
         require(_gotchiIds.length == _amounts.length, "InstallationFacet: Mismatched arrays");
         for (uint256 i; i < _gotchiIds.length; i++) {
             uint256 gotchiId = _gotchiIds[i];
@@ -555,7 +555,7 @@ contract ForgeFacet is Modifiers {
         }
     }
 
-    function burn(address account, uint256 id, uint256 amount) external {
+    function burn(address account, uint256 id, uint256 amount) external whenNotPaused {
         require(
             account == msg.sender || forgeTokenFacet().isApprovedForAll(account, msg.sender),
             "ForgeFacet: caller is not token owner or approved"

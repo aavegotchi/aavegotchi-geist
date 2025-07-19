@@ -10,6 +10,13 @@ import {AavegotchiFacet} from "../../facets/AavegotchiFacet.sol";
 import {INFTBridge} from "../../../shared/interfaces/INFTBridge.sol";
 
 contract WearablesFacet {
+    modifier whenNotPaused() {
+        if (msg.sender != WearableLibDiamond.contractOwner()) {
+            require(!WearableLibDiamond.diamondStorage().contractPaused, "WearablesFacet: Contract paused");
+        }
+        _;
+    }
+
     event ItemGeistBridgeUpdate(address _newBridge);
 
     function name() external pure returns (string memory) {
@@ -60,7 +67,7 @@ contract WearablesFacet {
 
     //WRITE
 
-    function setApprovalForAll(address _operator, bool _approved) external {
+    function setApprovalForAll(address _operator, bool _approved) external whenNotPaused {
         periphery().peripherySetApprovalForAll(_operator, _approved, msg.sender);
         //emit event
         //previous address in frame should be the owner
@@ -76,15 +83,29 @@ contract WearablesFacet {
         }
     }
 
-    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external {
+    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external whenNotPaused {
         periphery().peripherySafeTransferFrom(msg.sender, _from, _to, _id, _value, _data);
         //emit event
         LibEventHandler._receiveAndEmitTransferSingleEvent(msg.sender, _from, _to, _id, _value);
     }
 
-    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external {
+    function safeBatchTransferFrom(
+        address _from,
+        address _to,
+        uint256[] calldata _ids,
+        uint256[] calldata _values,
+        bytes calldata _data
+    ) external whenNotPaused {
         periphery().peripherySafeBatchTransferFrom(msg.sender, _from, _to, _ids, _values, _data);
         //emit event
         LibEventHandler._receiveAndEmitTransferBatchEvent(msg.sender, _from, _to, _ids, _values);
+    }
+
+    event DiamondPaused(bool _paused);
+
+    function toggleDiamondPaused() external {
+        WearableLibDiamond.enforceIsContractOwner();
+        WearableLibDiamond.diamondStorage().contractPaused = !WearableLibDiamond.diamondStorage().contractPaused;
+        emit DiamondPaused(WearableLibDiamond.diamondStorage().contractPaused);
     }
 }

@@ -32,7 +32,7 @@ contract VrfFacet is Modifiers {
    |            Write Functions        |
    |__________________________________*/
 
-    function openPortals(uint256[] calldata _tokenIds) external {
+    function openPortals(uint256[] calldata _tokenIds) external whenNotPaused {
         address owner = LibMeta.msgSender();
         for (uint256 i; i < _tokenIds.length; i++) {
             uint256 tokenId = _tokenIds[i];
@@ -73,7 +73,7 @@ contract VrfFacet is Modifiers {
         emit VrfRandomNumber(tokenId, _randomNumber, block.timestamp);
     }
 
-    function randomNumberCallback(uint256 requestId, uint256 randomNumber) external {
+    function randomNumberCallback(uint256 requestId, uint256 randomNumber) external whenNotPaused {
         require(LibMeta.msgSender() == s.VRFSystem, "Only VRFSystem can fulfill");
         uint256 tokenId = s.vrfRequestIdToTokenId[requestId];
         require(s.aavegotchis[tokenId].status == LibAavegotchi.STATUS_VRF_PENDING, "VrfFacet: VRF is not pending");

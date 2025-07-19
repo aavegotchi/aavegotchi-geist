@@ -367,6 +367,7 @@ struct AppStorage {
     mapping(address => mapping(uint256 => bool)) erc1155ListingExclusions;
     //proofofplay vrf
     address VRFSystem;
+    bool diamondPaused;
 }
 
 library LibAppStorage {
@@ -436,6 +437,14 @@ contract Modifiers {
     modifier onlyPeriphery() {
         address sender = LibMeta.msgSender();
         require(sender == s.wearableDiamond, "LibAppStorage: Not wearable diamond");
+        _;
+    }
+
+    modifier whenNotPaused() {
+        ///we exempt diamond owner from the freeze
+        if (msg.sender != LibDiamond.contractOwner()) {
+            require(!s.diamondPaused, "AppStorage: Diamond paused");
+        }
         _;
     }
 

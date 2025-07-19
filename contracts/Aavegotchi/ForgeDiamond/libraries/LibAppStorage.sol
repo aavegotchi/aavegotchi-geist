@@ -217,7 +217,10 @@ contract Modifiers {
     }
 
     modifier whenNotPaused() {
-        require(!s.contractPaused, "LibAppStorage: Contract paused");
+        ///we exempt diamond owner from the freeze
+        if (msg.sender != ForgeLibDiamond.contractOwner()) {
+            require(!s.contractPaused, "AppStorage: Contract paused");
+        }
         _;
     }
 

@@ -191,38 +191,6 @@ export function strDisplay(str: any) {
   return addCommas(str.toString());
 }
 
-// async function deployForgeDiamond(
-//   ownerAddress: string,
-//   aavegotchiDiamondAddress: string,
-//   wearableDiamondAddress: string,
-//   vrfSystemAddress: string,
-//   deploymentConfig: DeploymentConfig,
-//   signer: Signer
-// ) {
-//   // Deploy forge facets
-
-//   const forgeDiamond = await deployWithoutInit({
-//     diamondName: "ForgeDiamond",
-//     facetNames: [
-//       "ForgeFacet",
-//       "ForgeTokenFacet",
-//       "ForgeVRFFacet",
-//       "ForgeDAOFacet",
-//       "ForgeWriteFacet",
-//     ],
-//     signer,
-//     args: [
-//       ownerAddress,
-//       aavegotchiDiamondAddress,
-//       wearableDiamondAddress,
-//       vrfSystemAddress,
-//     ],
-//     deploymentConfig,
-//   });
-
-//   return forgeDiamond;
-// }
-
 async function createHauntWithCollaterals(
   hauntId: number,
   daoFacet: DAOFacet,
@@ -818,6 +786,16 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         deploymentConfig.wearableDiamond,
         signer
       );
+      //pause wearable diamond
+      console.log("Pausing Wearable Diamond");
+      const wearablesFacet = await ethers.getContractAt(
+        "WearablesFacet",
+        wearableDiamond.address,
+        signer
+      );
+      const pauseWearableTx = await wearablesFacet.toggleDiamondPaused();
+      await pauseWearableTx.wait();
+
       return wearableDiamond;
     }
   }
@@ -868,6 +846,18 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         deploymentConfig.forgeDiamond,
         signer
       );
+
+      //pause forge diamond
+      console.log("Pausing Forge Diamond");
+      const forgeFacet = await ethers.getContractAt(
+        "ForgeDAOFacet",
+        forgeDiamond.address,
+        signer
+      );
+      console.log("Pausing Forge Diamond");
+      const pauseForgeTx = await forgeFacet.toggleContractPaused();
+      await pauseForgeTx.wait();
+
       await new Promise((resolve) => setTimeout(resolve, 2000));
       return forgeDiamond;
     }
@@ -885,6 +875,11 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   const daoFacet = (
     await ethers.getContractAt("DAOFacet", aavegotchiDiamond.address)
   ).connect(signer);
+
+  //pause aavegotchi diamond
+  console.log("Pausing Aavegotchi Diamond");
+  const pauseAavegotchiTx = await daoFacet.toggleDiamondPaused();
+  await pauseAavegotchiTx.wait();
 
   console.log("Item Managers:", itemManagers);
   if (

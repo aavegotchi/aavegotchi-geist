@@ -115,7 +115,7 @@ contract ForgeVRFFacet is Modifiers {
     //      emit VrfResponse(info.user, _randomNumber, _requestId, block.number);
     //  }
 
-    function randomNumberCallback(uint256 requestId, uint256 randomNumber) external {
+    function randomNumberCallback(uint256 requestId, uint256 randomNumber) external whenNotPaused {
         require(LibMeta.msgSender() == s.VRFSystem, "Only VRFSystem can fulfill");
 
         VrfRequestInfo storage info = s.vrfRequestIdToVrfRequestInfo[requestId];

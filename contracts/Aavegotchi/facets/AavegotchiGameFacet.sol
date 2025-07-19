@@ -227,7 +227,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@param _tokenId The identifier of NFT to claim an Aavegotchi from
     ///@param _option The index of the aavegotchi to claim(1-10)
 
-    function claimAavegotchi(uint256 _tokenId, uint256 _option) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
+    function claimAavegotchi(uint256 _tokenId, uint256 _option) external whenNotPaused onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
         Aavegotchi storage aavegotchi = s.aavegotchis[_tokenId];
         require(aavegotchi.status == LibAavegotchi.STATUS_OPEN_PORTAL, "AavegotchiGameFacet: Portal not open");
         require(_option < PORTAL_AAVEGOTCHIS_NUM, "AavegotchiGameFacet: Only 10 aavegotchi options available");
@@ -258,7 +258,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@param _tokenId the identifier if the NFT to name
     ///@param _name Preferred name to give the claimed aavegotchi
 
-    function setAavegotchiName(uint256 _tokenId, string calldata _name) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
+    function setAavegotchiName(uint256 _tokenId, string calldata _name) external onlyUnlocked(_tokenId) whenNotPaused onlyAavegotchiOwner(_tokenId) {
         require(s.aavegotchis[_tokenId].status == LibAavegotchi.STATUS_AAVEGOTCHI, "AavegotchiGameFacet: Must claim Aavegotchi before setting name");
         string memory lowerName = LibAavegotchi.validateAndLowerName(_name);
         string memory existingName = s.aavegotchis[_tokenId].name;
@@ -275,7 +275,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@dev only valid for claimed aavegotchis
     ///@dev Kinship will only increase if the lastInteracted minus the current time is greater than or equal to 12 hours
     ///@param _tokenIds An array containing the token identifiers of the claimed aavegotchis that are to be interacted with
-    function interact(uint256[] calldata _tokenIds) external {
+    function interact(uint256[] calldata _tokenIds) external whenNotPaused {
         address sender = LibMeta.msgSender();
         for (uint256 i; i < _tokenIds.length; i++) {
             uint256 tokenId = _tokenIds[i];
@@ -313,7 +313,10 @@ contract AavegotchiGameFacet is Modifiers {
     ///@dev only valid for claimed aavegotchis
     ///@param _tokenId The identifier of the NFT to spend the skill points on
     ///@param _values An array of four integers that represent the values of the skill points
-    function spendSkillPoints(uint256 _tokenId, int16[4] calldata _values) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
+    function spendSkillPoints(
+        uint256 _tokenId,
+        int16[4] calldata _values
+    ) external whenNotPaused onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
         //To test (Dan): Prevent underflow (is this ok?), see require below
         uint256 totalUsed;
         for (uint256 index; index < _values.length; index++) {
@@ -335,7 +338,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@notice Allow the current owner/borrower of an NFT to reduce kinship while channelling alchemica
     ///@dev will revert if the gotchi kinship is too low to channel or if the lending listing does not enable channeling
     ///@param _gotchiId Id of the Gotchi used to channel
-    function reduceKinshipViaChanneling(uint32 _gotchiId) external {
+    function reduceKinshipViaChanneling(uint32 _gotchiId) external whenNotPaused {
         //only realmDiamond can reduce kinship
         require(msg.sender == s.realmAddress, "GotchiLending: Only Realm can reduce kinship via channeling");
         //no need to do checks on _gotchiId since realmDiamond handles that
@@ -368,7 +371,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@notice Allow the current owner of a gotchi to reassign all spent skill points
     ///@dev Reverts if user doesn't have enough Essence to pay for the respec
     ///@param _tokenId Id of the Gotchi to respec
-    function resetSkillPoints(uint32 _tokenId) public onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
+    function resetSkillPoints(uint32 _tokenId) public onlyUnlocked(_tokenId) whenNotPaused onlyAavegotchiOwner(_tokenId) {
         if (s.aavegotchis[_tokenId].respecCount > 0) {
             ForgeTokenFacet forgeTokenFacet = ForgeTokenFacet(s.forgeDiamond);
             uint256 ESSENCE = 1_000_000_001;

@@ -45,7 +45,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
         uint256 _priceInWei,
         uint256 _quantity,
         uint256 _duration
-    ) external {
+    ) external whenNotPaused {
         uint256 cost = _quantity * _priceInWei;
         require(cost >= 1e15, "ERC1155BuyOrder: cost should be 0.001 GHST or larger");
 
@@ -92,7 +92,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
         );
     }
 
-    function cancelERC1155BuyOrder(uint256 _buyOrderId) external {
+    function cancelERC1155BuyOrder(uint256 _buyOrderId) external whenNotPaused {
         address sender = LibMeta.msgSender();
         ERC1155BuyOrder memory erc1155BuyOrder = s.erc1155BuyOrders[_buyOrderId];
         require(erc1155BuyOrder.timeCreated != 0, "ERC1155BuyOrder: ERC1155 buyOrder does not exist");
@@ -117,7 +117,7 @@ contract ERC1155BuyOrderFacet is Modifiers {
         uint256 _category,
         uint256 _priceInWei,
         uint256 _quantity
-    ) external {
+    ) external whenNotPaused {
         address sender = LibMeta.msgSender();
         ERC1155BuyOrder storage erc1155BuyOrder = s.erc1155BuyOrders[_buyOrderId];
 
