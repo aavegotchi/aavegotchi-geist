@@ -98,10 +98,6 @@ contract CollateralFacet is Modifiers {
         require(escrow != address(0), "CollateralFacet: Does not have an escrow");
 
         address collateralType = s.aavegotchis[_tokenId].collateralType;
-        uint256 currentStake = IERC20(collateralType).balanceOf(escrow);
-        uint256 minimumStake = s.aavegotchis[_tokenId].minimumStake;
-
-        require(currentStake - _reduceAmount >= minimumStake, "CollateralFacet: Cannot reduce below minimum stake");
         emit DecreaseStake(_tokenId, _reduceAmount);
         LibERC20.transferFrom(collateralType, escrow, LibMeta.msgSender(), _reduceAmount);
     }
@@ -147,12 +143,6 @@ contract CollateralFacet is Modifiers {
         }
 
         emit LibERC721.Transfer(owner, address(0), _tokenId);
-
-        // transfer all collateral to LibMeta.msgSender()
-        address collateralType = s.aavegotchis[_tokenId].collateralType;
-        uint256 reduceAmount = IERC20(collateralType).balanceOf(escrow);
-        emit DecreaseStake(_tokenId, reduceAmount);
-        LibERC20.transferFrom(collateralType, escrow, owner, reduceAmount);
 
         // delete aavegotchi info
         string memory name = s.aavegotchis[_tokenId].name;
