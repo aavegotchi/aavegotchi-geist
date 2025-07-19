@@ -103,9 +103,9 @@ contract WearablesFacet {
 
     event DiamondPaused(bool _paused);
 
-    function toggleDiamondPaused() external {
+    function toggleDiamondPaused(bool _paused) external {
         WearableLibDiamond.enforceIsContractOwner();
-        WearableLibDiamond.diamondStorage().contractPaused = !WearableLibDiamond.diamondStorage().contractPaused;
-        emit DiamondPaused(WearableLibDiamond.diamondStorage().contractPaused);
+        WearableLibDiamond.diamondStorage().contractPaused = _paused;
+        emit DiamondPaused(_paused);
     }
 }

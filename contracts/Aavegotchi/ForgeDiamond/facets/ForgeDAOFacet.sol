@@ -116,9 +116,9 @@ contract ForgeDAOFacet is Modifiers {
         emit SetSmeltingSkillPointReductionFactorBips(oldBips, s.smeltingSkillPointReductionFactorBips);
     }
 
-    function toggleContractPaused() external onlyDaoOrOwner {
-        s.contractPaused = !s.contractPaused;
-        if (s.contractPaused) {
+    function toggleContractPaused(bool _paused) external onlyDaoOrOwner {
+        s.contractPaused = _paused;
+        if (_paused) {
             emit ContractPaused();
         } else {
             emit ContractUnpaused();

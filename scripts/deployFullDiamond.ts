@@ -793,7 +793,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         wearableDiamond.address,
         signer
       );
-      const pauseWearableTx = await wearablesFacet.toggleDiamondPaused();
+      const pauseWearableTx = await wearablesFacet.toggleDiamondPaused(true);
       await pauseWearableTx.wait();
 
       return wearableDiamond;
@@ -855,7 +855,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
         signer
       );
       console.log("Pausing Forge Diamond");
-      const pauseForgeTx = await forgeFacet.toggleContractPaused();
+      const pauseForgeTx = await forgeFacet.toggleContractPaused(true);
       await pauseForgeTx.wait();
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -878,7 +878,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
 
   //pause aavegotchi diamond
   console.log("Pausing Aavegotchi Diamond");
-  const pauseAavegotchiTx = await daoFacet.toggleDiamondPaused();
+  const pauseAavegotchiTx = await daoFacet.toggleDiamondPaused(true);
   await pauseAavegotchiTx.wait();
 
   console.log("Item Managers:", itemManagers);
