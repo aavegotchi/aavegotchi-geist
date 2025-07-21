@@ -43,6 +43,7 @@ export default {
     apiKey: {
       // matic: process.env.POLYGON_API_KEY,
       baseSepolia: process.env.BASE_API_KEY,
+      base: process.env.BASE_API_KEY,
     },
   },
   networks: {
