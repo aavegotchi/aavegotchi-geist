@@ -86,6 +86,7 @@ interface NetworkAddresses {
   wearableDiamond?: string;
   forgeDiamond?: string;
   vrfSystem?: string;
+  relayerPetter?: string;
   // vrfVars?: string;
   safeProxyFactory?: string;
   realmDiamond?: string;
@@ -189,10 +190,11 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
 
   8453: {
     ghst: "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb",
-    vrfSystem: "",
+    vrfSystem: "0x9eC728Fce50c77e0BeF7d34F1ab28a46409b7aF1",
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
     //@to-do: update aavegotchiDaoAddress for bsae mainnet
     aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
+    relayerPetter: "0xf52398257A254D541F392667600901f710a006eD",
   },
 };
 

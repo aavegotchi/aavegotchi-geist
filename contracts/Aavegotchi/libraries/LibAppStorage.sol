@@ -368,6 +368,7 @@ struct AppStorage {
     //proofofplay vrf
     address VRFSystem;
     bool diamondPaused;
+    address relayerPetter;
 }
 
 library LibAppStorage {
@@ -442,7 +443,7 @@ contract Modifiers {
 
     modifier whenNotPaused() {
         ///we exempt diamond owner from the freeze
-        if (msg.sender != LibDiamond.contractOwner()) {
+        if (msg.sender != LibDiamond.contractOwner() || msg.sender != s.relayerPetter) {
             require(!s.diamondPaused, "AppStorage: Diamond paused");
         }
         _;

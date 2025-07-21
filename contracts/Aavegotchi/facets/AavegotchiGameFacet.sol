@@ -271,6 +271,10 @@ contract AavegotchiGameFacet is Modifiers {
         emit SetAavegotchiName(_tokenId, existingName, _name);
     }
 
+    function setRelayerPetter(address _relayerPetter) external onlyOwner {
+        s.relayerPetter = _relayerPetter;
+    }
+
     ///@notice Allow the owner of an NFT to interact with them.thereby increasing their kinship(petting)
     ///@dev only valid for claimed aavegotchis
     ///@dev Kinship will only increase if the lastInteracted minus the current time is greater than or equal to 12 hours
@@ -281,8 +285,8 @@ contract AavegotchiGameFacet is Modifiers {
             uint256 tokenId = _tokenIds[i];
             address owner = s.aavegotchis[tokenId].owner;
 
-            //If the owner is the bridge or GBM Contract, anyone can pet the gotchis inside
-            if (owner != address(this) && owner != 0xD5543237C656f25EEA69f1E247b8Fa59ba353306) {
+            //If the owner is the bridge or GBM Contract or the relayerPetter, anyone can pet the gotchis inside
+            if (owner != address(this) && owner != 0xD5543237C656f25EEA69f1E247b8Fa59ba353306 && owner != s.relayerPetter) {
                 // Check lending status of aavegotchi and allow original pet operators
                 bool isOriginalPetOperator;
                 uint32 listingId = s.aavegotchiToListingId[uint32(tokenId)];

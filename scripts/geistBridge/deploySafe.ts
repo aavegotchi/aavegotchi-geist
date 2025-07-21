@@ -18,7 +18,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 const FAILED_SAFES_PATH = `${GNOSIS_PATH}/failedSafes.json`;
 const DEPLOYED_SAFES_PATH = `${GNOSIS_PATH}/deployedSafes.json`;
 
-const toBase = false; //TO-DO: change to true during mainnet deployment
+const toBase = true; //TO-DO: change to true during mainnet deployment
 
 //create processed directory if it doesn't exist
 if (!fs.existsSync(PROCESSED_PATH)) {

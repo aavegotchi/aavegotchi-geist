@@ -654,6 +654,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       rarityFarming,
       ghstContractAddress,
       addresses.vrfSystem,
+      addresses.relayerPetter,
     ],
   ];
 

@@ -25,6 +25,7 @@ contract InitDiamond {
         // string symbol;
         address ghstContract;
         address vrfSystem;
+        address relayerPetter;
     }
     function init(Args memory _args) external {
         s.dao = _args.dao;
@@ -47,5 +48,6 @@ contract InitDiamond {
         s.ghstContract = _args.ghstContract;
         s.listingFeeInWei = 1e17;
         s.tokenIdCounter = 25_000;
+        s.relayerPetter = _args.relayerPetter;
     }
 }
