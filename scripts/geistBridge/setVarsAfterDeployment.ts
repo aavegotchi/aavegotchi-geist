@@ -21,25 +21,25 @@ async function setVarsAfterDeployment() {
     c.aavegotchiDiamond!,
     signer
   );
-  gasused = await setRealmAddress(
-    aavegotchiGameFacet,
-    gasused,
-    c.realmDiamond!
-  );
+  // gasused = await setRealmAddress(
+  //   aavegotchiGameFacet,
+  //   gasused,
+  //   c.realmDiamond!
+  // );
 
   //whitelist addresses for baazaar trading
   const addressesToWhitelist = [
     c.aavegotchiDiamond!,
     c.forgeDiamond!,
-    c.realmDiamond!,
-    c.installationDiamond!,
-    c.tileDiamond!,
+    // c.realmDiamond!,
+    // c.installationDiamond!,
+    // c.tileDiamond!,
     c.fakeGotchiArtDiamond!,
     c.fakeGotchiCardDiamond!,
-    c.ggSkinsDiamond!,
-    c.ggProfilesDiamond!,
+    // c.ggSkinsDiamond!,
+    // c.ggProfilesDiamond!,
   ];
-  const bools = [true, true, true, true, true, true, true, true, true];
+  const bools = [true, true, true, true];
   const daoFacet = await ethers.getContractAt(
     "DAOFacet",
     c.aavegotchiDiamond!,
@@ -52,39 +52,39 @@ async function setVarsAfterDeployment() {
   tx = await whitelistTx.wait();
   gasused = gasused.add(tx.gasUsed);
 
-  //set revenue token for lendings
-  const lendingGetterAndSetterFacet = await ethers.getContractAt(
-    "LendingGetterAndSetterFacet",
-    c.aavegotchiDiamond!,
-    signer
-  );
-  const revenueTokens = [c.fud!, c.fomo!, c.alpha!, c.kek!];
-  const revenueTx = await lendingGetterAndSetterFacet.allowRevenueTokens(
-    revenueTokens
-  );
-  tx = await revenueTx.wait();
-  gasused = gasused.add(tx.gasUsed);
+  // //set revenue token for lendings
+  // const lendingGetterAndSetterFacet = await ethers.getContractAt(
+  //   "LendingGetterAndSetterFacet",
+  //   c.aavegotchiDiamond!,
+  //   signer
+  // );
+  // const revenueTokens = [c.fud!, c.fomo!, c.alpha!, c.kek!];
+  // const revenueTx = await lendingGetterAndSetterFacet.allowRevenueTokens(
+  //   revenueTokens
+  // );
+  // tx = await revenueTx.wait();
+  // gasused = gasused.add(tx.gasUsed);
 
-  //set forge setter addresses
+  // //set forge setter addresses
 
-  const forgeDaoFacet = await ethers.getContractAt(
-    "ForgeDAOFacet",
-    c.forgeDiamond!,
-    signer
-  );
-  //set gltr address
-  console.log("Setting gltr address");
-  const gltrAddressTx = await forgeDaoFacet.setGltrAddress(c.gltrAddress!);
-  tx = await gltrAddressTx.wait();
-  gasused = gasused.add(tx.gasUsed);
+  // const forgeDaoFacet = await ethers.getContractAt(
+  //   "ForgeDAOFacet",
+  //   c.forgeDiamond!,
+  //   signer
+  // );
+  // //set gltr address
+  // console.log("Setting gltr address");
+  // const gltrAddressTx = await forgeDaoFacet.setGltrAddress(c.gltrAddress!);
+  // tx = await gltrAddressTx.wait();
+  // gasused = gasused.add(tx.gasUsed);
 
-  //set aavegotchi dao address
-  console.log("Setting aavegotchi dao address");
-  const aavegotchiDaoAddressTx = await forgeDaoFacet.setAavegotchiDaoAddress(
-    c.aavegotchiDaoAddress!
-  );
-  tx = await aavegotchiDaoAddressTx.wait();
-  gasused = gasused.add(tx.gasUsed);
+  // //set aavegotchi dao address
+  // console.log("Setting aavegotchi dao address");
+  // const aavegotchiDaoAddressTx = await forgeDaoFacet.setAavegotchiDaoAddress(
+  //   c.aavegotchiDaoAddress!
+  // );
+  // tx = await aavegotchiDaoAddressTx.wait();
+  // gasused = gasused.add(tx.gasUsed);
 
   console.log("Total gas used: " + strDisplay(gasused));
 

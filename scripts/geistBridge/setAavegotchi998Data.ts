@@ -11,14 +11,10 @@ import { PROCESSED_PATH, DATA_PATH } from "./paths";
 const MAX_RETRIES = 3;
 // const BATCH_SIZE = 100; // Removed: Number of Aavegotchis (parent tokenIds) to process per transaction
 const MAX_ITEM_ENTRIES_PER_BATCH = 250; // New dynamic batching limit
-const INPUT_JSON_FILE = path.join(
-  DATA_PATH,
-  "aavegotchi",
-  "aavegotchi998Data.json"
-);
+const INPUT_JSON_FILE = path.join(DATA_PATH, "aavegotchi", "998remaining.json");
 const PROGRESS_FILE = path.join(
   PROCESSED_PATH,
-  "setAavegotchi998Data-progress.json"
+  "setAavegotchi998Data-progress2.json"
 );
 // =====================
 

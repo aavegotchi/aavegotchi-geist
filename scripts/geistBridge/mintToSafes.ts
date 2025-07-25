@@ -4,7 +4,7 @@ import path from "path";
 import { deploySafe } from "./deploySafe";
 import { ForgeFacet, AavegotchiBridgeFacet } from "../../typechain";
 import { getRelayerSigner } from "../helperFunctions"; // Renamed for clarity
-import { GNOSIS_PATH, PROCESSED_PATH } from "./paths";
+import { GNOSIS_PATH, PROCESSED_PATH, PC_WALLET } from "./paths";
 import { DATA_PATH } from "./paths";
 import { BigNumber } from "ethers"; // Added for contract calls
 import { varsForNetwork } from "../../helpers/constants"; // Added
@@ -530,7 +530,17 @@ async function mintToSafes() {
     forgeSafes
   );
 
-  // Log allocations for unverified safes
+  // =====================
+  // Handle UNVERIFIED safes: mint their allocations to PC_WALLET
+  // =====================
+
+  // Collect assets that belong to safes which failed to deploy
+  const pcAavegotchiTokenIds: string[] = [];
+  const pcWearableTokens: WearableTokenData[] = [];
+  const pcForgeTokens: TokenData[] = [];
+
+  const verifiedSafesSet = new Set(verifiedSafes.map((s) => s.toLowerCase()));
+
   const allInitialSafeAddresses = new Set<string>();
   aavegotchiSafes.forEach((s) =>
     allInitialSafeAddresses.add(s.safeAddress.toLowerCase())
@@ -542,60 +552,92 @@ async function mintToSafes() {
     allInitialSafeAddresses.add(s.safeAddress.toLowerCase())
   );
 
-  const verifiedSafesSet = new Set(verifiedSafes.map((s) => s.toLowerCase()));
   const unverifiedSafeAddresses = [...allInitialSafeAddresses].filter(
     (addr) => !verifiedSafesSet.has(addr)
   );
 
-  if (unverifiedSafeAddresses.length > 0) {
-    console.log(
-      `Found ${unverifiedSafeAddresses.length} safes that were not successfully verified/deployed. Logging their intended allocations...`
+  // Prepare log structure for failed safe allocations
+  const currentRunFailedAllocations: FailedSafeAllocationsLog = {};
+
+  for (const safeAddress of unverifiedSafeAddresses) {
+    const aData = aavegotchiSafes.find(
+      (s) => s.safeAddress.toLowerCase() === safeAddress
     );
-    const currentRunFailedAllocations: FailedSafeAllocationsLog = {};
+    const wData = wearableSafes.find(
+      (s) => s.safeAddress.toLowerCase() === safeAddress
+    );
+    const fData = forgeSafes.find(
+      (s) => s.safeAddress.toLowerCase() === safeAddress
+    );
 
-    for (const safeAddress of unverifiedSafeAddresses) {
-      const aData = aavegotchiSafes.find(
-        (s) => s.safeAddress.toLowerCase() === safeAddress
-      );
-      const wData = wearableSafes.find(
-        (s) => s.safeAddress.toLowerCase() === safeAddress
-      );
-      const fData = forgeSafes.find(
-        (s) => s.safeAddress.toLowerCase() === safeAddress
-      );
-
-      const allocationDetail: FailedSafeAllocationDetail = {};
-      if (aData?.tokenIds && aData.tokenIds.length > 0) {
-        allocationDetail.aavegotchis = aData.tokenIds;
-      }
-      if (wData?.tokens && wData.tokens.length > 0) {
-        allocationDetail.wearables = wData.tokens;
-      }
-      if (fData?.tokens && fData.tokens.length > 0) {
-        allocationDetail.forgeItems = fData.tokens;
-      }
-
-      if (Object.keys(allocationDetail).length > 0) {
-        currentRunFailedAllocations[safeAddress] = allocationDetail;
-        console.log(
-          `- Recording allocations for unverified safe: ${safeAddress}`
-        );
-      } else {
-        console.log(
-          `- Unverified safe ${safeAddress} had no allocations defined in input files or allocations were empty. Not logging.`
-        );
-      }
+    if (aData?.tokenIds?.length) {
+      pcAavegotchiTokenIds.push(...aData.tokenIds);
     }
-    if (Object.keys(currentRunFailedAllocations).length > 0) {
-      saveFailedAllocations(currentRunFailedAllocations);
-    } else {
-      console.log(
-        "No allocations to log for unverified safes (either no unverified safes with items, or all safes verified)."
-      );
+
+    if (wData?.tokens?.length) {
+      pcWearableTokens.push(...wData.tokens);
+    }
+
+    if (fData?.tokens?.length) {
+      pcForgeTokens.push(...fData.tokens);
+    }
+
+    // Build allocation detail for logging
+    const allocationDetail: FailedSafeAllocationDetail = {};
+    if (aData?.tokenIds && aData.tokenIds.length > 0) {
+      allocationDetail.aavegotchis = aData.tokenIds;
+    }
+    if (wData?.tokens && wData.tokens.length > 0) {
+      allocationDetail.wearables = wData.tokens;
+    }
+    if (fData?.tokens && fData.tokens.length > 0) {
+      allocationDetail.forgeItems = fData.tokens;
+    }
+
+    if (Object.keys(allocationDetail).length > 0) {
+      currentRunFailedAllocations[safeAddress] = allocationDetail;
     }
   }
 
-  // Initialize contracts
+  // Persist failed allocation log (unchanged behavior)
+  if (Object.keys(currentRunFailedAllocations).length > 0) {
+    console.log(
+      `Logging allocations for ${
+        Object.keys(currentRunFailedAllocations).length
+      } unverified safes to file.`
+    );
+    saveFailedAllocations(currentRunFailedAllocations);
+  }
+
+  // -------- Aggregate duplicates for ERC-1155 style tokens --------
+  function aggregateWearableBalances(
+    tokens: WearableTokenData[]
+  ): WearableTokenData[] {
+    const map: { [id: string]: number } = {};
+    for (const t of tokens) {
+      map[t.itemId] = (map[t.itemId] || 0) + t.balance;
+    }
+    return Object.entries(map).map(([itemId, balance]) => ({
+      itemId,
+      balance,
+    }));
+  }
+
+  function aggregateForgeBalances(tokens: TokenData[]): TokenData[] {
+    const map: { [id: string]: number } = {};
+    for (const t of tokens) {
+      map[t.tokenId] = (map[t.tokenId] || 0) + t.balance;
+    }
+    return Object.entries(map).map(([tokenId, balance]) => ({
+      tokenId,
+      balance,
+    }));
+  }
+
+  const aggregatedWearableTokens = aggregateWearableBalances(pcWearableTokens);
+  const aggregatedForgeTokens = aggregateForgeBalances(pcForgeTokens);
+
+  // Initialize contracts (after we have signer)
   const aavegotchiFacet = (await ethers.getContractAt(
     "AavegotchiBridgeFacet",
     contractAddresses.aavegotchiDiamond!,
@@ -608,12 +650,95 @@ async function mintToSafes() {
     signer
   )) as ForgeFacet;
 
+  // --- Mint collected assets to PC_WALLET ---
+  if (pcAavegotchiTokenIds.length > 0) {
+    console.log(
+      `Minting ${pcAavegotchiTokenIds.length} bridged Aavegotchis to PC_WALLET (${PC_WALLET})...`
+    );
+    try {
+      const tx = await aavegotchiFacet.mintAavegotchiBridged([
+        {
+          owner: PC_WALLET,
+          tokenIds: pcAavegotchiTokenIds,
+        },
+      ]);
+      console.log(`  - Aavegotchi Tx sent: ${tx.hash}`);
+      await tx.wait();
+      console.log("  - ✅ Aavegotchis minted to PC_WALLET");
+    } catch (error: any) {
+      console.error(
+        "  - ❌ Failed to mint Aavegotchis to PC_WALLET:",
+        error.message || error
+      );
+    }
+  }
+
+  if (aggregatedWearableTokens.length > 0) {
+    console.log(
+      `Minting ${aggregatedWearableTokens.length} types of Wearables to PC_WALLET (${PC_WALLET})...`
+    );
+    try {
+      const tx = await aavegotchiFacet.batchMintItems([
+        {
+          to: PC_WALLET,
+          itemBalances: aggregatedWearableTokens.map((t) => ({
+            itemId: BigNumber.from(t.itemId),
+            quantity: BigNumber.from(t.balance),
+          })),
+        },
+      ]);
+      console.log(`  - Wearables Tx sent: ${tx.hash}`);
+      await tx.wait();
+      console.log("  - ✅ Wearables minted to PC_WALLET");
+    } catch (error: any) {
+      console.error(
+        "  - ❌ Failed to mint Wearables to PC_WALLET:",
+        error.message || error
+      );
+    }
+  }
+
+  if (aggregatedForgeTokens.length > 0) {
+    console.log(
+      `Minting ${aggregatedForgeTokens.length} types of Forge items to PC_WALLET (${PC_WALLET})...`
+    );
+    try {
+      const tx = await forgeFacet.batchMintForgeItems([
+        {
+          to: PC_WALLET,
+          itemBalances: aggregatedForgeTokens.map((t) => ({
+            itemId: BigNumber.from(t.tokenId),
+            quantity: BigNumber.from(t.balance),
+          })),
+        },
+      ]);
+      console.log(`  - Forge items Tx sent: ${tx.hash}`);
+      await tx.wait();
+      console.log("  - ✅ Forge items minted to PC_WALLET");
+    } catch (error: any) {
+      console.error(
+        "  - ❌ Failed to mint Forge items to PC_WALLET:",
+        error.message || error
+      );
+    }
+  }
+
+  // Remove unverified safes from processing list to avoid redundant failures
+  const verifiedSafesForProcessing = [...safesToProcess].filter((addr) =>
+    verifiedSafesSet.has(addr)
+  );
+  console.log(
+    `After filtering, ${verifiedSafesForProcessing.length} verified safes remain for regular processing.`
+  );
+
+  // NOTE: The previous block that only logged allocations has been kept but moved above; functionality unchanged apart from additional PC_WALLET minting.
+
   // Process safes from the dynamically generated list
-  for (let i = 0; i < allSafesForProcessing.length; i++) {
-    const safeAddress = allSafesForProcessing[i];
+  for (let i = 0; i < verifiedSafesForProcessing.length; i++) {
+    const safeAddress = verifiedSafesForProcessing[i];
     console.log(
       `\nProcessing safe ${i + 1}/${
-        allSafesForProcessing.length
+        verifiedSafesForProcessing.length
       }: ${safeAddress}`
     );
 

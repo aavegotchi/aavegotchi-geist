@@ -74,7 +74,8 @@ contract AavegotchiBridgeFacet is Modifiers {
 
                 uint256 quantity = _mintItemsBridged[i].itemBalances[j].quantity;
                 uint256 totalQuantity = s.itemTypes[itemId].totalQuantity + quantity;
-                require(totalQuantity <= s.itemTypes[itemId].maxQuantity, "DAOFacet: Total item type quantity exceeds max quantity");
+                //+1 to account for forged and smelted assets
+                require(totalQuantity <= s.itemTypes[itemId].maxQuantity + 1, "DAOFacet: Total item type quantity exceeds max quantity");
 
                 LibItems.addToOwner(_mintItemsBridged[i].to, itemId, quantity);
                 s.itemTypes[itemId].totalQuantity = totalQuantity;
@@ -86,16 +87,16 @@ contract AavegotchiBridgeFacet is Modifiers {
                     _mintItemsBridged[i].itemBalances[j].itemId,
                     _mintItemsBridged[i].itemBalances[j].quantity
                 );
-                if (_mintItemsBridged[i].to.code.length > 0) {
-                    LibERC1155.onERC1155Received(
-                        sender,
-                        address(0),
-                        _mintItemsBridged[i].to,
-                        _mintItemsBridged[i].itemBalances[j].itemId,
-                        _mintItemsBridged[i].itemBalances[j].quantity,
-                        ""
-                    );
-                }
+                // if (_mintItemsBridged[i].to.code.length > 0) {
+                //     LibERC1155.onERC1155Received(
+                //         sender,
+                //         address(0),
+                //         _mintItemsBridged[i].to,
+                //         _mintItemsBridged[i].itemBalances[j].itemId,
+                //         _mintItemsBridged[i].itemBalances[j].quantity,
+                //         ""
+                //     );
+                // }
             }
         }
     }

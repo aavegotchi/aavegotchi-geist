@@ -322,14 +322,14 @@ contract ForgeFacet is Modifiers {
         _burnItem(sender, itemId, 1);
 
         uint256 forgeReqTime = forgeTime(gotchiId, rsm);
+        if (_gltr > 0) {
+            require(_gltr <= forgeReqTime, "ForgeFacet: too much GLTR");
 
-        require(_gltr <= forgeReqTime, "ForgeFacet: too much GLTR");
-
-        require(
-            gltrContract().transferFrom(sender, 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF, (uint256(_gltr) * 1e18)),
-            "ForgeFacet: Failed GLTR transfer"
-        );
-
+            require(
+                gltrContract().transferFrom(sender, 0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF, (uint256(_gltr) * 1e18)),
+                "ForgeFacet: Failed GLTR transfer"
+            );
+        }
         if (forgeReqTime - _gltr == 0) {
             // Immediately forge the item.
             wearablesFacet().safeTransferFrom(address(this), sender, itemId, 1, "");

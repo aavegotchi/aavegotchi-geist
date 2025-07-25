@@ -164,7 +164,8 @@ task(
         hre.network.name === "base-sepolia" ||
         hre.network.name === "baseSepolia" ||
         hre.network.name === "amoy" ||
-        hre.network.name === "geist"
+        hre.network.name === "geist" ||
+        hre.network.name === "base"
       ) {
         if (useLedger) {
           signer = new LedgerSigner(hre.ethers.provider, "m/44'/60'/1'/0/0");

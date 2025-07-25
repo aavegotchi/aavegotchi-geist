@@ -5,6 +5,8 @@ export const MISC_PROGRESS_PATH = `${PROCESSED_PATH}/miscProgress.json`;
 
 export const blockNumberPath = `${DATA_PATH}/blockNumber.json`;
 
+export const PC_WALLET = "0x01F010a5e001fe9d6940758EA5e8c777885E351e";
+
 interface BlockNumber {
   aavegotchis: number;
   forgeItems: number;

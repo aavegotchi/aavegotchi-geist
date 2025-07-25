@@ -443,7 +443,7 @@ export function calculateRarityScoreModifier(maxQuantity: number): number {
 }
 
 //exclude some tems from traitBooster checklist
-const excludedItems = [0, 26, 100, 105, 126, 127, 128, 129];
+const excludedItems = [0, 26, 100, 105, 126, 127, 128, 129, 210];
 
 export function getItemTypes(
   itemTypes: ItemTypeInputNew[],
@@ -512,7 +512,10 @@ export function getBaadgeItemTypes(
       Number(prev) + Math.abs(Number(cur));
     let traitBoosters = itemType.traitModifiers.reduce(reducer, 0);
 
-    if (itemType.category !== 1) {
+    if (
+      itemType.category !== 1 &&
+      !excludedItems.includes(Number(itemType.svgId))
+    ) {
       if (traitBoosters !== rarityLevelToTraitBoosters(itemType.rarityLevel)) {
         throw Error(`Trait Booster for ${itemType.name} does not match rarity`);
       }

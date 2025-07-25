@@ -18,8 +18,6 @@ contract ItemsFacet is Modifiers {
     //using LibAppStorage for AppStorage;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    event UseConsumables(uint256 indexed _tokenId, uint256[] _itemIds, uint256[] _quantities);
-
     /***********************************|
    |             Read Functions         |
    |__________________________________*/
@@ -32,7 +30,7 @@ contract ItemsFacet is Modifiers {
     ///@notice Returns balance for each item that exists for an account
     ///@param _account Address of the account to query
     ///@return bals_ An array of structs,each struct containing details about each item owned
-    function itemBalances(address _account) external view returns (ItemIdIO[] memory bals_) {
+    function itemBalances(address _account) public view returns (ItemIdIO[] memory bals_) {
         uint256 count = s.ownerItems[_account].length;
         bals_ = new ItemIdIO[](count);
         for (uint256 i; i < count; i++) {
@@ -159,7 +157,7 @@ contract ItemsFacet is Modifiers {
 
     /**
         @notice Set the base url for all voucher types
-        @param _value The new base url        
+        @param _value The new base url
     */
     function setBaseURI(string memory _value) external onlyDaoOrOwner {
         // require(LibMeta.msgSender() == s.contractOwner, "ItemsFacet: Must be contract owner");
@@ -183,7 +181,7 @@ contract ItemsFacet is Modifiers {
     function equipWearables(
         uint256 _tokenId,
         uint16[EQUIPPED_WEARABLE_SLOTS] calldata _wearablesToEquip
-    ) external onlyAavegotchiOwner(_tokenId) onlyUnlocked(_tokenId) {
+    ) public onlyAavegotchiOwner(_tokenId) onlyUnlocked(_tokenId) {
         uint256[EQUIPPED_WEARABLE_SLOTS] memory _depositIds;
         _equipWearables(_tokenId, _wearablesToEquip, _depositIds);
     }
@@ -199,8 +197,39 @@ contract ItemsFacet is Modifiers {
         uint256 _tokenId,
         uint16[EQUIPPED_WEARABLE_SLOTS] calldata _wearablesToEquip,
         uint256[EQUIPPED_WEARABLE_SLOTS] calldata _depositIds
-    ) external onlyAavegotchiOwner(_tokenId) onlyUnlocked(_tokenId) {
+    ) public onlyAavegotchiOwner(_tokenId) onlyUnlocked(_tokenId) {
         _equipWearables(_tokenId, _wearablesToEquip, _depositIds);
+    }
+
+    ///@notice Allow the owner of a claimed aavegotchi to equip/unequip wearables to his aavegotchis in batch
+    ///@dev Arrays in _wearablesToEquip need to be the same length as _tokenIds
+    ///@dev _wearablesToEquip are equiped to aavegotchis in the order of _tokenIds
+    ///@param _tokenIds Array containing the identifiers of the aavegotchis to make changes to
+    ///@param _wearablesToEquip An array of arrays containing the identifiers of the wearables to equip for aavegotchi in _tokenIds
+    function batchEquipWearables(uint256[] calldata _tokenIds, uint16[EQUIPPED_WEARABLE_SLOTS][] calldata _wearablesToEquip) external {
+        require(_wearablesToEquip.length == _tokenIds.length, "ItemsFacet: _wearablesToEquip length not same as _tokenIds length");
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            equipWearables(_tokenIds[i], _wearablesToEquip[i]);
+        }
+    }
+
+    ///@notice Allow the owner of a claimed aavegotchi to equip/unequip wearables to his aavegotchis in batch
+    ///@dev Arrays in _wearablesToEquip need to be the same length as _tokenIds
+    ///@dev _wearablesToEquip are equiped to aavegotchis in the order of _tokenIds
+    ///@dev _depositIds are equiped to aavegotchis in the order of _tokenIds
+    ///@param _tokenIds Array containing the identifiers of the aavegotchis to make changes to
+    ///@param _wearablesToEquip An array of arrays containing the identifiers of the wearables to equip for aavegotchis in _tokenIds
+    ///@param _depositIds An array of arrays containing the identifiers of the deposited wearables to equip for aavegotchis in _tokenIds
+    function batchEquipDelegatedWearables(
+        uint256[] calldata _tokenIds,
+        uint16[EQUIPPED_WEARABLE_SLOTS][] calldata _wearablesToEquip,
+        uint256[EQUIPPED_WEARABLE_SLOTS][] calldata _depositIds
+    ) external {
+        require(_wearablesToEquip.length == _tokenIds.length, "ItemsFacet: _wearablesToEquip length not same as _tokenIds length");
+        require(_depositIds.length == _tokenIds.length, "ItemsFacet: _depositIds length not same as _tokenIds length");
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            equipDelegatedWearables(_tokenIds[i], _wearablesToEquip[i], _depositIds[i]);
+        }
     }
 
     function _equipWearables(
@@ -300,71 +329,5 @@ contract ItemsFacet is Modifiers {
             }
         }
         LibAavegotchi.interact(_tokenId);
-    }
-
-    ///@notice Allow the owner of an NFT to use multiple consumable items for his aavegotchi
-    ///@dev Only valid for claimed aavegotchis
-    ///@dev Consumables can be used to boost kinship/XP of an aavegotchi
-    ///@param _tokenId Identtifier of aavegotchi to use the consumables on
-    ///@param _itemIds An array containing the identifiers of the items/consumables to use
-    ///@param _quantities An array containing the quantity of each consumable to use
-    function useConsumables(
-        uint256 _tokenId,
-        uint256[] calldata _itemIds,
-        uint256[] calldata _quantities
-    ) external whenNotPaused onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) {
-        require(_itemIds.length == _quantities.length, "ItemsFacet: _itemIds length != _quantities length");
-        require(s.aavegotchis[_tokenId].status == LibAavegotchi.STATUS_AAVEGOTCHI, "LibAavegotchi: Only valid for AG");
-
-        address sender = LibMeta.msgSender();
-        for (uint256 i; i < _itemIds.length; i++) {
-            uint256 itemId = _itemIds[i];
-            uint256 quantity = _quantities[i];
-            ItemType memory itemType = s.itemTypes[itemId];
-            require(itemType.category == LibItems.ITEM_CATEGORY_CONSUMABLE, "ItemsFacet: Item isn't consumable");
-
-            LibItems.removeFromOwner(sender, itemId, quantity);
-
-            //Increase kinship
-            if (itemType.kinshipBonus > 0) {
-                uint256 kinship = (uint256(int256(itemType.kinshipBonus)) * quantity) + s.aavegotchis[_tokenId].interactionCount;
-                s.aavegotchis[_tokenId].interactionCount = kinship;
-            } else if (itemType.kinshipBonus < 0) {
-                uint256 kinshipBonus = LibAppStorage.abs(itemType.kinshipBonus) * quantity;
-                if (s.aavegotchis[_tokenId].interactionCount > kinshipBonus) {
-                    s.aavegotchis[_tokenId].interactionCount -= kinshipBonus;
-                } else {
-                    s.aavegotchis[_tokenId].interactionCount = 0;
-                }
-            }
-
-            {
-                // prevent stack too deep error with braces here
-                //Boost traits and reset clock
-                bool boost = false;
-                for (uint256 j; j < NUMERIC_TRAITS_NUM; j++) {
-                    if (itemType.traitModifiers[j] != 0) {
-                        boost = true;
-                        break;
-                    }
-                }
-                if (boost) {
-                    s.aavegotchis[_tokenId].lastTemporaryBoost = uint40(block.timestamp);
-                    s.aavegotchis[_tokenId].temporaryTraitBoosts = itemType.traitModifiers;
-                }
-            }
-
-            //Increase experience
-            if (itemType.experienceBonus > 0) {
-                uint256 experience = (uint256(itemType.experienceBonus) * quantity) + s.aavegotchis[_tokenId].experience;
-                s.aavegotchis[_tokenId].experience = experience;
-            }
-
-            itemType.totalQuantity -= quantity;
-            LibAavegotchi.interact(_tokenId);
-            LibERC1155Marketplace.updateERC1155Listing(address(this), itemId, sender);
-        }
-        emit UseConsumables(_tokenId, _itemIds, _quantities);
-        IEventHandlerFacet(s.wearableDiamond).emitTransferBatchEvent(sender, sender, address(0), _itemIds, _quantities);
     }
 }

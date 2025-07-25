@@ -104,6 +104,11 @@ interface NetworkAddresses {
   kek?: string;
   gltrAddress?: string;
   aavegotchiDaoAddress?: string;
+  dao?: string;
+  daoTreasury?: string;
+  pixelCraft?: string;
+  rarityFarming?: string;
+  daoDirectorTreasury?: string;
 }
 
 // export const vrfVars: Record<number, VRFVars> = {
@@ -169,9 +174,9 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
     // vrfVars: vrfVars[84532],
     safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
-    aavegotchiDiamond: "0x03A74B3e2DD81F5E8FFA1Fb96bb81B35cF3ed5d2",
-    forgeDiamond: "0x40742c1D9dd604889aD45D2f85bE9C9A7609C4cB",
-    wearableDiamond: "0x7e1Df5ad57C011E3bFA029041935aece51f35ccC",
+    aavegotchiDiamond: "0x0C7d237250BF64e178253c111dc2352D05BA98aE",
+    forgeDiamond: "0x23b77A4EAb125cC8a1fc820f5A6dC0076c52e50d",
+    wearableDiamond: "0xF992E09Df18E2300813489661c6A838248ce52C0",
     realmDiamond: "0x37D140074B2f771bEa7ef23288EB87064e45bF8D",
     installationDiamond: "0x5Aefdc5283B24EEa7b50FFBBf7FB8A2bD4537609",
     tileDiamond: "0x96B19Fa954d961fAD4b665e3259C72466ca4C1dA",
@@ -186,6 +191,7 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     kek: "0x03f2D8689177d2ebc9686C01065818c02C053f6a",
     gltrAddress: "0x0dBFBABa88b32a96ee2c9b60007ddc03D0F1F379",
     aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
+    relayerPetter: "0xf52398257A254D541F392667600901f710a006eD",
   },
 
   8453: {
@@ -195,6 +201,16 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     //@to-do: update aavegotchiDaoAddress for bsae mainnet
     aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
     relayerPetter: "0xf52398257A254D541F392667600901f710a006eD",
+    aavegotchiDiamond: "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF",
+    forgeDiamond: "0x50aF2d63b839aA32b4166FD1Cb247129b715186C",
+    wearableDiamond: "0x052e6c114a166B0e91C2340370d72D4C33752B4b",
+    dao: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    daoTreasury: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    rarityFarming: "0x8c8E076Cd7D2A17Ba2a5e5AF7036c2b2B7F790f6",
+    pixelCraft: "0x50Def14C51123660f8768b511B93cC8c09f30356",
+    daoDirectorTreasury: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    fakeGotchiCardDiamond: "0xe46B8902dAD841476d9Fee081F1d62aE317206A9",
+    fakeGotchiArtDiamond: "0xAb59CA4A16925b0a4BaC5026C94bEB20A29Df479",
   },
 };
 

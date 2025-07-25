@@ -1499,9 +1499,9 @@
   },
   "84532": {
     "chainId": 84532,
-    "aavegotchiDiamond": "0xf28469b81871D924ae70664FEBf5AF626AAe5087",
-    "wearableDiamond": "0xAfdfE373C57Ac5CddbD57DEA6f3fF67C36D8ACFE",
-    "forgeDiamond": "0xec3DD222148b686995b86515C99A772375D691B7",
+    "aavegotchiDiamond": "0x0C7d237250BF64e178253c111dc2352D05BA98aE",
+    "wearableDiamond": "0xF992E09Df18E2300813489661c6A838248ce52C0",
+    "forgeDiamond": "0x23b77A4EAb125cC8a1fc820f5A6dC0076c52e50d",
     "haunts": {
       "1": true
     },
@@ -2393,6 +2393,34 @@
       "2_301": true,
       "2_66": true,
       "2_199": true,
+      "2_14": true,
+      "2_36": true,
+      "2_49": true,
+      "2_53": true,
+      "2_57": true,
+      "2_73": true,
+      "2_86": true,
+      "2_117": true,
+      "2_159": true,
+      "2_202": true,
+      "2_208": true,
+      "2_214": true,
+      "2_215": true,
+      "2_224": true,
+      "2_243": true,
+      "2_246": true,
+      "2_249": true,
+      "2_259": true,
+      "2_262": true,
+      "2_351": true,
+      "2_355": true,
+      "2_359": true,
+      "2_367": true,
+      "2_377": true,
+      "2_385": true,
+      "2_404": true,
+      "2_407": true,
+      "2_408": true,
       "3_27": true,
       "3_30": true,
       "3_33": true,
@@ -2576,9 +2604,9 @@
         "406_418": true
       },
       "sleeves": {
-        "0_24": true,
-        "24_50": true,
-        "50_54": true
+        "0_26": true,
+        "26_52": true,
+        "52_56": true
       },
       "wearables-left": {
         "0_54": true,
@@ -2608,71 +2636,72 @@
         "129_147": true,
         "147_210": true,
         "210_234": true,
-        "234_256": true,
-        "256_308": true,
+        "234_255": true,
+        "255_308": true,
         "308_370": true,
         "370_418": true
       },
       "sleeves-left": {
         "0_49": true,
-        "49_58": true
+        "49_56": true
       },
       "sleeves-right": {
-        "0_49": true,
-        "49_58": true
+        "0_48": true,
+        "48_56": true
       },
       "sleeves-back": {
-        "0_47": true,
-        "47_58": true
+        "0_49": true,
+        "49_56": true
       }
     },
     "itemManagers": [
-      "0x9343363e8e6518ba7166ce702a7589e7bbd1fd81"
+      "0xb0a8b0dae6c9c1bc7f504ad74b7cacbdcd903d06"
     ],
     "AavegotchiDiamond": {
       "name": "AavegotchiDiamond",
       "facets": {
-        "contracts/Aavegotchi/facets/AavegotchiFacet.sol:AavegotchiFacet": "0x8c37C30ce2255D1597586078E9D3A06E3586B200",
-        "AavegotchiGameFacet": "0x41Acef193e85f6D3e94A4FA5E6841a0E9dC7bA0D",
-        "SvgFacet": "0x440a342B57894Ee5EfDe143d02Cf996fa49Ddbe0",
-        "contracts/Aavegotchi/facets/ItemsFacet.sol:ItemsFacet": "0xbE4A8f84ac85FabF7Ee0818668B69d90Aae4A921",
-        "ItemsTransferFacet": "0x45Ad1fe92cf4c2447D0818f34a125509a89FF95e",
-        "CollateralFacet": "0xBAc1aCf07e8c1399ad896355EDd7500DdC81bC1f",
-        "DAOFacet": "0x07A26217Fa4Ee46e75fA8f5766061198C42AEA7d",
-        "VrfFacet": "0x2852878947fA66Fb95C8Fd896F91e41Ff6780b51",
-        "ShopFacet": "0x9435BAA6f32570F646C3CEeb3C9BdaB2477d6769",
-        "MetaTransactionsFacet": "0xdD2919833cF75E68df4bdA61A80Ff7F872cF3429",
-        "ERC1155MarketplaceFacet": "0x39f54082867dCc38757853c82629698cEc65C051",
-        "ERC721MarketplaceFacet": "0xeBa3b6ABb0AF9F316a6FF706c988D05441b6D8ea",
-        "EscrowFacet": "0x8119492185cF6A34C306A5c0A2d228bc66340aB1",
-        "GotchiLendingFacet": "0x6f29Ff42ceBa5A66ed843F3C86448846A074f051",
-        "LendingGetterAndSetterFacet": "0x19bE2C3011a188cfA69bE82D000caa2ADbeb2502",
-        "MarketplaceGetterFacet": "0x9F5BBA7926F681B93F8DDeF806c4261251a62e7e",
-        "SvgViewsFacet": "0xAFCdF47be111774AE218CA60c20c942A844D719b",
-        "WearableSetsFacet": "0x673f039676C70DDD497b1983481F2CBDfC646F6e",
-        "WhitelistFacet": "0x85b74a2D1b9C23E2DFC655470493C74C2bD9eE60",
-        "PeripheryFacet": "0x9d3a301B899fC682f77B96421157cf79E81e0306",
-        "MerkleDropFacet": "0xEd2a609DA86F98DB4F6D32aDc10337477bbFeC60",
-        "ERC721BuyOrderFacet": "0xeE539346e6A695d2C1bd93D88e005EE657A304af",
-        "ItemsRolesRegistryFacet": "0xEA689a9378341180e84F7a09554ba74DD953d7b7",
-        "ERC1155BuyOrderFacet": "0xF6389741733bec256f0ac6Bd558aA89E290080a1",
-        "AavegotchiBridgeFacet": "0x5d50C8c2FE90851AAb2024BcA8989EFe470392c8"
+        "contracts/Aavegotchi/facets/AavegotchiFacet.sol:AavegotchiFacet": "0x4F103fe883AB1bbf692def2371d25848F59A48cd",
+        "AavegotchiGameFacet": "0x3EB5Cc9Ebb82bBA09e4Bf8F5Df3Df084D6bCB6cc",
+        "SvgFacet": "0xBdA692664692eB698Ba4F41ca15D4AcAc3d09F49",
+        "contracts/Aavegotchi/facets/ItemsFacet.sol:ItemsFacet": "0xEE7Dd6216a7406Df32df59DA530e874f04e233E3",
+        "ItemsTransferFacet": "0x4B9b034D9bF019fc8415052153cDc042Ff8BaB3d",
+        "CollateralFacet": "0x6a67D3dc63B87F2e38c69D9158Bb5D0c24719360",
+        "DAOFacet": "0xAe444076399Fd21e1fAF62C806F5302613bcA835",
+        "VrfFacet": "0x167F86Fc9C8f50ea0d75b23d66f5F4D9bde33003",
+        "ShopFacet": "0x807f62ef3D472CdbF0Df4705a7cb7C7DE1F2F0C8",
+        "MetaTransactionsFacet": "0xB0faB180718eb9F0F3b6F001407b24Eb08bA4c4a",
+        "ERC1155MarketplaceFacet": "0xb77Ad2aA245EdAbb3009269748719E1f9C6b307E",
+        "ERC721MarketplaceFacet": "0xcBba9070cC1560e8813c9d67a5A558ABB8E8F41a",
+        "EscrowFacet": "0xFB7FAF4b747773c9d9C9a6f01C1779963E73ec96",
+        "GotchiLendingFacet": "0xA23C4bcA4aA2018e27f98c91E166b7D6788b0817",
+        "LendingGetterAndSetterFacet": "0x164Ae951047101FcBc8a236a37418853be4421a4",
+        "MarketplaceGetterFacet": "0x67C5bB443AdA3cA114cd6c6079d51EBA88dF995B",
+        "SvgViewsFacet": "0x3DD9FD1126E5f6C6a24812FAb0081d165eb05570",
+        "WearableSetsFacet": "0xAdf1c1cF404F1e9838De403d42D080c02C307ec7",
+        "WhitelistFacet": "0x568c583A5f019Ae3B00Cd1E62217b70E49a27c4c",
+        "PeripheryFacet": "0x9402E82B03268304029B179A81EdCcaF3BCcF8c3",
+        "MerkleDropFacet": "0x91D67cC303a71b67b54E0c65c8f54e501147A729",
+        "ERC721BuyOrderFacet": "0x73515bC14FB79BfB38815c4636FA2096B161854F",
+        "ItemsRolesRegistryFacet": "0x00EA8F8D230125C79252b3c70D3740303305D945",
+        "ERC1155BuyOrderFacet": "0xbc8831417bBf8Ff8D3321203cd2c77eeAD3f6010",
+        "AavegotchiBridgeFacet": "0xb0703825a92824c5Fff82662834c70aeBD1d5482"
       }
     },
     "WearableDiamond": {
       "name": "WearableDiamond",
       "facets": {
-        "EventHandlerFacet": "0x5cC00Cc00cFccCC4bEB2f7aFeF513baB4a5d92C4",
-        "WearablesFacet": "0xe5Ac0725C8fd14418713d4DFb470301eAD2E731C"
+        "EventHandlerFacet": "0x275028DDabd1B90655aB4593120D1F405D0c4b4F",
+        "WearablesFacet": "0x145BF8d6F125A24f12a4406CD19f19384C293527"
       }
     },
     "ForgeDiamond": {
       "name": "ForgeDiamond",
       "facets": {
-        "ForgeFacet": "0x7c2bEbFBDE9D60094F0cfc6dc3F5Ea6187D6B864",
-        "ForgeTokenFacet": "0x4D8a5F4f15DAd488cE7e8aB494d2a43aD54eB17E",
-        "ForgeVRFFacet": "0x4dCB94a97fD7417852bEbc8c21aAe88c811068b0",
-        "ForgeDAOFacet": "0x1CFe20Bea103CF198C3154Bd661D0DEB52f9f4d7"
+        "ForgeFacet": "0xA9CCc466703A3F40620959Ecbd94f55a0075F016",
+        "ForgeTokenFacet": "0x7f601A968586cB5a6982A0fdb0240bAc796A5647",
+        "ForgeVRFFacet": "0xeCf5171bD0581c316b4e5D0362454DdFb571BD2d",
+        "ForgeDAOFacet": "0xA69EB56cFC3A2fd6A84AC5EAEB283528C64417AF",
+        "ForgeWriteFacet": "0x5AF4493A0e78f48970736D1803E60Bd1a62fA95A"
       }
     },
     "setForgeDiamond": true

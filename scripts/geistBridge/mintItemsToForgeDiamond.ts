@@ -22,7 +22,7 @@ function getFilePaths(mintableType: MintableType): {
     };
   } else if (mintableType === "wearables") {
     return {
-      itemsFile: `${DATA_PATH}/wearables/wearables-forgeDiamond.json`,
+      itemsFile: `${DATA_PATH}/wearables/wearables-forgeDiamond-missing.json`,
     };
   }
   throw new Error(`Invalid mintable type: ${mintableType}`);
@@ -108,15 +108,15 @@ async function processMintingForType(mintableType: MintableType) {
 }
 
 async function main() {
-  console.log("--- Starting Forge and Wearable Minting Script ---");
+  // console.log("--- Starting Forge and Wearable Minting Script ---");
 
-  console.log("\n[STEP 1] Processing Forge Items...");
-  ensureMiscProgress("mintForgeItemsToForgeDiamond");
-  await processMintingForType("forge-items");
-  writeMiscProgress("mintForgeItemsToForgeDiamond", true);
+  // console.log("\n[STEP 1] Processing Forge Items...");
+  // ensureMiscProgress("mintForgeItemsToForgeDiamond");
+  // await processMintingForType("forge-items");
+  // writeMiscProgress("mintForgeItemsToForgeDiamond", true);
 
   console.log("\n[STEP 2] Processing Wearables...");
-  ensureMiscProgress("mintWearablesToForgeDiamond");
+  // ensureMiscProgress("mintWearablesToForgeDiamond");
   await processMintingForType("wearables");
   writeMiscProgress("mintWearablesToForgeDiamond", true);
 

@@ -15,9 +15,9 @@ type MintableType = "gotchis" | "wearables";
 
 function getFilePath(mintableType: MintableType): string {
   if (mintableType === "gotchis") {
-    return `${DATA_PATH}/aavegotchi/aavegotchi-aavegotchiDiamond.json`;
+    // return `${DATA_PATH}/aavegotchi/aavegotchi-aavegotchiDiamond.json`;
   } else if (mintableType === "wearables") {
-    return `${DATA_PATH}/wearables/wearables-diamond.json`;
+    return `${DATA_PATH}/wearables/wearables-diamond-missing.json`;
   }
   throw new Error(`Invalid mintable type: ${mintableType}`);
 }
@@ -100,17 +100,17 @@ async function processMintingForType(mintableType: MintableType) {
 }
 
 async function main() {
-  console.log("--- Starting Aavegotchi Diamond Minting Script ---");
+  // console.log("--- Starting Aavegotchi Diamond Minting Script ---");
 
-  console.log("\n[STEP 1] Processing Gotchis...");
-  const gotchiTask = "mintAavegotchisToAavegotchiDiamond";
-  ensureMiscProgress(gotchiTask);
-  await processMintingForType("gotchis");
-  writeMiscProgress(gotchiTask, true);
+  // console.log("\n[STEP 1] Processing Gotchis...");
+  // const gotchiTask = "mintAavegotchisToAavegotchiDiamond";
+  // ensureMiscProgress(gotchiTask);
+  // await processMintingForType("gotchis");
+  // writeMiscProgress(gotchiTask, true);
 
   console.log("\n[STEP 2] Processing Wearables...");
   const wearableTask = "mintWearablesToAavegotchiDiamond";
-  ensureMiscProgress(wearableTask);
+  // ensureMiscProgress(wearableTask);
   await processMintingForType("wearables");
   writeMiscProgress(wearableTask, true);
 
