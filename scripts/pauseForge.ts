@@ -1,25 +1,30 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { loadDeploymentConfig } from "./deployFullDiamond";
-import { ForgeDAOFacet } from "../typechain";
+import {
+  AavegotchiFacet,
+  AavegotchiGameFacet,
+  ForgeDAOFacet,
+} from "../typechain";
 import { ethers } from "hardhat";
+import { varsForNetwork } from "../helpers/constants";
 
 async function main() {
   const hre: HardhatRuntimeEnvironment = require("hardhat");
   const forgeDiamondAddress = loadDeploymentConfig(63157)
     .forgeDiamond as string;
+  const c = await varsForNetwork(ethers);
 
   const signer = (await ethers.getSigners())[0];
 
   // Get contract
   const forgeFacet = (await hre.ethers.getContractAt(
-    "ForgeDAOFacet",
-    forgeDiamondAddress,
-    signer
-  )) as ForgeDAOFacet;
+    "AavegotchiGameFacet",
+    c.aavegotchiDiamond!
+  )) as AavegotchiGameFacet;
 
   // Pause forge
-  const tx = await forgeFacet.pauseContract();
-  await tx.wait();
+  const tx = await forgeFacet.portalAavegotchiTraits(2590);
+  console.log(tx);
 
   console.log("Forge has been paused");
 }

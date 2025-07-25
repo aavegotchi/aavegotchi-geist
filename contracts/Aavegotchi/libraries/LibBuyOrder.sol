@@ -33,16 +33,6 @@ library LibBuyOrder {
         uint256 _tokenId = erc721BuyOrder.erc721TokenId;
         address _tokenAddress = erc721BuyOrder.erc721TokenAddress;
 
-        uint256 index = s.erc721TokenToBuyOrderIdIndexes[_tokenAddress][_tokenId][_buyOrderId];
-        uint256 lastIndex = s.erc721TokenToBuyOrderIds[_tokenAddress][_tokenId].length - 1;
-        if (index != lastIndex) {
-            uint256 lastBuyOrderId = s.erc721TokenToBuyOrderIds[_tokenAddress][_tokenId][lastIndex];
-            s.erc721TokenToBuyOrderIds[_tokenAddress][_tokenId][index] = lastBuyOrderId;
-            s.erc721TokenToBuyOrderIdIndexes[_tokenAddress][_tokenId][lastBuyOrderId] = index;
-        }
-        s.erc721TokenToBuyOrderIds[_tokenAddress][_tokenId].pop();
-        delete s.erc721TokenToBuyOrderIdIndexes[_tokenAddress][_tokenId][_buyOrderId];
-
         delete s.buyerToBuyOrderId[_tokenAddress][_tokenId][erc721BuyOrder.buyer];
     }
 

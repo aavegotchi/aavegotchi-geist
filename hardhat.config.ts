@@ -4,7 +4,8 @@
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-contract-sizer";
-import "@nomiclabs/hardhat-etherscan";
+// import "@nomiclabs/hardhat-etherscan";
+import "@nomicfoundation/hardhat-verify";
 import "solidity-coverage";
 //import './tasks/generateDiamondABI.js';
 import * as dotenv from "dotenv";
@@ -41,32 +42,14 @@ export default {
   etherscan: {
     apiKey: {
       // matic: process.env.POLYGON_API_KEY,
-      polter: "empty",
-      geist: "empty",
+      baseSepolia: process.env.BASE_API_KEY,
+      base: process.env.BASE_API_KEY,
     },
-    customChains: [
-      {
-        network: "polter",
-        chainId: 631571,
-        urls: {
-          apiURL: "https://polter-testnet.explorer.alchemy.com/api",
-          browserURL: "https://polter-testnet.explorer.alchemy.com",
-        },
-      },
-      {
-        network: "geist",
-        chainId: 63157,
-        urls: {
-          apiURL: "https://geist-mainnet.explorer.alchemy.com/api",
-          browserURL: "https://geist-mainnet.explorer.alchemy.com",
-        },
-      },
-    ],
   },
   networks: {
     hardhat: {
       forking: {
-        url: process.env.GEIST_URL,
+        url: process.env.BASE_SEPOLIA_RPC_URL,
         // timeout: 12000000,
         blockNumber: 1743308,
       },
@@ -76,6 +59,7 @@ export default {
     },
     localhost: {
       timeout: 16000000,
+      //  chainId: 31337,
     },
     matic: {
       url: process.env.MATIC_URL,
@@ -99,18 +83,16 @@ export default {
       url: process.env.AMOY_URL,
       accounts: [process.env.SECRET],
     },
-    polter: {
-      url: process.env.POLTER_TESTNET_URL,
-      accounts: [process.env.SECRET],
-    },
-    geist: {
-      url: process.env.GEIST_URL,
-      accounts: [process.env.SECRET],
-    },
     baseSepolia: {
-      url: process.env.BASE_SEPOLIA_URL,
+      url: process.env.BASE_SEPOLIA_RPC_URL,
       accounts: [process.env.SECRET],
       chainId: 84532,
+    },
+
+    base: {
+      url: process.env.BASE_RPC_URL,
+      accounts: [process.env.SECRET],
+      chainId: 8453,
     },
 
     // gorli: {

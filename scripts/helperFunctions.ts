@@ -6,6 +6,7 @@ import {
   DefenderRelayProvider,
   DefenderRelaySigner,
 } from "defender-relay-client/lib/ethers";
+// import { run } from "hardhat";
 
 import { fundSigner } from "../helpers/helpers";
 
@@ -78,6 +79,8 @@ export function getSelector(func: string, ethers: any) {
 }
 
 export const maticDiamondAddress = "0x86935F11C86623deC8a25696E1C19a8659CbF95d";
+export const maticForgeDiamondAddress =
+  "0x4fDfc1B53Fd1D80d969C984ba7a8CE4c7bAaD442";
 
 export const maticDiamondUpgrader =
   "0x01F010a5e001fe9d6940758EA5e8c777885E351e";
@@ -260,22 +263,45 @@ export interface RelayerInfo {
 }
 
 export const xpRelayerAddress = "0xb6384935d68e9858f8385ebeed7db84fc93b1420";
+export const xpRelayerAddressBaseSepolia =
+  "0x39e86c0e02076E83694083e2eb48B510B3a96E4e";
+export const xpRelayerAddressBase =
+  "0xf52398257A254D541F392667600901f710a006eD";
 
 export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
   const testing = ["hardhat", "localhost"].includes(hre.network.name);
+  let xpRelayer;
+  if (
+    hre.network.config.chainId === 137 ||
+    hre.network.config.chainId === 8453
+  ) {
+    xpRelayer = xpRelayerAddress;
+  } else if (hre.network.config.chainId === 84532) {
+    xpRelayer = xpRelayerAddressBaseSepolia;
+  } else if (hre.network.config.chainId === 8453) {
+    xpRelayer = xpRelayerAddressBase;
+  }
+
   if (testing) {
-    console.log("Using Hardhat");
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [xpRelayerAddress],
-    });
-    await hre.network.provider.request({
-      method: "hardhat_setBalance",
-      params: [xpRelayerAddress, "0x100000000000000000000000"],
-    });
-    return await hre.ethers.provider.getSigner(xpRelayerAddress);
-  } else if (hre.network.name === "matic") {
-    console.log("USING MATIC");
+    xpRelayer = xpRelayerAddress;
+    if (hre.network.config.chainId !== 31337) {
+      console.log("Using Hardhat");
+
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [xpRelayer],
+      });
+      await hre.network.provider.request({
+        method: "hardhat_setBalance",
+        params: [xpRelayerAddress, "0x100000000000000000000000"],
+      });
+      return await hre.ethers.provider.getSigner(xpRelayerAddress);
+    } else {
+      return (await hre.ethers.getSigners())[0];
+    }
+    //we assume same defender for base mainnet
+  } else if (hre.network.name === "matic" || hre.network.name === "base") {
+    console.log(`USING ${hre.network.name}`);
 
     const credentials: RelayerInfo = {
       apiKey: process.env.DEFENDER_APIKEY!,
@@ -285,17 +311,22 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
     const provider = new DefenderRelayProvider(credentials);
     return new DefenderRelaySigner(credentials, provider, {
       speed: "safeLow",
-      validForSeconds: 7200,
+      validForSeconds: 200,
+    });
+  } else if (hre.network.name === "baseSepolia") {
+    console.log("USING BASE SEPOLIA DEFENDER");
+    const credentials: RelayerInfo = {
+      apiKey: process.env.DEFENDER_APIKEY_BASESEPOLIA!,
+      apiSecret: process.env.DEFENDER_SECRET_BASESEPOLIA!,
+    };
+
+    const provider = new DefenderRelayProvider(credentials);
+    return new DefenderRelaySigner(credentials, provider, {
+      speed: "average",
+      validForSeconds: 180,
     });
   } else if (
-    [
-      "tenderly",
-      "polter",
-      "base-sepolia",
-      "amoy",
-      "geist",
-      "baseSepolia",
-    ].includes(hre.network.name)
+    ["tenderly", "polter", "amoy", "geist"].includes(hre.network.name)
   ) {
     //impersonate
     return (await hre.ethers.getSigners())[0];
@@ -323,5 +354,64 @@ export function logXPRecipients(
 
     fs.writeFileSync(parentFile, JSON.stringify(data));
     console.log("finished writing to file");
+  }
+}
+
+export async function verifyContract(
+  address: string,
+  withArgs: boolean = false,
+  args?: any[],
+  contractName?: string
+) {
+  //only try to verify if it is a live network
+
+  //@ts-ignore
+  if (["localhost", "hardhat"].includes(hre.network.name)) {
+    console.log("Skipping verification on local network");
+    return;
+  }
+
+  console.log(`Attempting to verify contract at ${address}...`);
+  //wait 5 seconds because of base mainnet lags
+  console.log("Waiting 5 seconds for base mainnet to catch up...");
+  await delay(5000);
+
+  try {
+    const verifyArgs: any = {
+      address,
+    };
+
+    if (withArgs && args) {
+      verifyArgs.constructorArguments = args;
+    }
+
+    if (contractName) {
+      verifyArgs.contract = contractName;
+    }
+
+    //@ts-ignore
+    await hre.run("verify:verify", verifyArgs);
+    console.log(`Successfully verified contract ${address}`);
+  } catch (error: any) {
+    const msg = error?.message || "";
+    if (
+      msg.includes("Already Verified") ||
+      msg.includes("ContractAlreadyVerified") || // Added to catch Etherscan's newer message
+      msg.includes("already verified") || // General catch
+      msg.includes("Contract source code already verified") // Another Etherscan variant
+    ) {
+      console.log(
+        `Contract ${address}${
+          contractName ? " (" + contractName + ")" : ""
+        } already verified on block explorer, skipping.`
+      );
+    } else {
+      console.error(
+        `Error verifying contract ${address}${
+          contractName ? " (" + contractName + ")" : ""
+        }:`,
+        msg
+      );
+    }
   }
 }

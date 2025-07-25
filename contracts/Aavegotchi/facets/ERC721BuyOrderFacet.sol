@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.1;
 
-import {LibAavegotchi} from "../libraries/LibAavegotchi.sol";
+import {LibAavegotchi, AavegotchiInfo} from "../libraries/LibAavegotchi.sol";
 import {LibBuyOrder} from "../libraries/LibBuyOrder.sol";
 import {LibERC721Marketplace} from "../libraries/LibERC721Marketplace.sol";
 import {LibERC20} from "../../shared/libraries/LibERC20.sol";
@@ -82,44 +82,33 @@ contract ERC721BuyOrderFacet is Modifiers {
         }
     }
 
-    function getERC721BuyOrderIdsByTokenId(
-        address _erc721TokenAddress,
-        uint256 _erc721TokenId
-    ) external view returns (uint256[] memory buyOrderIds_) {
-        buyOrderIds_ = s.erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId];
-    }
-
-    function getERC721BuyOrdersByTokenId(
-        address _erc721TokenAddress,
-        uint256 _erc721TokenId
-    ) external view returns (ERC721BuyOrder[] memory buyOrders_) {
-        uint256[] memory buyOrderIds = s.erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId];
-        uint256 length = buyOrderIds.length;
-        buyOrders_ = new ERC721BuyOrder[](length);
-        for (uint256 i; i < length; i++) {
-            buyOrders_[i] = s.erc721BuyOrders[buyOrderIds[i]];
-        }
-    }
-
     function placeERC721BuyOrder(
         address _erc721TokenAddress,
         uint256 _erc721TokenId,
+        uint256 _category,
         uint256 _priceInWei,
         uint256 _duration,
         bool[] calldata _validationOptions // 0: BRS, 1: GHST, 2: skill points
-    ) external {
+    ) external whenNotPaused {
         require(_priceInWei >= 1e18, "ERC721BuyOrder: price should be 1 GHST or larger");
 
         address sender = LibMeta.msgSender();
         uint256 ghstBalance = IERC20(s.ghstContract).balanceOf(sender);
         require(ghstBalance >= _priceInWei, "ERC721BuyOrder: Not enough GHST!");
 
-        uint256 category = LibSharedMarketplace.getERC721Category(_erc721TokenAddress, _erc721TokenId);
-        require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721BuyOrder: Cannot buy a portal that is pending VRF");
-        require(sender != IERC721(_erc721TokenAddress).ownerOf(_erc721TokenId), "ERC721BuyOrder: Owner can't be buyer");
-        if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
-            require(_validationOptions.length == 3, "ERC721BuyOrder: Not enough validation options for aavegotchi");
+        // Aavegotchi-specific validation
+        if (_erc721TokenAddress == address(this)) {
+            AavegotchiInfo memory aavegotchiInfo = LibAavegotchi.getAavegotchi(_erc721TokenId);
+            uint256 category = aavegotchiInfo.status;
+            require(category == _category, "ERC721BuyOrder: Category mismatch");
+            require(category != LibAavegotchi.STATUS_VRF_PENDING, "ERC721BuyOrder: Cannot buy a portal that is pending VRF");
+
+            if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
+                require(_validationOptions.length == 3, "ERC721BuyOrder: Not enough validation options for aavegotchi");
+            }
         }
+
+        require(sender != IERC721(_erc721TokenAddress).ownerOf(_erc721TokenId), "ERC721BuyOrder: Owner can't be buyer");
 
         uint256 oldBuyOrderId = s.buyerToBuyOrderId[_erc721TokenAddress][_erc721TokenId][sender];
         if (oldBuyOrderId != 0) {
@@ -139,9 +128,6 @@ contract ERC721BuyOrderFacet is Modifiers {
         s.nextERC721BuyOrderId++;
         uint256 buyOrderId = s.nextERC721BuyOrderId;
 
-        s.erc721TokenToBuyOrderIdIndexes[_erc721TokenAddress][_erc721TokenId][buyOrderId] = s
-        .erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId].length;
-        s.erc721TokenToBuyOrderIds[_erc721TokenAddress][_erc721TokenId].push(buyOrderId);
         s.buyerToBuyOrderId[_erc721TokenAddress][_erc721TokenId][sender] = buyOrderId;
 
         bytes32 _validationHash = LibBuyOrder.generateValidationHash(_erc721TokenAddress, _erc721TokenId, _validationOptions);
@@ -163,7 +149,7 @@ contract ERC721BuyOrderFacet is Modifiers {
             sender,
             _erc721TokenAddress,
             _erc721TokenId,
-            category,
+            _category,
             _priceInWei,
             _duration,
             _validationHash,
@@ -171,7 +157,7 @@ contract ERC721BuyOrderFacet is Modifiers {
         );
     }
 
-    function cancelERC721BuyOrder(uint256 _buyOrderId) external {
+    function cancelERC721BuyOrder(uint256 _buyOrderId) external whenNotPaused {
         address sender = LibMeta.msgSender();
         ERC721BuyOrder memory erc721BuyOrder = s.erc721BuyOrders[_buyOrderId];
 
@@ -189,7 +175,12 @@ contract ERC721BuyOrderFacet is Modifiers {
         emit ERC721BuyOrderCanceled(_buyOrderId, block.timestamp);
     }
 
-    function executeERC721BuyOrder(uint256 _buyOrderId, address _erc721TokenAddress, uint256 _erc721TokenId, uint256 _priceInWei) external {
+    function executeERC721BuyOrder(
+        uint256 _buyOrderId,
+        address _erc721TokenAddress,
+        uint256 _erc721TokenId,
+        uint256 _priceInWei
+    ) external whenNotPaused {
         address sender = LibMeta.msgSender();
         ERC721BuyOrder storage erc721BuyOrder = s.erc721BuyOrders[_buyOrderId];
 
@@ -205,7 +196,8 @@ contract ERC721BuyOrderFacet is Modifiers {
 
         if (erc721BuyOrder.erc721TokenAddress == address(this)) {
             // disable for gotchi in lending
-            uint256 category = LibSharedMarketplace.getERC721Category(_erc721TokenAddress, _erc721TokenId);
+            AavegotchiInfo memory aavegotchiInfo = LibAavegotchi.getAavegotchi(_erc721TokenId);
+            uint256 category = aavegotchiInfo.status;
             if (category == LibAavegotchi.STATUS_AAVEGOTCHI) {
                 require(!LibGotchiLending.isAavegotchiLent(uint32(_erc721TokenId)), "ERC721BuyOrder: Not supported for aavegotchi in lending");
             }

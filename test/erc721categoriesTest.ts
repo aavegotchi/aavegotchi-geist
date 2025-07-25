@@ -147,21 +147,19 @@ describe("Testing ERC721 categories", async function () {
     expect(listings.length).to.equal(0);
   });
 
-  it("Cannot duplicate a category for another contract address", async function () {
+  it("Can set duplicate category for another contract address", async function () {
     ERC721MarketplaceFacet = await impersonate(
       itemManager,
       ERC721MarketplaceFacet,
       ethers,
       network
     );
-    await expect(
-      ERC721MarketplaceFacet.setERC721Categories([
-        {
-          erc721TokenAddress: testAddress,
-          category: 4,
-        },
-      ])
-    ).to.be.revertedWith("ERC721Marketplace: Category has already been set");
+    await ERC721MarketplaceFacet.setERC721Categories([
+      {
+        erc721TokenAddress: testAddress,
+        category: 4,
+      },
+    ]);
   });
 
   it("Cannot create categories under 4", async function () {

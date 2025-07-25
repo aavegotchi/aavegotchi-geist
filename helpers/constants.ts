@@ -1,4 +1,9 @@
 import { BigNumber } from "ethers";
+import { HardhatEthersHelpers } from "hardhat/types";
+import { ethers } from "ethers";
+import * as dotenv from "dotenv";
+import path from "path";
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 export const aavegotchiDiamondAddressMatic =
   "0x86935F11C86623deC8a25696E1C19a8659CbF95d";
@@ -78,30 +83,81 @@ export const AMOY_FORGE_DIAMOND = "0xF7c2AC46723Ad844620F798ECe67f5C673120FB6";
 interface NetworkAddresses {
   ghst: string;
   aavegotchiDiamond?: string;
-  vrfCoordinator?: string;
-  vrfVars?: VRFVars;
+  wearableDiamond?: string;
+  forgeDiamond?: string;
+  vrfSystem?: string;
+  relayerPetter?: string;
+  // vrfVars?: string;
+  safeProxyFactory?: string;
+  realmDiamond?: string;
+  installationDiamond?: string;
+  tileDiamond?: string;
+  fakeGotchiCardDiamond?: string;
+  fakeGotchiArtDiamond?: string;
+  ghstStakingDiamond?: string;
+  ggSkinsDiamond?: string;
+  ggProfilesDiamond?: string;
+  //REALM
+  fud?: string;
+  fomo?: string;
+  alpha?: string;
+  kek?: string;
+  gltrAddress?: string;
+  aavegotchiDaoAddress?: string;
+  dao?: string;
+  daoTreasury?: string;
+  pixelCraft?: string;
+  rarityFarming?: string;
+  daoDirectorTreasury?: string;
 }
+
+// export const vrfVars: Record<number, VRFVars> = {
+//   //base Sepolia
+//   84532: {
+//     linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+//     keyHash:
+//       "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+//     subId: BigNumber.from(
+//       "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+//     ),
+//     requestConfirmations: 32,
+//     callbackGasLimit: 2_500_000,
+//     numWords: 4,
+//     //use LINK for payment
+//     nativePayment: false,
+//   },
+//   //same place-holder values for local
+//   31337: {
+//     linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
+//     keyHash:
+//       "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
+//     subId: BigNumber.from(
+//       "72591281827055554057534631089554678415620592034035525148607866650220315375510"
+//     ),
+//     requestConfirmations: 32,
+//     callbackGasLimit: 2_500_00,
+//     numWords: 4,
+//     //use LINK for payment
+//     nativePayment: false,
+//   },
+// };
 
 export const networkAddresses: Record<number, NetworkAddresses> = {
   137: {
     ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    aavegotchiDiamond: "0x86935F11C86623deC8a25696E1C19a8659CbF95d",
+    forgeDiamond: "0x4fDfc1B53Fd1D80d969C984ba7a8CE4c7bAaD442",
+    wearableDiamond: "0x58de9AaBCaeEC0f69883C94318810ad79Cc6a44f",
   },
   31337: {
     ghst: "0x443650Be09A02Be6fa79Ba19169A853A33581660",
-    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
-    vrfVars: {
-      linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-      keyHash:
-        "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-      subId: BigNumber.from(
-        "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-      ),
-      requestConfirmations: 32,
-      callbackGasLimit: 2_500_00,
-      numWords: 4,
-      //use LINK for payment
-      nativePayment: false,
-    },
+    vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
+    // vrfVars: vrfVars[84532],
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    aavegotchiDiamond: "0x03A74B3e2DD81F5E8FFA1Fb96bb81B35cF3ed5d2",
+    forgeDiamond: "0xf0b0aFA15c61E939dD7Ae2e82Fbe98FFd5598C65",
+    wearableDiamond: "0x83FAaC162062524e041dFB43681B0d958eD49Acb",
   },
 
   631571: {
@@ -115,20 +171,46 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
 
   84532: {
     ghst: "0xe97f36a00058aa7dfc4e85d23532c3f70453a7ae",
-    vrfCoordinator: "0x5C210eF41CD1a72de73bF76eC39637bB0d3d7BEE",
-    vrfVars: {
-      linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-      keyHash:
-        "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-      subId: BigNumber.from(
-        "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-      ),
-      requestConfirmations: 32,
-      callbackGasLimit: 2_500_00,
-      numWords: 4,
-      //use LINK for payment
-      nativePayment: false,
-    },
+    vrfSystem: "0x8aFDcAA4573A36061aC087F9Ba872A7C7F482CFC",
+    // vrfVars: vrfVars[84532],
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    aavegotchiDiamond: "0x0C7d237250BF64e178253c111dc2352D05BA98aE",
+    forgeDiamond: "0x23b77A4EAb125cC8a1fc820f5A6dC0076c52e50d",
+    wearableDiamond: "0xF992E09Df18E2300813489661c6A838248ce52C0",
+    realmDiamond: "0x37D140074B2f771bEa7ef23288EB87064e45bF8D",
+    installationDiamond: "0x5Aefdc5283B24EEa7b50FFBBf7FB8A2bD4537609",
+    tileDiamond: "0x96B19Fa954d961fAD4b665e3259C72466ca4C1dA",
+    fakeGotchiCardDiamond: "0xE4E508dab5D7d98f4c06aB6D24bB225588036C9D",
+    fakeGotchiArtDiamond: "0xD0dCC1d1E22D490e5270631787E1866E773b16C7",
+    ghstStakingDiamond: "0xD0dCC1d1E22D490e5270631787E1866E773b16C7",
+    ggSkinsDiamond: "0xab1e7e320f02107bf2748179ed0c0bcfd5532e4a",
+    ggProfilesDiamond: "0x15517138573ce459943da529c9530ef76a22b713",
+    fud: "0x98810DD548cd39213A609ef373c7eBD5524b32F8",
+    fomo: "0xe67A189A9efF5B72B236ECf7B1Ac249d3496e31E",
+    alpha: "0x48bAC15D5561a92E232523ed3660A884C21E93c3",
+    kek: "0x03f2D8689177d2ebc9686C01065818c02C053f6a",
+    gltrAddress: "0x0dBFBABa88b32a96ee2c9b60007ddc03D0F1F379",
+    aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
+    relayerPetter: "0xf52398257A254D541F392667600901f710a006eD",
+  },
+
+  8453: {
+    ghst: "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb",
+    vrfSystem: "0x9eC728Fce50c77e0BeF7d34F1ab28a46409b7aF1",
+    safeProxyFactory: "0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2",
+    //@to-do: update aavegotchiDaoAddress for bsae mainnet
+    aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
+    relayerPetter: "0xf52398257A254D541F392667600901f710a006eD",
+    aavegotchiDiamond: "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF",
+    forgeDiamond: "0x50aF2d63b839aA32b4166FD1Cb247129b715186C",
+    wearableDiamond: "0x052e6c114a166B0e91C2340370d72D4C33752B4b",
+    dao: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    daoTreasury: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    rarityFarming: "0x8c8E076Cd7D2A17Ba2a5e5AF7036c2b2B7F790f6",
+    pixelCraft: "0x50Def14C51123660f8768b511B93cC8c09f30356",
+    daoDirectorTreasury: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    fakeGotchiCardDiamond: "0xe46B8902dAD841476d9Fee081F1d62aE317206A9",
+    fakeGotchiArtDiamond: "0xAb59CA4A16925b0a4BaC5026C94bEB20A29Df479",
   },
 };
 
@@ -142,36 +224,13 @@ export interface VRFVars {
   nativePayment: boolean;
 }
 
-export const vrfVars: Record<number, VRFVars> = {
-  //base Sepolia
-  84532: {
-    linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-    keyHash:
-      "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-    subId: BigNumber.from(
-      "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-    ),
-    requestConfirmations: 32,
-    callbackGasLimit: 2_500_000,
-    numWords: 4,
-    //use LINK for payment
-    nativePayment: false,
-  },
-  //same place-holder values for local
-  31337: {
-    linkAddress: "0xE4aB69C077896252FAFBD49EFD26B5D171A32410",
-    keyHash:
-      "0x9e1344a1247c8a1785d0a4681a27152bffdb43666ae5bf7d14d24a5efd44bf71",
-    subId: BigNumber.from(
-      "72591281827055554057534631089554678415620592034035525148607866650220315375510"
-    ),
-    requestConfirmations: 32,
-    callbackGasLimit: 2_500_00,
-    numWords: 4,
-    //use LINK for payment
-    nativePayment: false,
-  },
-};
+export async function varsForNetwork(ethers: HardhatEthersHelpers) {
+  return varsByChainId((await ethers.provider.getNetwork()).chainId);
+}
+
+export function varsByChainId(chainId: number) {
+  return networkAddresses[chainId];
+}
 
 export enum ERC1155_BAAZAAR_CATEGORY_TO_ID {
   WEARABLE = 0,
@@ -198,4 +257,21 @@ export enum WEARABLE_BASE_QUANTITIES {
   LEGENDARY = 100,
   MYTHICAL = 50,
   GODLIKE = 10,
+}
+
+export function baseSepoliaProvider() {
+  const url = process.env.BASE_SEPOLIA_RPC_URL;
+  if (!url) {
+    throw new Error("BASE_SEPOLIA_RPC_URL not found in environment variables");
+  }
+  return new ethers.providers.JsonRpcProvider(url);
+}
+
+export function baseProvider() {
+  const url = process.env.BASE_RPC_URL;
+  if (!url) {
+    throw new Error("BASE_RPC_URL not found in environment variables");
+  }
+  console.log("Using Base URL:", url);
+  return new ethers.providers.JsonRpcProvider(url);
 }

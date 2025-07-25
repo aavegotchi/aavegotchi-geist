@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.1;
 
-import {LibAavegotchi, AavegotchiInfo} from "../libraries/LibAavegotchi.sol";
+import {LibAavegotchi, AavegotchiInfo, AavegotchiBridged} from "../libraries/LibAavegotchi.sol";
+import {LibItems} from "../libraries/LibItems.sol";
 
 import {LibStrings} from "../../shared/libraries/LibStrings.sol";
-import {Modifiers} from "../libraries/LibAppStorage.sol";
+import {Modifiers, Aavegotchi} from "../libraries/LibAppStorage.sol";
 import {LibGotchiLending} from "../libraries/LibGotchiLending.sol";
 import {LibMeta} from "../../shared/libraries/LibMeta.sol";
 import {LibERC721Marketplace} from "../libraries/LibERC721Marketplace.sol";
 import {LibERC721} from "../../shared/libraries/LibERC721.sol";
+import {LibERC1155} from "../../shared/libraries/LibERC1155.sol";
+
+import {CollateralEscrow} from "../CollateralEscrow.sol";
 
 import {ForgeFacet} from "../ForgeDiamond/facets/ForgeFacet.sol";
 
@@ -36,6 +40,13 @@ contract AavegotchiFacet is Modifiers {
     ///@return aavegotchiInfo_ a struct containing all details about
     function getAavegotchi(uint256 _tokenId) external view returns (AavegotchiInfo memory aavegotchiInfo_) {
         aavegotchiInfo_ = LibAavegotchi.getAavegotchi(_tokenId);
+    }
+
+    function batchGetBridgedAavegotchi(uint256[] calldata _tokenIds) external view returns (AavegotchiBridged[] memory aavegotchiInfos_) {
+        aavegotchiInfos_ = new AavegotchiBridged[](_tokenIds.length);
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            aavegotchiInfos_[i] = LibAavegotchi.getAavegotchiBridged(_tokenIds[i]);
+        }
     }
 
     ///@notice returns the time an NFT was claimed
@@ -208,7 +219,7 @@ contract AavegotchiFacet is Modifiers {
     }
 
     // This function is used by transfer functions
-    function internalTransferFrom(address _sender, address _from, address _to, uint256 _tokenId) internal {
+    function internalTransferFrom(address _sender, address _from, address _to, uint256 _tokenId) internal whenNotPaused {
         LibGotchiLending.enforceAavegotchiNotInLending(uint32(_tokenId), _sender);
         _enforceAavegotchiNotForging(_tokenId);
         _enforceAavegotchiNotEquippedWithDelegatedItems(_tokenId);
@@ -230,7 +241,7 @@ contract AavegotchiFacet is Modifiers {
     ///  operator of the current owner.
     /// @param _approved The new approved NFT controller
     /// @param _tokenId The NFT to approve
-    function approve(address _approved, uint256 _tokenId) external {
+    function approve(address _approved, uint256 _tokenId) external whenNotPaused {
         address owner = s.aavegotchis[_tokenId].owner;
         require(owner == LibMeta.msgSender() || s.operators[owner][LibMeta.msgSender()], "ERC721: Not owner or operator of token.");
         s.approved[_tokenId] = _approved;
@@ -243,7 +254,7 @@ contract AavegotchiFacet is Modifiers {
     ///  multiple operators per owner.
     /// @param _operator Address to add to the set of authorized operators
     /// @param _approved True if the operator is approved, false to revoke approval
-    function setApprovalForAll(address _operator, bool _approved) external {
+    function setApprovalForAll(address _operator, bool _approved) external whenNotPaused {
         s.operators[LibMeta.msgSender()][_operator] = _approved;
         emit LibERC721.ApprovalForAll(LibMeta.msgSender(), _operator, _approved);
     }
@@ -253,23 +264,21 @@ contract AavegotchiFacet is Modifiers {
     ///@param _operator Address to disable/enable as a pet operator
     ///@param _approved True if operator is approved,False if approval is revoked
 
-    function setPetOperatorForAll(address _operator, bool _approved) external {
+    function setPetOperatorForAll(address _operator, bool _approved) external whenNotPaused {
         s.petOperators[LibMeta.msgSender()][_operator] = _approved;
         emit PetOperatorApprovalForAll(LibMeta.msgSender(), _operator, _approved);
     }
 
     ///@notice Return the universal name of the NFT
 
-    function name() external view returns (string memory) {
+    function name() external pure returns (string memory) {
         return "Aavegotchi";
-        // return s.name;
     }
 
     /// @notice An abbreviated name for NFTs in this contract
 
-    function symbol() external view returns (string memory) {
+    function symbol() external pure returns (string memory) {
         return "GOTCHI";
-        // return s.symbol;
     }
 
     /// @notice A distinct Uniform Resource Identifier (URI) for a given asset.

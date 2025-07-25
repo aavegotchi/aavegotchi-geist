@@ -1,4 +1,5 @@
 import { BigNumberish } from "@ethersproject/bignumber";
+import { allBadges } from "../svgs/BadgeData";
 
 type Category = 0 | 1 | 2 | 3;
 
@@ -442,7 +443,7 @@ export function calculateRarityScoreModifier(maxQuantity: number): number {
 }
 
 //exclude some tems from traitBooster checklist
-const excludedItems = [0, 26, 100, 105, 126, 127, 128, 129];
+const excludedItems = [0, 26, 100, 105, 126, 127, 128, 129, 210];
 
 export function getItemTypes(
   itemTypes: ItemTypeInputNew[],
@@ -450,7 +451,8 @@ export function getItemTypes(
 ): ItemTypeOutput[] {
   const result = [];
   for (const itemType of itemTypes) {
-    let maxQuantity: number = rarityLevelToMaxQuantity(itemType.rarityLevel);
+    //we should not dynamically compute this for new deployments
+    // let maxQuantity: number = rarityLevelToMaxQuantity(itemType.rarityLevel);
 
     let itemTypeOut: ItemTypeOutput = {
       ...itemType,
@@ -458,8 +460,8 @@ export function getItemTypes(
       ghstPrice: ethers.utils.parseEther(
         rarityLevelToGhstPrice(itemType.rarityLevel)
       ),
-      rarityScoreModifier: calculateRarityScoreModifier(maxQuantity),
-      maxQuantity: maxQuantity,
+      rarityScoreModifier: calculateRarityScoreModifier(itemType.maxQuantity!),
+      maxQuantity: itemType.maxQuantity!,
       totalQuantity: 0, //New items always start at 0
       name: itemType.name.trim(), //Trim the name to remove empty spaces
     };
@@ -502,11 +504,18 @@ export function getBaadgeItemTypes(
       name: itemType.name.trim(), //Trim the name to remove empty spaces
     };
 
+    if (itemType.svgId === 210) {
+      itemTypeOut.traitModifiers = [0, 0, 0, 0, 0, 0];
+    }
+
     const reducer = (prev: BigNumberish, cur: BigNumberish) =>
       Number(prev) + Math.abs(Number(cur));
     let traitBoosters = itemType.traitModifiers.reduce(reducer, 0);
 
-    if (itemType.category !== 1) {
+    if (
+      itemType.category !== 1 &&
+      !excludedItems.includes(Number(itemType.svgId))
+    ) {
       if (traitBoosters !== rarityLevelToTraitBoosters(itemType.rarityLevel)) {
         throw Error(`Trait Booster for ${itemType.name} does not match rarity`);
       }
@@ -516,6 +525,23 @@ export function getBaadgeItemTypes(
       throw Error("Is not array.");
     }
     result.push(itemTypeOut);
+  }
+  return result;
+}
+
+export function getAllItemTypes(
+  itemTypes: ItemTypeInputNew[],
+  ethers: any
+): ItemTypeOutput[] {
+  let result: ItemTypeOutput[] = [];
+  //use getItemTypes if its not a badge, else get as a a badge
+  //we also fetch the h1Bg as a badge
+  for (const itemType of itemTypes) {
+    if (allBadges.includes(Number(itemType.svgId)) || itemType.svgId === 210) {
+      result.push(getBaadgeItemTypes([itemType])[0]);
+    } else {
+      result.push(getItemTypes([itemType], ethers)[0]);
+    }
   }
   return result;
 }

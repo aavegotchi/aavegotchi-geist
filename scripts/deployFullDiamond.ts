@@ -1,6 +1,7 @@
 /* global ethers hre */
 
 import { ethers, network, run } from "hardhat";
+import hre from "hardhat";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -52,7 +53,11 @@ import { convertSideDimensionsToTaskFormat } from "../tasks/updateItemSideDimens
 import { allExceptions } from "../svgs/allExceptions";
 import { convertExceptionsToTaskFormat } from "../tasks/updateWearableExceptions";
 
-import { deploy, deployWithoutInit } from "../js/diamond-util/src";
+// import {
+//   deploy,
+//   deployWithoutInit,
+//   executeTransactionWithRetry,
+// } from "../js/diamond-util/src";
 
 import {
   getCollaterals,
@@ -63,12 +68,13 @@ import { networkAddresses } from "../helpers/constants";
 
 // Import fs and path for file operations
 import * as os from "os";
-import { BigNumber, BigNumberish, Contract } from "ethers";
+import { BigNumber, BigNumberish, Contract, Signer } from "ethers";
 import {
   collateralsLeftSvgs,
   collateralsRightSvgs,
 } from "../svgs/collaterals-sides";
-import { xpRelayerAddress } from "./helperFunctions";
+import { getRelayerSigner } from "./helperFunctions";
+import { deployWithoutInit, deploy } from "../js/diamond-util/src";
 
 // Define the interface for the deployment configuration
 export interface DeploymentConfig {
@@ -88,9 +94,7 @@ export interface DeploymentConfig {
       [id: string]: boolean;
     };
   };
-  erc721CategoriesAdded: boolean;
-  erc1155CategoriesAdded: boolean;
-  realmAddressSet: boolean;
+  // realmAddressSet: boolean;
   wearableSets: Record<string, boolean>;
   sideViewDimensions: Record<string, string>;
   sideViewExceptions: Record<string, boolean>;
@@ -104,7 +108,7 @@ const CONFIG_PATH = path.join(__dirname, "../deployment-config.json");
 // Load the deployment configuration specific to the current chainId
 export function loadDeploymentConfig(
   chainId: number,
-  useFreshDeploy: boolean = false
+  useFreshDeploy: boolean = true
 ): DeploymentConfig {
   if (useFreshDeploy) {
     return {
@@ -123,9 +127,8 @@ export function loadDeploymentConfig(
       sideViewDimensionsAdded: false,
       sideViewExceptionsAdded: false,
       svgsUploaded: {},
-      erc721CategoriesAdded: false,
-      erc1155CategoriesAdded: false,
-      realmAddressSet: false,
+
+      // realmAddressSet: false,
       itemManagers: undefined,
     };
   }
@@ -148,8 +151,6 @@ export function loadDeploymentConfig(
       sideViewDimensions: {},
       sideViewExceptions: {},
       itemManagers: undefined,
-      erc721CategoriesAdded: false,
-      erc1155CategoriesAdded: false,
       realmAddressSet: false,
       svgsUploaded: {},
       sideViewDimensionsAdded: false,
@@ -186,31 +187,8 @@ function addCommas(nStr: any) {
   return x1 + x2;
 }
 
-function strDisplay(str: any) {
+export function strDisplay(str: any) {
   return addCommas(str.toString());
-}
-
-async function deployForgeDiamond(
-  ownerAddress: string,
-  aavegotchiDiamondAddress: string,
-  wearableDiamondAddress: string,
-  deploymentConfig: DeploymentConfig
-) {
-  // Deploy forge facets
-
-  const forgeDiamond = await deployWithoutInit({
-    diamondName: "ForgeDiamond",
-    facetNames: [
-      "ForgeFacet",
-      "ForgeTokenFacet",
-      "ForgeVRFFacet",
-      "ForgeDAOFacet",
-    ],
-    args: [ownerAddress, aavegotchiDiamondAddress, wearableDiamondAddress],
-    deploymentConfig,
-  });
-
-  return forgeDiamond;
 }
 
 async function createHauntWithCollaterals(
@@ -219,43 +197,61 @@ async function createHauntWithCollaterals(
   initialHauntSize: string,
   portalPrice: BigNumberish,
   collaterals: any[],
-  totalGasUsed: BigNumber
+  currentTotalGasUsed: BigNumber,
+  hauntSigner: Signer
 ) {
-  let tx = await daoFacet.createHaunt(
-    initialHauntSize,
-    portalPrice,
-    "0x000000"
+  console.log(`Creating Haunt ${hauntId}`);
+  const txHaunt = await daoFacet
+    .connect(hauntSigner)
+    .createHaunt(initialHauntSize, portalPrice, "0x000000");
+  const receiptHaunt = await ethers.provider.waitForTransaction(
+    txHaunt.hash,
+    1
   );
+  if (receiptHaunt.status !== 1) {
+    throw new Error(`Creating Haunt ${hauntId} failed. Tx: ${txHaunt.hash}`);
+  }
+  console.log(
+    "Haunt created:" +
+      strDisplay(receiptHaunt.gasUsed) +
+      ` (tx: ${txHaunt.hash})`
+  );
+  currentTotalGasUsed = currentTotalGasUsed.add(receiptHaunt.gasUsed);
 
-  let receipt = await tx.wait();
-  console.log("Haunt created:" + strDisplay(receipt.gasUsed));
-  totalGasUsed = totalGasUsed.add(receipt.gasUsed);
-
-  // Add collateral info for haunt
-  console.log("Adding Collateral Types");
-
-  tx = await daoFacet.addCollateralTypes(hauntId, collaterals);
-  receipt = await tx.wait();
-  console.log("Add Collateral Types gas used::" + strDisplay(receipt.gasUsed));
-  totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+  console.log("Adding Collateral Types for Haunt", hauntId);
+  const txCollaterals = await daoFacet
+    .connect(hauntSigner)
+    .addCollateralTypes(hauntId, collaterals);
+  const receiptCollaterals = await ethers.provider.waitForTransaction(
+    txCollaterals.hash,
+    1
+  );
+  if (receiptCollaterals.status !== 1) {
+    throw new Error(
+      `Adding Collateral Types for Haunt ${hauntId} failed. Tx: ${txCollaterals.hash}`
+    );
+  }
+  console.log(
+    "Add Collateral Types gas used::" +
+      strDisplay(receiptCollaterals.gasUsed) +
+      ` (tx: ${txCollaterals.hash})`
+  );
+  currentTotalGasUsed = currentTotalGasUsed.add(receiptCollaterals.gasUsed);
+  return currentTotalGasUsed;
 }
 
 async function addItemTypes(
   daoFacet: DAOFacet,
   totalGasUsed: BigNumber,
-  deploymentConfig: DeploymentConfig
+  deploymentConfig: DeploymentConfig,
+  signer: Signer
 ) {
-  // Initialize itemTypes in config if not exists
   deploymentConfig.itemTypes = deploymentConfig.itemTypes || {};
-
   console.log("Adding item types");
 
-  // Add item types
   const itemTypes2: ItemTypeInputNew[] = [];
   for (let i = 0; i < allItemTypes.length; i++) {
-    // Skip if this item type is already added
     if (deploymentConfig.itemTypes[Number(allItemTypes[i].svgId)]) {
-      console.log(`Item type ${allItemTypes[i].svgId} already added, skipping`);
       continue;
     }
     itemTypes2.push(toItemTypeInputNew(allItemTypes[i]));
@@ -263,7 +259,7 @@ async function addItemTypes(
 
   if (itemTypes2.length === 0) {
     console.log("All item types already added.");
-    return;
+    return totalGasUsed;
   }
 
   const itemTypes = getItemTypes(itemTypes2, ethers);
@@ -277,51 +273,50 @@ async function addItemTypes(
     const end = start + batchSize;
     const batch = itemTypes.slice(start, end);
 
-    const tx = await daoFacet.addItemTypes(batch);
-    const receipt = await tx.wait();
-
-    if (!receipt.status) {
-      throw Error(`Error:: ${tx.hash}`);
+    console.log(`Adding Item Types Batch ${i + 1} of ${totalBatches}`);
+    const tx = await daoFacet.connect(signer).addItemTypes(batch);
+    const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
+    if (receipt.status !== 1) {
+      throw new Error(
+        `Adding Item Types Batch ${i + 1} failed. Tx: ${tx.hash}`
+      );
     }
 
-    // Mark these items as added in the config
     batch.forEach((item, index) => {
       const originalItem = itemTypes2[start + index];
       deploymentConfig.itemTypes![Number(originalItem.svgId)] = true;
     });
-
-    // Save after each batch
     saveDeploymentConfig(deploymentConfig);
 
     console.log(
       `Adding Item Types Batch ${
         i + 1
-      } of ${totalBatches}, gas used:: ${strDisplay(receipt.gasUsed)}`
+      } of ${totalBatches}, gas used:: ${strDisplay(receipt.gasUsed)} (tx: ${
+        tx.hash
+      })`
     );
     totalGasUsed = totalGasUsed.add(receipt.gasUsed);
   }
   console.log("Finished adding itemTypes");
+  return totalGasUsed;
 }
 
 async function addWearableSets(
   daoFacet: DAOFacet,
   totalGasUsed: BigNumber,
-  deploymentConfig: DeploymentConfig
+  deploymentConfig: DeploymentConfig,
+  signer: Signer
 ) {
-  // Initialize wearableSets in config if not exists
   deploymentConfig.wearableSets = deploymentConfig.wearableSets || {};
-
-  // Filter only unprocessed wearable sets
   const setsToAdd = wearableSetArrays.filter(
     (set) => !deploymentConfig.wearableSets![set.name]
   );
 
   if (setsToAdd.length === 0) {
     console.log("All wearable sets already added.");
-    return;
+    return totalGasUsed;
   }
 
-  // Add wearable sets in batches
   console.log("Adding", setsToAdd.length, "Wearable Sets");
   const batchSize = 50;
   const totalBatches = Math.ceil(setsToAdd.length / batchSize);
@@ -331,28 +326,30 @@ async function addWearableSets(
     const end = start + batchSize;
     const batch = setsToAdd.slice(start, end);
 
-    const tx = await daoFacet.addWearableSets(batch);
-    const receipt = await tx.wait();
-
-    if (!receipt.status) {
-      throw Error(`Error:: ${tx.hash}`);
+    console.log(`Adding Wearable Sets Batch ${i + 1} of ${totalBatches}`);
+    const tx = await daoFacet.connect(signer).addWearableSets(batch as any);
+    const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
+    if (receipt.status !== 1) {
+      throw new Error(
+        `Adding Wearable Sets Batch ${i + 1} failed. Tx: ${tx.hash}`
+      );
     }
 
-    // Mark these sets as added in the config
     batch.forEach((set) => {
       deploymentConfig.wearableSets![set.name] = true;
     });
-
-    // Save after each batch
     saveDeploymentConfig(deploymentConfig);
 
     console.log(
       `Adding Wearable Sets Batch ${
         i + 1
-      } of ${totalBatches}, gas used:: ${strDisplay(receipt.gasUsed)}`
+      } of ${totalBatches}, gas used:: ${strDisplay(receipt.gasUsed)} (tx: ${
+        tx.hash
+      })`
     );
     totalGasUsed = totalGasUsed.add(receipt.gasUsed);
   }
+  return totalGasUsed;
 }
 
 async function addSideViewDimensions(
@@ -504,12 +501,10 @@ async function uploadAllSvgs(
   };
 
   for (const svgGroup of Object.entries(svgGroups)) {
-    const svg = svgGroup[1];
+    const svgData = svgGroup[1];
     const svgType = svgGroup[0];
-
-    await uploadSvgs(svgFacet, svg, svgType, ethers, deploymentConfig);
+    await uploadSvgs(svgFacet, svgData, svgType, ethers, deploymentConfig);
   }
-
   console.log("Upload Done");
 
   interface SleeveInput {
@@ -527,140 +522,40 @@ async function uploadAllSvgs(
   }
 
   console.log("Associating sleeves svgs with body wearable svgs.");
+
   const tx = await svgFacet.setSleeves(sleevesInput);
-  const receipt = await tx.wait();
-  if (!receipt.status) {
-    throw Error(`Error:: ${tx.hash}`);
+  const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
+  if (receipt.status !== 1) {
+    throw new Error(
+      `Associating sleeves with body wearable SVGs failed. Tx: ${tx.hash}`
+    );
   }
-  console.log("Sleeves associating gas used::" + strDisplay(receipt.gasUsed));
-  totalGasUsed = totalGasUsed.add(receipt.gasUsed);
-}
 
-async function addERC721Categories(
-  erc721MarketplaceFacet: ERC721MarketplaceFacet,
-  totalGasUsed: BigNumber,
-  realmDiamondAddress: string,
-  fakeGotchiArtDiamondAddress: string
-) {
-  console.log("Adding ERC721 categories");
-  const erc721Categories = [
-    {
-      erc721TokenAddress: realmDiamondAddress,
-      category: 4,
-    },
-    {
-      erc721TokenAddress: fakeGotchiArtDiamondAddress,
-      category: 5,
-    },
-  ];
-  const tx = await erc721MarketplaceFacet.setERC721Categories(erc721Categories);
-  const receipt = await tx.wait();
-  if (!receipt.status) {
-    throw Error(`Error:: ${tx.hash}`);
-  }
   console.log(
-    "Adding ERC721 categories gas used::" + strDisplay(receipt.gasUsed)
+    "Sleeves associating gas used::" +
+      strDisplay(receipt.gasUsed) +
+      ` (tx: ${tx.hash})`
   );
   totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+  return totalGasUsed;
 }
 
-async function addERC1155Categories(
-  erc1155MarketplaceFacet: ERC1155MarketplaceFacet,
-  totalGasUsed: BigNumber,
-  ghstStakingDiamondAddress: string,
-  installationDiamondAddress: string,
-  tileDiamondAddress: string,
-  forgeDiamondAddress: string,
-  fakeGotchiCardDiamondAddress: string
-) {
-  console.log("Adding ERC1155 categories");
-  const erc1155Categories = [];
-  for (let i = 0; i < 6; i++) {
-    erc1155Categories.push({
-      erc1155TokenAddress: ghstStakingDiamondAddress,
-      erc1155TypeId: i,
-      category: 3,
-    });
-  }
-  [
-    1, 141, 142, 143, 144, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155,
-    156,
-  ].forEach((id) => {
-    erc1155Categories.push({
-      erc1155TokenAddress: installationDiamondAddress,
-      erc1155TypeId: id,
-      category: 4,
-    });
-  });
-  Array.from({ length: 31 }, (_, index) => index + 1).forEach((id) => {
-    erc1155Categories.push({
-      erc1155TokenAddress: tileDiamondAddress,
-      erc1155TypeId: id,
-      category: 5,
-    });
-  });
-  erc1155Categories.push({
-    erc1155TokenAddress: fakeGotchiCardDiamondAddress,
-    erc1155TypeId: 0,
-    category: 6,
-  });
-
-  const offset = 1_000_000_000;
-  const alloyCategory = 7;
-  const geodesCategory = 9;
-  const essenceCategory = 10;
-  const coresCategory = 11;
-  const alloyIds = [offset];
-  const essenceIds = [offset + 1];
-  const geodeIds = [];
-  for (let i = offset + 2; i < offset + 8; i++) {
-    geodeIds.push(i);
-  }
-  const coreIds = [];
-  for (let i = offset + 8; i < offset + 44; i++) {
-    coreIds.push(i);
-  }
-  const forgeFinalArray = [
-    [alloyCategory, alloyIds],
-    [geodesCategory, geodeIds],
-    [essenceCategory, essenceIds],
-    [coresCategory, coreIds],
-  ];
-  forgeFinalArray.forEach((el) => {
-    const category = el[0];
-    const toAdd = el[1] as number[];
-
-    for (let index = 0; index < toAdd.length; index++) {
-      erc1155Categories.push({
-        erc1155TokenAddress: forgeDiamondAddress,
-        erc1155TypeId: toAdd[index],
-        category: category,
-      });
-    }
-  });
-
-  const tx = await erc1155MarketplaceFacet.setERC1155Categories(
-    erc1155Categories
-  );
-  const receipt = await tx.wait();
-  if (!receipt.status) {
-    throw Error(`Error:: ${tx.hash}`);
-  }
-  console.log(
-    "Adding ERC1155 categories gas used::" + strDisplay(receipt.gasUsed)
-  );
-  totalGasUsed = totalGasUsed.add(receipt.gasUsed);
-}
-
-async function setRealmAddress(
+export async function setRealmAddress(
   aavegotchiGameFacet: AavegotchiGameFacet,
   totalGasUsed: BigNumber,
   realmDiamondAddress: string
 ) {
+  console.log("Setting Realm address");
   const tx = await aavegotchiGameFacet.setRealmAddress(realmDiamondAddress);
-  const receipt = await tx.wait();
-  console.log("Realm diamond set:" + strDisplay(receipt.gasUsed));
+  const receipt = await ethers.provider.waitForTransaction(tx.hash, 1);
+  if (receipt.status !== 1) {
+    throw new Error(`Setting Realm address failed. Tx: ${tx.hash}`);
+  }
+  console.log(
+    "Realm diamond set:" + strDisplay(receipt.gasUsed) + ` (tx: ${tx.hash})`
+  );
   totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+  return totalGasUsed;
 }
 
 export async function deployFullDiamond(useFreshDeploy: boolean = false) {
@@ -672,12 +567,12 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       "polter",
       "baseSepolia",
       "geist",
+      "base",
     ].includes(network.name)
   ) {
     throw Error("No network settings for " + network.name);
   }
 
-  // Get deployed wGHST address
   let chainId = network.config.chainId as number;
 
   if (network.name === "polter") {
@@ -695,61 +590,36 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   if (network.name === "localhost") {
     chainId = 31337;
   }
+  if (network.name === "base") {
+    chainId = 8453;
+  }
 
-  // Load existing deployment configuration
-  const deploymentConfig = loadDeploymentConfig(chainId, useFreshDeploy);
+  const deploymentConfig = loadDeploymentConfig(chainId, true);
 
   if (deploymentConfig.chainId === undefined) {
     deploymentConfig.chainId = chainId;
   }
 
-  // Variables (Update based on your network configurations)
-  const ghstStakingDiamondAddress =
-    deploymentConfig.ghstStakingDiamondAddress ||
-    "0xae83d5fc564Ef58224e934ba4Df72a100d5082a0";
-  const realmDiamondAddress =
-    deploymentConfig.realmDiamondAddress ||
-    "0x5a4faEb79951bAAa0866B72fD6517E693c8E4620";
-  const installationDiamondAddress =
-    deploymentConfig.installationDiamondAddress ||
-    "0x514b7c55FB3DFf3533B58D85CD25Ba04bb30612D";
-  const tileDiamondAddress =
-    deploymentConfig.tileDiamondAddress ||
-    "0xCa6F4Ef19a1Beb9BeF12f64b395087E5680bcB22";
-  const fakeGotchiArtDiamondAddress =
-    deploymentConfig.fakeGotchiArtDiamondAddress ||
-    "0x330088c3372f4F78cF023DF16E1e1564109191dc";
-  const fakeGotchiCardDiamondAddress =
-    deploymentConfig.fakeGotchiCardDiamondAddress ||
-    "0x9E282FE4a0be6A0C4B9f7d9fEF10547da35c52EA";
-
-  const name = "Test";
-  const symbol = "TEST";
-
-  const accounts = await ethers.getSigners();
-  const ownerAddress = await accounts[0].getAddress();
+  const signer = await getRelayerSigner(hre);
+  const ownerAddress = await signer.getAddress();
 
   console.log("Owner: " + ownerAddress);
 
-  const dao = ownerAddress; // 'todo'
+  const dao = ownerAddress;
   const daoTreasury = ownerAddress;
-  const rarityFarming = ownerAddress; // 'todo'
-  const pixelCraft = ownerAddress; // 'todo'
-  const itemManagers = [ownerAddress, xpRelayerAddress]; // 'todo'
+  const rarityFarming = ownerAddress;
+  const pixelCraft = ownerAddress;
+  const itemManagers = [ownerAddress];
   let ghstContractAddress = "";
-  let requestConfig;
 
   const addresses = networkAddresses[chainId];
 
   if (chainId === 31337) {
-    //deploy fake ghst token
-    //deploy ERC20.sol
-    const ERC20Factory = await ethers.getContractFactory("ERC20Token");
+    const ERC20Factory = await ethers.getContractFactory("ERC20Token", signer);
     const erc20 = await ERC20Factory.deploy();
     await erc20.deployed();
     ghstContractAddress = erc20.address;
   } else {
-    // Check if addresses exist for this network
     if (!addresses || !addresses.ghst) {
       throw new Error(
         `No GHST address configured for network ${network.name} (chainId: ${chainId})`
@@ -764,25 +634,20 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       daoTreasury,
       pixelCraft,
       rarityFarming,
-      name,
-      symbol,
       ghstContractAddress,
-      addresses.vrfCoordinator,
-      requestConfig,
+      addresses.vrfSystem,
+      addresses.relayerPetter,
     ],
   ];
 
   console.log("args:", initArgs);
 
   let totalGasUsed = ethers.BigNumber.from("0");
-  let tx;
-  let receipt;
 
   async function deployAavegotchiDiamond(): Promise<Contract> {
-    let aavegotchiDiamond: any;
+    let aavegotchiDiamond: Contract;
     if (!deploymentConfig.aavegotchiDiamond) {
-      // Deploy Aavegotchi Diamond
-      aavegotchiDiamond = await deploy({
+      const deployResult = await deploy({
         diamondName: "AavegotchiDiamond",
         initDiamond: "contracts/Aavegotchi/InitDiamond.sol:InitDiamond",
         facetNames: [
@@ -810,237 +675,319 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
           "ERC721BuyOrderFacet",
           "ItemsRolesRegistryFacet",
           "ERC1155BuyOrderFacet",
+          "AavegotchiBridgeFacet",
         ],
-        owner: ownerAddress,
+        signer: signer,
         args: initArgs,
         deploymentConfig,
       });
-
+      aavegotchiDiamond = deployResult.deployedDiamond;
       console.log("Aavegotchi diamond address:" + aavegotchiDiamond.address);
-
-      tx = aavegotchiDiamond.deployTransaction;
-      receipt = await tx.wait();
       console.log(
-        "Aavegotchi diamond deploy gas used:" + strDisplay(receipt.gasUsed)
+        "Aavegotchi diamond deploy gas used:" +
+          strDisplay(deployResult.diamondReceipt.gasUsed)
       );
-      totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+      totalGasUsed = totalGasUsed.add(deployResult.diamondReceipt.gasUsed);
+      if (deployResult.initDiamondReceipt) {
+        totalGasUsed = totalGasUsed.add(
+          deployResult.initDiamondReceipt.gasUsed
+        );
+      }
+      totalGasUsed = totalGasUsed.add(deployResult.diamondCutReceipt.gasUsed);
 
-      // Save the deployment address
       deploymentConfig.aavegotchiDiamond = aavegotchiDiamond.address;
       saveDeploymentConfig(deploymentConfig);
-
       return aavegotchiDiamond;
     } else {
-      console.log("using existring");
-      // Use existing deployment
+      console.log(
+        "Using existing Aavegotchi Diamond at " +
+          deploymentConfig.aavegotchiDiamond
+      );
       aavegotchiDiamond = await ethers.getContractAt(
         "Diamond",
-        deploymentConfig.aavegotchiDiamond
-      );
-
-      console.log(
-        "Using existing Aavegotchi Diamond at " + aavegotchiDiamond.address
+        deploymentConfig.aavegotchiDiamond,
+        signer
       );
       return aavegotchiDiamond;
     }
   }
 
-  async function deployWearableDiamond(): Promise<Contract> {
-    // Deployment of Wearable Diamond
-    let wearableDiamond: any;
+  async function deployWearableDiamond(
+    aavegotchiDiamondAddress: string
+  ): Promise<Contract> {
+    let wearableDiamond: Contract;
     if (!deploymentConfig.wearableDiamond) {
-      // Deploy facets
-
-      wearableDiamond = await deployWithoutInit({
+      const deployResult = await deployWithoutInit({
         diamondName: "WearableDiamond",
-        args: [ownerAddress, aavegotchiDiamond.address],
+        signer: signer,
+        args: [ownerAddress, aavegotchiDiamondAddress],
         facetNames: ["EventHandlerFacet", "WearablesFacet"],
         deploymentConfig,
       });
-
+      wearableDiamond = deployResult.deployedDiamond;
       console.log("Wearable diamond address:" + wearableDiamond.address);
-
-      tx = wearableDiamond.deployTransaction;
-      receipt = await tx.wait();
       console.log(
-        "Wearable diamond deploy gas used:" + strDisplay(receipt.gasUsed)
+        "Wearable diamond deploy gas used:" +
+          strDisplay(deployResult.diamondReceipt.gasUsed)
       );
+      totalGasUsed = totalGasUsed.add(deployResult.diamondReceipt.gasUsed);
+      totalGasUsed = totalGasUsed.add(deployResult.diamondCutReceipt.gasUsed);
 
-      totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+      const peripheryFacet = (
+        await ethers.getContractAt("PeripheryFacet", aavegotchiDiamondAddress)
+      ).connect(signer);
 
-      // Set periphery
-      const peripheryFacet = await ethers.getContractAt(
-        "PeripheryFacet",
-        aavegotchiDiamond.address
+      console.log("Setting wearable diamond in periphery");
+      const peripheryTx = await peripheryFacet.setPeriphery(
+        wearableDiamond.address
       );
-      tx = await peripheryFacet.setPeriphery(wearableDiamond.address);
-      receipt = await tx.wait();
-      if (!receipt.status) {
-        throw Error(`Error:: ${tx.hash}`);
+      const peripheryReceipt = await ethers.provider.waitForTransaction(
+        peripheryTx.hash,
+        1
+      );
+      if (peripheryReceipt.status !== 1) {
+        throw new Error(
+          `Setting wearable diamond in periphery failed. Tx: ${peripheryTx.hash}`
+        );
       }
       console.log(
-        "Setting wearable diamond gas used::" + strDisplay(receipt.gasUsed)
+        "Setting wearable diamond gas used::" +
+          strDisplay(peripheryReceipt.gasUsed) +
+          ` (tx: ${peripheryTx.hash})`
       );
-      totalGasUsed = totalGasUsed.add(receipt.gasUsed);
+      totalGasUsed = totalGasUsed.add(peripheryReceipt.gasUsed);
 
-      // Save the deployment address
       deploymentConfig.wearableDiamond = wearableDiamond.address;
       saveDeploymentConfig(deploymentConfig);
-
       return wearableDiamond;
     } else {
+      console.log(
+        "Using existing Wearable Diamond at " + deploymentConfig.wearableDiamond
+      );
       wearableDiamond = await ethers.getContractAt(
         "WearableDiamond",
-        deploymentConfig.wearableDiamond
+        deploymentConfig.wearableDiamond,
+        signer
       );
-      console.log(
-        "Using existing Wearable Diamond at " + wearableDiamond.address
+      //pause wearable diamond
+      console.log("Pausing Wearable Diamond");
+      const wearablesFacet = await ethers.getContractAt(
+        "WearablesFacet",
+        wearableDiamond.address,
+        signer
       );
+      const pauseWearableTx = await wearablesFacet.toggleDiamondPaused(true);
+      await pauseWearableTx.wait();
+      console.log("Wearable Diamond paused");
+
       return wearableDiamond;
     }
   }
 
-  async function deployNewForgeDiamond(): Promise<Contract> {
-    let forgeDiamond: any;
+  async function deployNewForgeDiamond(
+    aavegotchiDiamondAddress: string,
+    wearableDiamondAddress: string
+  ): Promise<Contract> {
+    let forgeDiamond: Contract;
     if (!deploymentConfig.forgeDiamond) {
-      forgeDiamond = await deployForgeDiamond(
-        ownerAddress,
-        aavegotchiDiamond.address,
-        wearableDiamond.address,
-        deploymentConfig
-      );
-      console.log("Forge diamond address:" + forgeDiamond.address);
+      const deployResult = await deployWithoutInit({
+        diamondName: "ForgeDiamond",
+        facetNames: [
+          "ForgeFacet",
+          "ForgeTokenFacet",
+          "ForgeVRFFacet",
+          "ForgeDAOFacet",
+          "ForgeWriteFacet",
+        ],
+        signer: signer,
+        args: [
+          ownerAddress,
+          aavegotchiDiamondAddress,
+          wearableDiamondAddress,
+          addresses.vrfSystem!,
+        ],
+        deploymentConfig,
+      });
 
-      // Save the deployment address
+      forgeDiamond = deployResult.deployedDiamond;
+      console.log("Forge diamond address:" + forgeDiamond.address);
+      console.log(
+        "Forge diamond deploy gas used:" +
+          strDisplay(deployResult.diamondReceipt.gasUsed)
+      );
+      totalGasUsed = totalGasUsed.add(deployResult.diamondReceipt.gasUsed);
+      totalGasUsed = totalGasUsed.add(deployResult.diamondCutReceipt.gasUsed);
+
       deploymentConfig.forgeDiamond = forgeDiamond.address;
       saveDeploymentConfig(deploymentConfig);
-
       return forgeDiamond;
     } else {
+      console.log(
+        "Using existing Forge Diamond at " + deploymentConfig.forgeDiamond
+      );
       forgeDiamond = await ethers.getContractAt(
         "ForgeDiamond",
-        deploymentConfig.forgeDiamond
+        deploymentConfig.forgeDiamond,
+        signer
       );
-      console.log("Using existing Forge Diamond at " + forgeDiamond.address);
+
+      //pause forge diamond
+      console.log("Pausing Forge Diamond");
+      const forgeFacet = await ethers.getContractAt(
+        "ForgeDAOFacet",
+        forgeDiamond.address,
+        signer
+      );
+      console.log("Pausing Forge Diamond");
+      const pauseForgeTx = await forgeFacet.toggleContractPaused(true);
+      await pauseForgeTx.wait();
+      console.log("Forge Diamond paused");
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       return forgeDiamond;
-    }
-  }
-
-  async function deployHaunts() {
-    // Add Haunt 1 if not already added
-    if (!deploymentConfig.haunts || !deploymentConfig.haunts[1]) {
-      await createHauntWithCollaterals(
-        1,
-        daoFacet,
-        "10000",
-        ethers.utils.parseEther("0.1"),
-        getCollaterals(network.name, ghstContractAddress, h1Collaterals),
-        totalGasUsed
-      );
-
-      // Update config
-      deploymentConfig.haunts = deploymentConfig.haunts || {};
-      deploymentConfig.haunts[1] = true;
-      saveDeploymentConfig(deploymentConfig);
-    } else {
-      console.log("Haunt 1 already created.");
-    }
-
-    // Similar for Haunt 2
-    if (!deploymentConfig.haunts[2]) {
-      await createHauntWithCollaterals(
-        2,
-        daoFacet,
-        "15000",
-        ethers.utils.parseEther("0.1"),
-        getCollaterals(network.name, ghstContractAddress, h2Collaterals),
-        totalGasUsed
-      );
-
-      // Update config
-      deploymentConfig.haunts[2] = true;
-      saveDeploymentConfig(deploymentConfig);
-    } else {
-      console.log("Haunt 2 already created.");
     }
   }
 
   const aavegotchiDiamond = await deployAavegotchiDiamond();
-  const wearableDiamond = await deployWearableDiamond();
-  const forgeDiamond = await deployNewForgeDiamond();
-
-  const daoFacet = await ethers.getContractAt(
-    "DAOFacet",
+  const wearableDiamond = await deployWearableDiamond(
     aavegotchiDiamond.address
   );
+  const forgeDiamond = await deployNewForgeDiamond(
+    aavegotchiDiamond.address,
+    wearableDiamond.address
+  );
+
+  const daoFacet = (
+    await ethers.getContractAt("DAOFacet", aavegotchiDiamond.address)
+  ).connect(signer);
+
+  //pause aavegotchi diamond
+  console.log("Pausing Aavegotchi Diamond");
+  const pauseAavegotchiTx = await daoFacet.toggleDiamondPaused(true);
+  await pauseAavegotchiTx.wait();
+  console.log("Aavegotchi Diamond paused");
 
   console.log("Item Managers:", itemManagers);
-
-  if (!deploymentConfig.itemManagers) {
-    await daoFacet.addItemManagers(itemManagers);
+  if (
+    !deploymentConfig.itemManagers ||
+    deploymentConfig.itemManagers.length < itemManagers.length
+  ) {
+    console.log("Adding Item Managers");
+    const itemManagerTx = await daoFacet.addItemManagers(itemManagers);
+    const itemManagerReceipt = await ethers.provider.waitForTransaction(
+      itemManagerTx.hash,
+      1
+    );
+    if (itemManagerReceipt.status !== 1) {
+      throw new Error(`Adding item managers failed. Tx: ${itemManagerTx.hash}`);
+    }
+    totalGasUsed = totalGasUsed.add(itemManagerReceipt.gasUsed);
+    console.log(
+      "Item Managers added, gas: " +
+        strDisplay(itemManagerReceipt.gasUsed) +
+        ` (tx: ${itemManagerTx.hash})`
+    );
     deploymentConfig.itemManagers = itemManagers;
+    saveDeploymentConfig(deploymentConfig);
+  } else {
+    console.log("Item Managers already configured or up to date.");
   }
 
-  // Now, for adding haunts, item types, wearable sets, etc., we can check in the config whether they've been added
-  await deployHaunts();
+  await createHauntWithCollaterals(
+    1,
+    daoFacet,
+    "10000",
+    ethers.utils.parseEther("0.1"),
+    getCollaterals(network.name, ghstContractAddress, h1Collaterals),
+    totalGasUsed,
+    signer
+  );
+  deploymentConfig.haunts = deploymentConfig.haunts || {};
+  deploymentConfig.haunts[1] = true;
+  saveDeploymentConfig(deploymentConfig);
 
-  //first set itemManagers
-
-  //Add Item Managers
-
-  // Add Item Types
   if (
     !deploymentConfig.itemTypes ||
     Object.keys(deploymentConfig.itemTypes).length < allItemTypes.length
   ) {
-    await addItemTypes(daoFacet, totalGasUsed, deploymentConfig);
+    totalGasUsed = await addItemTypes(
+      daoFacet,
+      totalGasUsed,
+      deploymentConfig,
+      signer
+    );
   } else {
     console.log("All Item Types already added.");
   }
 
-  // Add Wearable Sets (updated check)
+  await createHauntWithCollaterals(
+    2,
+    daoFacet,
+    "15000",
+    ethers.utils.parseEther("0.1"),
+    getCollaterals(network.name, ghstContractAddress, h2Collaterals),
+    totalGasUsed,
+    signer
+  );
+  deploymentConfig.haunts = deploymentConfig.haunts || {};
+  deploymentConfig.haunts[1] = true;
+  saveDeploymentConfig(deploymentConfig);
+
+  if (
+    !deploymentConfig.itemTypes ||
+    Object.keys(deploymentConfig.itemTypes).length < allItemTypes.length
+  ) {
+    totalGasUsed = await addItemTypes(
+      daoFacet,
+      totalGasUsed,
+      deploymentConfig,
+      signer
+    );
+  } else {
+    console.log("All Item Types already added.");
+  }
+
   if (
     !deploymentConfig.wearableSets ||
     Object.keys(deploymentConfig.wearableSets).length < wearableSetArrays.length
   ) {
-    await addWearableSets(daoFacet, totalGasUsed, deploymentConfig);
+    totalGasUsed = await addWearableSets(
+      daoFacet,
+      totalGasUsed,
+      deploymentConfig,
+      signer
+    );
   } else {
     console.log("All Wearable Sets already added.");
   }
 
-  // Add Side View Dimensions (updated check)
-  if (
-    !deploymentConfig.sideViewDimensions ||
-    Object.keys(deploymentConfig.sideViewDimensions).length <
-      allSideViewDimensions.length
-  ) {
-    await addSideViewDimensions(aavegotchiDiamond.address, deploymentConfig);
-  } else {
-    console.log("All Side View Dimensions already added.");
-  }
+  await addSideViewDimensions(aavegotchiDiamond.address, deploymentConfig);
+  await addSideviewExceptions(aavegotchiDiamond.address, deploymentConfig);
 
-  // Add Side View Exceptions
-  if (
-    !deploymentConfig.sideViewExceptions ||
-    Object.keys(deploymentConfig.sideViewExceptions).length <
-      allExceptions.length
-  ) {
-    await addSideviewExceptions(aavegotchiDiamond.address, deploymentConfig);
-  } else {
-    console.log("All Side View Exceptions already added.");
-  }
-
-  // Upload all SVGs
-
-  const svgFacet = await ethers.getContractAt(
-    "SvgFacet",
-    aavegotchiDiamond.address
-  );
-  await uploadAllSvgs(svgFacet, totalGasUsed, deploymentConfig);
+  let svgFacet = (
+    await ethers.getContractAt("SvgFacet", aavegotchiDiamond.address)
+  ).connect(signer);
+  totalGasUsed = await uploadAllSvgs(svgFacet, totalGasUsed, deploymentConfig);
   saveDeploymentConfig(deploymentConfig);
 
   if (!deploymentConfig.setForgeDiamond) {
-    await daoFacet.setForge(forgeDiamond.address);
+    console.log("Setting Forge Diamond in DAOFacet");
+    const setForgeTx = await daoFacet.setForge(forgeDiamond.address);
+    const setForgeReceipt = await ethers.provider.waitForTransaction(
+      setForgeTx.hash,
+      1
+    );
+    if (setForgeReceipt.status !== 1) {
+      throw new Error(
+        `Setting Forge Diamond in DAOFacet failed. Tx: ${setForgeTx.hash}`
+      );
+    }
+    totalGasUsed = totalGasUsed.add(setForgeReceipt.gasUsed);
+    console.log(
+      "Forge diamond set in DAOFacet, gas: " +
+        strDisplay(setForgeReceipt.gasUsed) +
+        ` (tx: ${setForgeTx.hash})`
+    );
     deploymentConfig.setForgeDiamond = true;
     saveDeploymentConfig(deploymentConfig);
   } else {
@@ -1048,87 +995,28 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   }
 
   if (!deploymentConfig.forgePropertiesSet) {
-    //Set forge properties
-    await setForgeProperties(forgeDiamond.address);
+    console.log("Setting Forge Properties");
+    await setForgeProperties(
+      forgeDiamond.address,
+      aavegotchiDiamond.address,
+      signer
+    );
     deploymentConfig.forgePropertiesSet = true;
     saveDeploymentConfig(deploymentConfig);
+    console.log("Forge properties set.");
   } else {
     console.log("Forge properties already set.");
   }
 
-  // Add ERC721 Categories
-  const erc721MarketplaceFacet = await ethers.getContractAt(
-    "ERC721MarketplaceFacet",
-    aavegotchiDiamond.address
-  );
-  if (!deploymentConfig.erc721CategoriesAdded) {
-    await addERC721Categories(
-      erc721MarketplaceFacet,
-      totalGasUsed,
-      realmDiamondAddress,
-      fakeGotchiArtDiamondAddress
-    );
-
-    deploymentConfig.erc721CategoriesAdded = true;
-    saveDeploymentConfig(deploymentConfig);
-  } else {
-    console.log("ERC721 Categories already added.");
-  }
-
-  // Add ERC1155 Categories
-  const erc1155MarketplaceFacet = await ethers.getContractAt(
-    "ERC1155MarketplaceFacet",
-    aavegotchiDiamond.address
-  );
-  if (!deploymentConfig.erc1155CategoriesAdded) {
-    await addERC1155Categories(
-      erc1155MarketplaceFacet,
-      totalGasUsed,
-      ghstStakingDiamondAddress,
-      installationDiamondAddress,
-      tileDiamondAddress,
-      forgeDiamond.address,
-      fakeGotchiCardDiamondAddress
-    );
-
-    deploymentConfig.erc1155CategoriesAdded = true;
-    saveDeploymentConfig(deploymentConfig);
-  } else {
-    console.log("ERC1155 Categories already added.");
-  }
-
-  // Set Realm Address
-  const aavegotchiGameFacet = await ethers.getContractAt(
-    "AavegotchiGameFacet",
-    aavegotchiDiamond.address
-  );
-  if (!deploymentConfig.realmAddressSet) {
-    await setRealmAddress(
-      aavegotchiGameFacet,
-      totalGasUsed,
-      realmDiamondAddress
-    );
-
-    deploymentConfig.realmAddressSet = true;
-    saveDeploymentConfig(deploymentConfig);
-  } else {
-    console.log("Realm address already set.");
-  }
-
-  // Continue with any other steps...
-
   console.log("Total gas used: " + strDisplay(totalGasUsed));
-
   return {
     aavegotchiDiamond: aavegotchiDiamond,
     forgeDiamond: forgeDiamond,
     wearableDiamond: wearableDiamond,
-    testGhstContractAddress: ghstContractAddress, //testing only
+    testGhstContractAddress: ghstContractAddress,
   };
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 if (require.main === module) {
   deployFullDiamond(true)
     .then(() => process.exit(0))

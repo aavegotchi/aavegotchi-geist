@@ -38,6 +38,30 @@ struct AavegotchiInfo {
     ItemTypeIO[] items;
 }
 
+struct AavegotchiBridged {
+    uint16[EQUIPPED_WEARABLE_SLOTS] equippedWearables;
+    int8[NUMERIC_TRAITS_NUM] temporaryTraitBoosts;
+    int16[NUMERIC_TRAITS_NUM] numericTraits;
+    string name;
+    uint256 randomNumber;
+    uint256 experience;
+    uint256 minimumStake;
+    uint256 usedSkillPoints;
+    uint256 interactionCount;
+    address collateralType;
+    uint40 claimTime;
+    uint40 lastTemporaryBoost;
+    uint16 hauntId;
+    address owner;
+    uint8 status;
+    uint40 lastInteracted;
+    bool locked;
+    address escrow;
+    uint256[] items;
+    uint256 respecCount;
+    uint256 baseRandomNumber;
+}
+
 struct PortalAavegotchiTraitsIO {
     uint256 randomNumber;
     int16[NUMERIC_TRAITS_NUM] numericTraits;
@@ -171,6 +195,32 @@ library LibAavegotchi {
             aavegotchiInfo_.locked = s.aavegotchis[_tokenId].locked;
             aavegotchiInfo_.items = LibItems.itemBalancesOfTokenWithTypes(address(this), _tokenId);
         }
+    }
+
+    function getAavegotchiBridged(uint256 _tokenId) internal view returns (AavegotchiBridged memory aavegotchiInfo_) {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        Aavegotchi storage aavegotchi = s.aavegotchis[_tokenId];
+        aavegotchiInfo_.equippedWearables = aavegotchi.equippedWearables;
+        aavegotchiInfo_.temporaryTraitBoosts = aavegotchi.temporaryTraitBoosts;
+        aavegotchiInfo_.numericTraits = aavegotchi.numericTraits;
+        aavegotchiInfo_.name = aavegotchi.name;
+        aavegotchiInfo_.randomNumber = aavegotchi.randomNumber;
+        aavegotchiInfo_.experience = aavegotchi.experience;
+        aavegotchiInfo_.minimumStake = aavegotchi.minimumStake;
+        aavegotchiInfo_.usedSkillPoints = aavegotchi.usedSkillPoints;
+        aavegotchiInfo_.interactionCount = aavegotchi.interactionCount;
+        aavegotchiInfo_.collateralType = aavegotchi.collateralType;
+        aavegotchiInfo_.claimTime = aavegotchi.claimTime;
+        aavegotchiInfo_.lastTemporaryBoost = aavegotchi.lastTemporaryBoost;
+        aavegotchiInfo_.hauntId = aavegotchi.hauntId;
+        aavegotchiInfo_.owner = aavegotchi.owner;
+        aavegotchiInfo_.status = aavegotchi.status;
+        aavegotchiInfo_.lastInteracted = aavegotchi.lastInteracted;
+        aavegotchiInfo_.locked = aavegotchi.locked;
+        aavegotchiInfo_.escrow = aavegotchi.escrow;
+        aavegotchiInfo_.items = s.nftItems[address(this)][_tokenId];
+        aavegotchiInfo_.respecCount = aavegotchi.respecCount;
+        aavegotchiInfo_.baseRandomNumber = s.tokenIdToRandomNumber[_tokenId];
     }
 
     //Only valid for claimed Aavegotchis
@@ -336,9 +386,35 @@ library LibAavegotchi {
         return string(name);
     }
 
+    function validateAndLowerNameBridge(string memory _name) internal pure returns (string memory c) {
+        bytes memory name = abi.encodePacked(_name);
+        uint256 len = name.length;
+
+        if (len == 0) {
+            c = "";
+        } else {
+            //require(len != 0, "LibAavegotchi: name can't be 0 chars");
+            require(len < 26, "LibAavegotchi: name can't be greater than 25 characters");
+            uint256 char = uint256(uint8(name[0]));
+            require(char != 32, "LibAavegotchi: first char of name can't be a space");
+            char = uint256(uint8(name[len - 1]));
+            require(char != 32, "LibAavegotchi: last char of name can't be a space");
+            for (uint256 i; i < len; i++) {
+                char = uint256(uint8(name[i]));
+                require(char > 31 && char < 127, "LibAavegotchi: invalid character in Aavegotchi name.");
+                if (char < 91 && char > 64) {
+                    name[i] = bytes1(uint8(char + 32));
+                }
+            }
+            c = string(name);
+        }
+    }
+
     function transfer(address _from, address _to, uint256 _tokenId) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();
-
+        if (s.aavegotchis[_tokenId].locked == false && msg.sender == address(0x1E0049783F008A0085193E00003D00cd54003c71)) {
+            revert("Opensea transfers not supported yet");
+        }
         // remove
         uint256 index = s.ownerTokenIdIndexes[_from][_tokenId];
         uint256 lastIndex = s.ownerTokenIds[_from].length - 1;

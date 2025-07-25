@@ -10,6 +10,13 @@ import {AavegotchiFacet} from "../../facets/AavegotchiFacet.sol";
 import {INFTBridge} from "../../../shared/interfaces/INFTBridge.sol";
 
 contract WearablesFacet {
+    modifier whenNotPaused() {
+        if (msg.sender != WearableLibDiamond.contractOwner()) {
+            require(!WearableLibDiamond.diamondStorage().contractPaused, "WearablesFacet: Contract paused");
+        }
+        _;
+    }
+
     event ItemGeistBridgeUpdate(address _newBridge);
 
     function name() external pure returns (string memory) {
@@ -60,7 +67,7 @@ contract WearablesFacet {
 
     //WRITE
 
-    function setApprovalForAll(address _operator, bool _approved) external {
+    function setApprovalForAll(address _operator, bool _approved) external whenNotPaused {
         periphery().peripherySetApprovalForAll(_operator, _approved, msg.sender);
         //emit event
         //previous address in frame should be the owner
@@ -76,56 +83,29 @@ contract WearablesFacet {
         }
     }
 
-    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external {
+    function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external whenNotPaused {
         periphery().peripherySafeTransferFrom(msg.sender, _from, _to, _id, _value, _data);
         //emit event
         LibEventHandler._receiveAndEmitTransferSingleEvent(msg.sender, _from, _to, _id, _value);
     }
 
-    function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external {
+    function safeBatchTransferFrom(
+        address _from,
+        address _to,
+        uint256[] calldata _ids,
+        uint256[] calldata _values,
+        bytes calldata _data
+    ) external whenNotPaused {
         periphery().peripherySafeBatchTransferFrom(msg.sender, _from, _to, _ids, _values, _data);
         //emit event
         LibEventHandler._receiveAndEmitTransferBatchEvent(msg.sender, _from, _to, _ids, _values);
     }
 
-    //Bridging
+    event DiamondPaused(bool _paused);
 
-    function setItemGeistBridge(address _itemGeistBridge) external {
+    function toggleDiamondPaused(bool _paused) external {
         WearableLibDiamond.enforceIsContractOwner();
-        WearableLibDiamond.diamondStorage().itemGeistBridge = _itemGeistBridge;
-        emit ItemGeistBridgeUpdate(_itemGeistBridge);
-    }
-
-    function itemGeistBridge() public view returns (address) {
-        return WearableLibDiamond.diamondStorage().itemGeistBridge;
-    }
-
-    function bridgeItem(address _receiver, uint256 _tokenId, uint256 _amount, uint256 _msgGasLimit, address _connector) external payable {
-        WearableLibDiamond.DiamondStorage storage ds = WearableLibDiamond.diamondStorage();
-
-        INFTBridge(ds.itemGeistBridge).bridge{value: msg.value}(
-            _receiver,
-            msg.sender,
-            _tokenId,
-            _amount,
-            _msgGasLimit,
-            _connector,
-            new bytes(0),
-            new bytes(0)
-        );
-    }
-
-    function mint(address _to, uint _tokenId, uint _quantity) external {
-        require(msg.sender == WearableLibDiamond.diamondStorage().itemGeistBridge, "WearablesFacet: Only item geist bridge can mint");
-
-        periphery().peripheryBridgeMint(_to, _tokenId, _quantity);
-
-        LibEventHandler._receiveAndEmitTransferSingleEvent(msg.sender, address(0), _to, _tokenId, _quantity);
-    }
-
-    function burn(address _from, uint _tokenId, uint _quantity) external {
-        require(msg.sender == WearableLibDiamond.diamondStorage().itemGeistBridge, "WearablesFacet: Only item geist bridge can burn");
-        periphery().peripheryBridgeBurn(_from, _tokenId, _quantity);
-        LibEventHandler._receiveAndEmitTransferSingleEvent(msg.sender, _from, address(0), _tokenId, _quantity);
+        WearableLibDiamond.diamondStorage().contractPaused = _paused;
+        emit DiamondPaused(_paused);
     }
 }

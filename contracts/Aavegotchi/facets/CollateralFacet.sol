@@ -80,7 +80,7 @@ contract CollateralFacet is Modifiers {
     ///@param _tokenId The identifier of the NFT to increase
     ///@param _stakeAmount The amount of collateral tokens to increase the current collateral by
 
-    function increaseStake(uint256 _tokenId, uint256 _stakeAmount) external onlyAavegotchiOwner(_tokenId) onlyPolygonOrTesting {
+    function increaseStake(uint256 _tokenId, uint256 _stakeAmount) external whenNotPaused onlyAavegotchiOwner(_tokenId) {
         address escrow = s.aavegotchis[_tokenId].escrow;
         require(escrow != address(0), "CollateralFacet: Does not have an escrow");
         address collateralType = s.aavegotchis[_tokenId].collateralType;
@@ -93,18 +93,11 @@ contract CollateralFacet is Modifiers {
     ///@dev Will throw if it is reduced less than the minimum stake
     ///@param _tokenId The identifier of the NFT to decrease
     ///@param _reduceAmount The amount of collateral tokens to decrease the current collateral by
-    function decreaseStake(
-        uint256 _tokenId,
-        uint256 _reduceAmount
-    ) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) onlyPolygonOrTesting {
+    function decreaseStake(uint256 _tokenId, uint256 _reduceAmount) external onlyUnlocked(_tokenId) whenNotPaused onlyAavegotchiOwner(_tokenId) {
         address escrow = s.aavegotchis[_tokenId].escrow;
         require(escrow != address(0), "CollateralFacet: Does not have an escrow");
 
         address collateralType = s.aavegotchis[_tokenId].collateralType;
-        uint256 currentStake = IERC20(collateralType).balanceOf(escrow);
-        uint256 minimumStake = s.aavegotchis[_tokenId].minimumStake;
-
-        require(currentStake - _reduceAmount >= minimumStake, "CollateralFacet: Cannot reduce below minimum stake");
         emit DecreaseStake(_tokenId, _reduceAmount);
         LibERC20.transferFrom(collateralType, escrow, LibMeta.msgSender(), _reduceAmount);
     }
@@ -115,7 +108,7 @@ contract CollateralFacet is Modifiers {
     ///@param _tokenId Identifier of NFT to destroy
     ///@param _toId Identifier of another claimed aavegotchi where the XP of the sacrificed aavegotchi will be sent
 
-    function decreaseAndDestroy(uint256 _tokenId, uint256 _toId) external onlyUnlocked(_tokenId) onlyAavegotchiOwner(_tokenId) onlyPolygonOrTesting {
+    function decreaseAndDestroy(uint256 _tokenId, uint256 _toId) external onlyUnlocked(_tokenId) whenNotPaused onlyAavegotchiOwner(_tokenId) {
         address escrow = s.aavegotchis[_tokenId].escrow;
         require(escrow != address(0), "CollateralFacet: Does not have an escrow");
 
@@ -150,12 +143,6 @@ contract CollateralFacet is Modifiers {
         }
 
         emit LibERC721.Transfer(owner, address(0), _tokenId);
-
-        // transfer all collateral to LibMeta.msgSender()
-        address collateralType = s.aavegotchis[_tokenId].collateralType;
-        uint256 reduceAmount = IERC20(collateralType).balanceOf(escrow);
-        emit DecreaseStake(_tokenId, reduceAmount);
-        LibERC20.transferFrom(collateralType, escrow, owner, reduceAmount);
 
         // delete aavegotchi info
         string memory name = s.aavegotchis[_tokenId].name;

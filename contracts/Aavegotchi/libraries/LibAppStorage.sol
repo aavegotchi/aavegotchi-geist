@@ -15,14 +15,14 @@ uint256 constant PORTAL_AAVEGOTCHIS_NUM = 10;
 // uint32 constant NO_OF_WORDS = 1;
 // uint32 constant VRF_GAS_LIMIT = 2_500_000;
 
-struct RequestConfig {
-    bytes32 keyHash;
-    uint256 subId;
-    uint16 requestConfirmations;
-    uint32 callbackGasLimit;
-    uint32 numWords;
-    bool nativePayment;
-}
+// struct RequestConfig {
+//     bytes32 keyHash;
+//     uint256 subId;
+//     uint16 requestConfirmations;
+//     uint32 callbackGasLimit;
+//     uint32 numWords;
+//     bool nativePayment;
+// }
 
 //  switch (traitType) {
 //         case 0:
@@ -58,6 +58,7 @@ struct Aavegotchi {
     uint40 lastInteracted; //The last time this Aavegotchi was interacted with
     bool locked;
     address escrow; //The escrow address this Aavegotchi manages.
+    uint256 respecCount; //The number of times this Aavegotchi has been respec'd
 }
 
 struct Dimensions {
@@ -203,12 +204,6 @@ struct GotchiLending {
     uint256 permissions; //0=none, 1=channelling
 }
 
-struct LendingListItem {
-    uint32 parentListingId;
-    uint256 listingId;
-    uint32 childListingId;
-}
-
 struct Whitelist {
     address owner;
     string name;
@@ -252,6 +247,7 @@ struct ERC1155BuyOrder {
     address buyer;
     address erc1155TokenAddress;
     uint256 erc1155TokenId;
+    uint256 category;
     uint256 priceInWei;
     uint256 quantity;
     uint256 timeCreated;
@@ -288,8 +284,8 @@ struct AppStorage {
     mapping(address => uint256) metaNonces;
     uint32 tokenIdCounter;
     uint16 currentHauntId;
-    string name;
-    string symbol;
+    // string name;
+    // string symbol;
     //Addresses
     address[] collateralTypes;
     address ghstContract;
@@ -304,36 +300,17 @@ struct AppStorage {
     //VRF
     mapping(uint256 => uint256) vrfRequestIdToTokenId;
     // mapping(bytes32 => uint256) vrfNonces;
-    address vrfCoordinator;
+    // address vrfCoordinator;
     // Marketplace
     uint256 nextERC1155ListingId;
     // erc1155 category => erc1155Order
     //ERC1155Order[] erc1155MarketOrders;
     mapping(uint256 => ERC1155Listing) erc1155Listings;
-    // category => ("listed" or purchased => first listingId)
-    //mapping(uint256 => mapping(string => bytes32[])) erc1155MarketListingIds;
-    mapping(uint256 => mapping(string => uint256)) erc1155ListingHead;
-    // "listed" or purchased => (listingId => ListingListItem)
-    mapping(string => mapping(uint256 => ListingListItem)) erc1155ListingListItem;
-    mapping(address => mapping(uint256 => mapping(string => uint256))) erc1155OwnerListingHead;
-    // "listed" or purchased => (listingId => ListingListItem)
-    mapping(string => mapping(uint256 => ListingListItem)) erc1155OwnerListingListItem;
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc1155TokenToListingId;
     uint256 listingFeeInWei;
-    // erc1155Token => (erc1155TypeId => category)
-    mapping(address => mapping(uint256 => uint256)) erc1155Categories;
     uint256 nextERC721ListingId;
     //ERC1155Order[] erc1155MarketOrders;
     mapping(uint256 => ERC721Listing) erc721Listings;
-    // listingId => ListingListItem
-    mapping(uint256 => ListingListItem) erc721ListingListItem;
-    mapping(uint256 => mapping(string => uint256)) erc721ListingHead;
-    // user address => category => sort => listingId => ListingListItem
-    mapping(uint256 => ListingListItem) erc721OwnerListingListItem;
-    mapping(address => mapping(uint256 => mapping(string => uint256))) erc721OwnerListingHead;
-    // erc1155Token => (erc1155TypeId => category)
-    // not really in use now, for the future
-    mapping(address => mapping(uint256 => uint256)) erc721Categories;
     // erc721 token address, erc721 tokenId, user address => listingId
     mapping(address => mapping(uint256 => mapping(address => uint256))) erc721TokenToListingId;
     mapping(uint256 => uint256) sleeves;
@@ -343,19 +320,12 @@ struct AppStorage {
     // itemTypeId => (sideview => Dimensions)
     mapping(uint256 => mapping(bytes => Dimensions)) sideViewDimensions;
     mapping(address => mapping(address => bool)) petOperators; //Pet operators for a token
-    mapping(uint256 => address) categoryToTokenAddress;
     //***
     //Gotchi Lending
     //***
     uint32 nextGotchiListingId;
     mapping(uint32 => GotchiLending) gotchiLendings;
     mapping(uint32 => uint32) aavegotchiToListingId;
-    mapping(address => uint32[]) lentTokenIds;
-    mapping(address => mapping(uint32 => uint32)) lentTokenIdIndexes; // address => lent token id => index
-    mapping(bytes32 => mapping(uint32 => LendingListItem)) gotchiLendingListItem; // ("listed" or "agreed") => listingId => LendingListItem
-    mapping(bytes32 => uint32) gotchiLendingHead; // ("listed" or "agreed") => listingId
-    mapping(bytes32 => mapping(uint32 => LendingListItem)) aavegotchiLenderLendingListItem; // ("listed" or "agreed") => listingId => LendingListItem
-    mapping(address => mapping(bytes32 => uint32)) aavegotchiLenderLendingHead; // user address => ("listed" or "agreed") => listingId => LendingListItem
     Whitelist[] whitelists;
     // If zero, then the user is not whitelisted for the given whitelist ID. Otherwise, this represents the position of the user in the whitelist + 1
     mapping(uint32 => mapping(address => uint256)) isWhitelisted; // whitelistId => whitelistAddress => isWhitelisted
@@ -374,11 +344,10 @@ struct AppStorage {
     // states for buy orders
     uint256 nextERC721BuyOrderId;
     mapping(uint256 => ERC721BuyOrder) erc721BuyOrders; // buyOrderId => data
-    mapping(address => mapping(uint256 => uint256[])) erc721TokenToBuyOrderIds; // erc721 token address => erc721TokenId => buyOrderIds
-    mapping(address => mapping(uint256 => mapping(uint256 => uint256))) erc721TokenToBuyOrderIdIndexes; // erc721 token address => erc721TokenId => buyOrderId => index
+    //we definitely need this one
     mapping(address => mapping(uint256 => mapping(address => uint256))) buyerToBuyOrderId; // erc721 token address => erc721TokenId => sender => buyOrderId
     // respec
-    mapping(uint32 => uint256) gotchiRespecCount;
+    // mapping(uint32 => uint256) gotchiRespecCount;
     address daoDirectorTreasury;
     // Items Roles Registry
     // depositId => userRoleDepositInfo
@@ -393,11 +362,13 @@ struct AppStorage {
     // states for erc1155 buy orders
     uint256 nextERC1155BuyOrderId;
     mapping(uint256 => ERC1155BuyOrder) erc1155BuyOrders; // buyOrderId => data
-    address gotchGeistBridge;
-    address itemGeistBridge;
     mapping(address => bool) baazaarTradingAllowlist; // allowlist for baazaar trading
-    //chainlink vrf 2.5
-    RequestConfig requestConfig;
+    // tokenAddress => tokenId => isExcluded
+    mapping(address => mapping(uint256 => bool)) erc1155ListingExclusions;
+    //proofofplay vrf
+    address VRFSystem;
+    bool diamondPaused;
+    address relayerPetter;
 }
 
 library LibAppStorage {
@@ -464,27 +435,23 @@ contract Modifiers {
         _;
     }
 
-    modifier onlyGotchiGeistBridge() {
-        address sender = LibMeta.msgSender();
-        require(sender == s.gotchGeistBridge, "LibAppStorage: Do not have access");
-        _;
-    }
-
-    modifier onlyItemGeistBridge() {
-        address sender = LibMeta.msgSender();
-        require(sender == s.itemGeistBridge, "LibAppStorage: Do not have access");
-        _;
-    }
-
     modifier onlyPeriphery() {
         address sender = LibMeta.msgSender();
         require(sender == s.wearableDiamond, "LibAppStorage: Not wearable diamond");
         _;
     }
 
-    modifier onlyPolygonOrTesting() {
-        // enabled for polygon only
-        require(block.chainid == 137, "LibAppStorage: Disabled function");
+    modifier whenNotPaused() {
+        ///we exempt diamond owner from the freeze
+        if (msg.sender != LibDiamond.contractOwner() || msg.sender != s.relayerPetter) {
+            require(!s.diamondPaused, "AppStorage: Diamond paused");
+        }
         _;
     }
+
+    // modifier onlyPolygonOrTesting() {
+    //     // enabled for polygon only
+    //     require(block.chainid == 137, "LibAppStorage: Disabled function");
+    //     _;
+    // }
 }

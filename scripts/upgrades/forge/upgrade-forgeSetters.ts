@@ -1,7 +1,12 @@
-import { ForgeDAOFacet, OwnershipFacet } from "../../../typechain";
+import {
+  ForgeDAOFacet,
+  ForgeTokenFacet,
+  OwnershipFacet,
+} from "../../../typechain";
 import { ethers, network } from "hardhat";
 import { sendToTenderly } from "../../libraries/tenderly";
 import { diamondOwner, impersonate } from "../../helperFunctions";
+import { Signer } from "ethers";
 
 const daoAddr = "0x6fb7e0AAFBa16396Ad6c1046027717bcA25F821f"; // DTF multisig
 const GLTR = "0x3801C3B3B5c98F88a9c9005966AA96aa440B9Afc";
@@ -39,7 +44,12 @@ const skillPts = {
   godlike: 5200,
 };
 
-export async function setForgeProperties(forgeDiamondAddress: string) {
+export async function setForgeProperties(
+  forgeDiamondAddress: string,
+  aavegotchiDiamondAddress: string,
+
+  signer: Signer
+) {
   // const owner = await diamondOwner(forgeDiamondAddress, ethers);
   // console.log("owner:", owner);
 
@@ -48,10 +58,14 @@ export async function setForgeProperties(forgeDiamondAddress: string) {
   let forgeDaoFacet = (await ethers.getContractAt(
     "contracts/Aavegotchi/ForgeDiamond/facets/ForgeDAOFacet.sol:ForgeDAOFacet",
     forgeDiamondAddress,
-    (
-      await ethers.getSigners()
-    )[0]
+    signer
   )) as ForgeDAOFacet;
+
+  const forgeTokenFacet = (await ethers.getContractAt(
+    "contracts/Aavegotchi/ForgeDiamond/facets/ForgeTokenFacet.sol:ForgeTokenFacet",
+    forgeDiamondAddress,
+    signer
+  )) as ForgeTokenFacet;
 
   // if (network.name === "hardhat") {
   //   forgeDaoFacet = await impersonate(
@@ -141,6 +155,13 @@ export async function setForgeProperties(forgeDiamondAddress: string) {
   await forgeDaoFacet.setForgeTimeCostInBlocks(timeCost);
   await forgeDaoFacet.setSkillPointsEarnedFromForge(skillPts);
   await forgeDaoFacet.setSmeltingSkillPointReductionFactorBips(5000);
+
+  await forgeDaoFacet.setAavegotchiDiamondAddress(aavegotchiDiamondAddress);
+
+  await forgeTokenFacet.setBaseURI(
+    "https://app.aavegotchi.com/metadata/forge/"
+  );
+
   // }
 
   console.log("Finished setForgeProperties.");

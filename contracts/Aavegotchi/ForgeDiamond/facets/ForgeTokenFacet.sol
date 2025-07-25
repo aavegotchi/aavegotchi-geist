@@ -79,7 +79,7 @@ contract ForgeTokenFacet is Modifiers {
     /**
      * @dev See {IERC1155-setApprovalForAll}.
      */
-    function setApprovalForAll(address operator, bool approved) public {
+    function setApprovalForAll(address operator, bool approved) public whenNotPaused {
         _setApprovalForAll(LibMeta.msgSender(), operator, approved);
     }
 
@@ -93,7 +93,7 @@ contract ForgeTokenFacet is Modifiers {
     /**
      * @dev See {IERC1155-safeTransferFrom}.
      */
-    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) public {
+    function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes memory data) public whenNotPaused {
         require(from == msg.sender || isApprovedForAll(from, msg.sender), "ForgeTokenFacet: caller is not token owner or approved");
         _safeTransferFrom(from, to, id, amount, data);
     }
@@ -101,7 +101,7 @@ contract ForgeTokenFacet is Modifiers {
     /**
      * @dev See {IERC1155-safeBatchTransferFrom}.
      */
-    function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public {
+    function safeBatchTransferFrom(address from, address to, uint256[] memory ids, uint256[] memory amounts, bytes memory data) public whenNotPaused {
         require(from == msg.sender || isApprovedForAll(from, msg.sender), "ForgeTokenFacet: caller is not token owner or approved");
         _safeBatchTransferFrom(from, to, ids, amounts, data);
     }

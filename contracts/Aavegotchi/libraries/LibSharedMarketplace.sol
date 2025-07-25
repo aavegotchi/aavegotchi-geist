@@ -109,36 +109,21 @@ library LibSharedMarketplace {
 
         require(s.baazaarTradingAllowlist[_erc721TokenAddress], "ERC721Marketplace: baazaar trading not allowed");
 
-        //this will usually be 0
+        //other contracts can only support 1 category
         if (_erc721TokenAddress != address(this)) {
-            category_ = s.erc721Categories[_erc721TokenAddress][0];
+            category_ = 0;
         } else {
             category_ = s.aavegotchis[_erc721TokenId].status; // 0 == portal, 1 == vrf pending, 2 == open portal, 3 == Aavegotchi
         }
     }
 
-    ///@notice Query the category details of a ERC1155 NFT
-    ///@param _erc1155TokenAddress Contract address of NFT to query
-    ///@param _erc1155TypeId Identifier of the NFT to query
-    ///@return category_ Category of the NFT // 0 is wearable, 1 is badge, 2 is consumable, 3 is tickets
-    function getERC1155Category(address _erc1155TokenAddress, uint256 _erc1155TypeId) internal view returns (uint256 category_) {
+    function isERC1155ListingExcluded(address _erc1155TokenAddress, uint256 _id) internal view returns (bool) {
         AppStorage storage s = LibAppStorage.diamondStorage();
-        //We don't need to support whitelisting specific IDs for collections anymore. As long as the contract is on the allowlist, all items are supported.
-        require(s.baazaarTradingAllowlist[_erc1155TokenAddress], "ERC1155Marketplace: baazaar trading not allowed");
+        return s.erc1155ListingExclusions[_erc1155TokenAddress][_id];
+    }
 
-        if (_erc1155TokenAddress == s.forgeDiamond && _erc1155TypeId < 1_000_000_000) {
-            //Schematics are always supported to trade, so long as the wearable exists
-            //Schematic IDs are under 1_000_000_000 offset.
-            category_ = 7;
-            require(s.itemTypes[_erc1155TypeId].maxQuantity > 0, "ERC1155Marketplace: erc1155 item not supported");
-        } else {
-            //This will usually be 0
-            category_ = s.erc1155Categories[_erc1155TokenAddress][_erc1155TypeId];
-        }
-
-        //Aavegotchi Wearables specific
-        if (category_ == 0 && _erc1155TokenAddress == address(this)) {
-            require(s.itemTypes[_erc1155TypeId].maxQuantity > 0, "ERC1155Marketplace: erc1155 item not supported");
-        }
+    function isContractWhitelisted(address _tokenAddress) internal view returns (bool) {
+        AppStorage storage s = LibAppStorage.diamondStorage();
+        return s.baazaarTradingAllowlist[_tokenAddress];
     }
 }

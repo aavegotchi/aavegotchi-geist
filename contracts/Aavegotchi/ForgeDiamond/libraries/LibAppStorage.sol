@@ -126,12 +126,21 @@ enum VrfStatus {
 
 struct VrfRequestInfo {
     address user;
-    bytes32 requestId;
+    uint256 requestId;
     VrfStatus status;
     uint256 randomNumber;
     uint256[] geodeTokenIds;
     uint256[] amountPerToken;
 }
+
+// struct RequestConfig {
+//     bytes32 keyHash;
+//     uint256 subId;
+//     uint16 requestConfirmations;
+//     uint32 callbackGasLimit;
+//     uint32 numWords;
+//     bool nativePayment;
+// }
 
 struct AppStorage {
     ////// ERC1155
@@ -180,17 +189,14 @@ struct AppStorage {
     mapping(uint256 => uint256) maxSupplyByToken;
     address aavegotchiDiamond;
     mapping(uint256 => uint256) geodePrizeQuantities;
-    mapping(bytes32 => uint256) vrfNonces;
-    mapping(bytes32 => VrfRequestInfo) vrfRequestIdToVrfRequestInfo;
-    mapping(address => bytes32[]) vrfUserToRequestIds;
+    mapping(uint256 => VrfRequestInfo) vrfRequestIdToVrfRequestInfo;
+    mapping(address => uint256[]) vrfUserToRequestIds;
     mapping(address => bool) userVrfPending;
     uint256[] geodePrizeTokenIds;
-    ILink link;
-    address vrfCoordinator;
-    bytes32 keyHash;
-    uint144 vrfFee;
+    // address vrfCoordinator;
     mapping(uint8 => mapping(uint8 => uint256)) geodeWinChanceMultiTierBips;
     mapping(uint256 => uint8) geodePrizeRarities;
+    address VRFSystem;
 }
 
 library LibAppStorage {
@@ -211,7 +217,10 @@ contract Modifiers {
     }
 
     modifier whenNotPaused() {
-        require(!s.contractPaused, "LibAppStorage: Contract paused");
+        ///we exempt diamond owner from the freeze
+        if (msg.sender != ForgeLibDiamond.contractOwner()) {
+            require(!s.contractPaused, "AppStorage: Contract paused");
+        }
         _;
     }
 

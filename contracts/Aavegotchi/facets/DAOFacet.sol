@@ -35,7 +35,9 @@ contract DAOFacet is Modifiers {
     event ItemGeistBridgeUpdate(address _newBridge);
     event GHSTContractUpdate(address _newGHSTContract);
     event BaazaarTradingAllowlistUpdate(address _contract, bool _allow);
-
+    event ERC1155ListingExclusionUpdate(address indexed token, uint256 indexed id, bool excluded);
+    event WearableDiamondUpdate(address _wearableDiamond);
+    event ForgeDiamondUpdate(address _forgeDiamond);
     /***********************************|
    |             Read Functions         |
    |__________________________________*/
@@ -59,6 +61,14 @@ contract DAOFacet is Modifiers {
     ///@return Refresh time of game manager `_manager`
     function gameManagerRefreshTime(address _manager) external view returns (uint256) {
         return s.gameManagers[_manager].refreshTime;
+    }
+
+    function getWearableDiamond() external view returns (address) {
+        return s.wearableDiamond;
+    }
+
+    function getForgeDiamond() external view returns (address) {
+        return s.forgeDiamond;
     }
 
     /***********************************|
@@ -212,7 +222,7 @@ contract DAOFacet is Modifiers {
     //May overload the block gas limit but worth trying
     ///@notice allow an item manager to create a new Haunt, also uploagding the collateral types,collateral svgs,eyeshape types and eyeshape svgs all in one transaction
     ///@param _payload A struct containing all details needed to be uploaded for a new Haunt
-    function createHauntWithPayload(CreateHauntPayload calldata _payload) external onlyDaoOrOwner onlyPolygonOrTesting returns (uint256 hauntId_) {
+    function createHauntWithPayload(CreateHauntPayload calldata _payload) external onlyDaoOrOwner returns (uint256 hauntId_) {
         uint256 currentHauntId = s.currentHauntId;
         // require(
         //     s.haunts[currentHauntId].totalCount == s.haunts[currentHauntId].hauntMaxSize,
@@ -331,7 +341,6 @@ contract DAOFacet is Modifiers {
         uint256 itemTypesLength = s.itemTypes.length;
         for (uint256 i; i < _itemTypes.length; i++) {
             uint256 itemId = itemTypesLength++;
-            s.erc1155Categories[address(this)][itemId] = _itemTypes[i].category;
             s.itemTypes.push(_itemTypes[i]);
             emit AddItemType(_itemTypes[i]);
             IEventHandlerFacet(s.wearableDiamond).emitTransferSingleEvent(LibMeta.msgSender(), address(0), address(0), itemId, 0);
@@ -436,20 +445,6 @@ contract DAOFacet is Modifiers {
         }
     }
 
-    ///@notice Allow the DAO to update an address as a Geist bridge of the gotchi
-    ///@param _newBridge The address to be update as a bridge
-    function updateGotchiGeistBridge(address _newBridge) external onlyDaoOrOwner {
-        s.gotchGeistBridge = _newBridge;
-        emit GotchiGeistBridgeUpdate(_newBridge);
-    }
-
-    ///@notice Allow the DAO to update an address as a Geist bridge of the item
-    ///@param _newBridge The address to be update as a bridge
-    function updateItemGeistBridge(address _newBridge) external onlyDaoOrOwner {
-        s.itemGeistBridge = _newBridge;
-        emit ItemGeistBridgeUpdate(_newBridge);
-    }
-
     function setGHSTContract(address _ghstContract) external onlyDaoOrOwner {
         s.ghstContract = _ghstContract;
         emit GHSTContractUpdate(_ghstContract);
@@ -469,5 +464,30 @@ contract DAOFacet is Modifiers {
 
     function getBaazaarTradingAllowlist(address _contract) external view returns (bool) {
         return s.baazaarTradingAllowlist[_contract];
+    }
+
+    function setERC1155ListingExclusions(address token, uint256[] calldata ids, bool[] calldata flags) external onlyDaoOrOwner {
+        require(ids.length == flags.length, "DAOFacet: ids and flags mismatch");
+        for (uint256 i; i < ids.length; i++) {
+            s.erc1155ListingExclusions[token][ids[i]] = flags[i];
+            emit ERC1155ListingExclusionUpdate(token, ids[i], flags[i]);
+        }
+    }
+
+    function setWearableDiamond(address _wearableDiamond) external onlyDaoOrOwner {
+        s.wearableDiamond = _wearableDiamond;
+        emit WearableDiamondUpdate(_wearableDiamond);
+    }
+
+    function setForgeDiamond(address _forgeDiamond) external onlyDaoOrOwner {
+        s.forgeDiamond = _forgeDiamond;
+        emit ForgeDiamondUpdate(_forgeDiamond);
+    }
+
+    event DiamondPaused(bool _paused);
+
+    function toggleDiamondPaused(bool _paused) external onlyDaoOrOwner {
+        s.diamondPaused = _paused;
+        emit DiamondPaused(_paused);
     }
 }

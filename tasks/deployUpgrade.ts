@@ -10,7 +10,13 @@ import { Signer } from "@ethersproject/abstract-signer";
 
 import { IDiamondCut } from "../typechain";
 import { LedgerSigner } from "@anders-t/ethers-ledger";
-import { getSelectors, getSighashes, delay } from "../scripts/helperFunctions";
+import {
+  getSelectors,
+  getSighashes,
+  delay,
+  verifyContract,
+  getRelayerSigner,
+} from "../scripts/helperFunctions";
 
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { sendToMultisig } from "../scripts/libraries/multisig/multisig";
@@ -33,6 +39,7 @@ export interface DeployUpgradeTaskArgs {
   initAddress?: string;
   initCalldata?: string;
   rawSigs?: boolean;
+  useRelayer: boolean;
   // updateDiamondABI: boolean;
   freshDeployment?: boolean;
 }
@@ -98,6 +105,7 @@ task(
   )
   .addFlag("useLedger", "Set to true if Ledger should be used for signing")
   .addFlag("freshDeployment", "This is for Diamonds that are freshly deployed ")
+  .addFlag("useRelayer", "Set to true if Relayer should be used for signing")
   // .addFlag("verifyFacets","Set to true if facets should be verified after deployment")
 
   .setAction(
@@ -114,6 +122,7 @@ task(
       const useLedger = taskArgs.useLedger;
       const initAddress = taskArgs.initAddress;
       const initCalldata = taskArgs.initCalldata;
+      const useRelayer = taskArgs.useRelayer;
 
       const branch = require("git-branch");
 
@@ -155,10 +164,14 @@ task(
         hre.network.name === "base-sepolia" ||
         hre.network.name === "baseSepolia" ||
         hre.network.name === "amoy" ||
-        hre.network.name === "geist"
+        hre.network.name === "geist" ||
+        hre.network.name === "base"
       ) {
         if (useLedger) {
           signer = new LedgerSigner(hre.ethers.provider, "m/44'/60'/1'/0/0");
+        }
+        if (useRelayer) {
+          signer = await getRelayerSigner(hre);
         } else signer = (await hre.ethers.getSigners())[0];
       }
 
@@ -190,7 +203,8 @@ task(
         console.log("facet:", facet);
         if (facet.facetName.length > 0) {
           const factory = (await hre.ethers.getContractFactory(
-            facet.facetName
+            facet.facetName,
+            signer
           )) as ContractFactory;
           const deployedFacet: Contract = await factory.deploy();
           await deployedFacet.deployed();
@@ -198,6 +212,10 @@ task(
             `Deployed Facet Address for ${facet.facetName}:`,
             deployedFacet.address
           );
+          //verify all new facets by default
+          //wait for some time to ensure the contract is deployed
+          await delay(2000);
+          await verifyContract(deployedFacet.address);
           deployedFacets.push(deployedFacet);
 
           const newSelectors = getSighashes(facet.addSelectors, hre.ethers);

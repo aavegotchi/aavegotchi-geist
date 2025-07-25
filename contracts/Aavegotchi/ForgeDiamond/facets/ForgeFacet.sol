@@ -66,6 +66,11 @@ contract ForgeFacet is Modifiers {
         facet = LendingGetterAndSetterFacet(ForgeLibDiamond.aavegotchiDiamond());
     }
 
+    function getVars() public view returns (address wearableDiamond, address aavegotchiDiamond) {
+        wearableDiamond = address(wearablesFacet());
+        aavegotchiDiamond = address(aavegotchiFacet());
+    }
+
     function gltrContract() internal view returns (IERC20 token) {
         token = IERC20(s.gltr);
     }
@@ -385,7 +390,7 @@ contract ForgeFacet is Modifiers {
     /// @dev amount expressed in block numbers
     /// @param _gotchiIds An array containing the gotchi ID queues to speed up
     /// @param _amounts An array containing the corresponding amounts of $GLTR tokens to pay for each queue speedup
-    function reduceQueueTime(uint256[] calldata _gotchiIds, uint40[] calldata _amounts) external {
+    function reduceQueueTime(uint256[] calldata _gotchiIds, uint40[] calldata _amounts) external whenNotPaused {
         require(_gotchiIds.length == _amounts.length, "InstallationFacet: Mismatched arrays");
         for (uint256 i; i < _gotchiIds.length; i++) {
             uint256 gotchiId = _gotchiIds[i];
@@ -530,7 +535,27 @@ contract ForgeFacet is Modifiers {
         _mintBatch(to, ids, amounts);
     }
 
-    function burn(address account, uint256 id, uint256 amount) external {
+    struct MintForgeItemsBridged {
+        address to;
+        ForgeItemBalance[] itemBalances;
+    }
+
+    struct ForgeItemBalance {
+        uint256 itemId;
+        uint256 quantity;
+    }
+
+    function batchMintForgeItems(MintForgeItemsBridged[] calldata _mintForgeItemsBridged) external onlyDaoOrOwner {
+        for (uint256 i; i < _mintForgeItemsBridged.length; i++) {
+            address to = _mintForgeItemsBridged[i].to;
+            ForgeItemBalance[] memory itemBalances = _mintForgeItemsBridged[i].itemBalances;
+            for (uint256 j; j < itemBalances.length; j++) {
+                _mintItem(to, itemBalances[j].itemId, itemBalances[j].quantity);
+            }
+        }
+    }
+
+    function burn(address account, uint256 id, uint256 amount) external whenNotPaused {
         require(
             account == msg.sender || forgeTokenFacet().isApprovedForAll(account, msg.sender),
             "ForgeFacet: caller is not token owner or approved"
