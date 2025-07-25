@@ -567,6 +567,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       "polter",
       "baseSepolia",
       "geist",
+      "base",
     ].includes(network.name)
   ) {
     throw Error("No network settings for " + network.name);
@@ -589,34 +590,15 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   if (network.name === "localhost") {
     chainId = 31337;
   }
+  if (network.name === "base") {
+    chainId = 8453;
+  }
 
   const deploymentConfig = loadDeploymentConfig(chainId, true);
 
   if (deploymentConfig.chainId === undefined) {
     deploymentConfig.chainId = chainId;
   }
-
-  // const ghstStakingDiamondAddress =
-  //   deploymentConfig.ghstStakingDiamondAddress ||
-  //   "0xae83d5fc564Ef58224e934ba4Df72a100d5082a0";
-  // const realmDiamondAddress =
-  //   deploymentConfig.realmDiamondAddress ||
-  //   "0x5a4faEb79951bAAa0866B72fD6517E693c8E4620";
-  // const installationDiamondAddress =
-  //   deploymentConfig.installationDiamondAddress ||
-  //   "0x514b7c55FB3DFf3533B58D85CD25Ba04bb30612D";
-  // const tileDiamondAddress =
-  //   deploymentConfig.tileDiamondAddress ||
-  //   "0xCa6F4Ef19a1Beb9BeF12f64b395087E5680bcB22";
-  // const fakeGotchiArtDiamondAddress =
-  //   deploymentConfig.fakeGotchiArtDiamondAddress ||
-  //   "0x330088c3372f4F78cF023DF16E1e1564109191dc";
-  // const fakeGotchiCardDiamondAddress =
-  //   deploymentConfig.fakeGotchiCardDiamondAddress ||
-  //   "0x9E282FE4a0be6A0C4B9f7d9fEF10547da35c52EA";
-
-  // const name = "Test";
-  // const symbol = "TEST";
 
   const signer = await getRelayerSigner(hre);
   const ownerAddress = await signer.getAddress();
@@ -796,6 +778,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       );
       const pauseWearableTx = await wearablesFacet.toggleDiamondPaused(true);
       await pauseWearableTx.wait();
+      console.log("Wearable Diamond paused");
 
       return wearableDiamond;
     }
@@ -858,6 +841,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
       console.log("Pausing Forge Diamond");
       const pauseForgeTx = await forgeFacet.toggleContractPaused(true);
       await pauseForgeTx.wait();
+      console.log("Forge Diamond paused");
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
       return forgeDiamond;
@@ -881,6 +865,7 @@ export async function deployFullDiamond(useFreshDeploy: boolean = false) {
   console.log("Pausing Aavegotchi Diamond");
   const pauseAavegotchiTx = await daoFacet.toggleDiamondPaused(true);
   await pauseAavegotchiTx.wait();
+  console.log("Aavegotchi Diamond paused");
 
   console.log("Item Managers:", itemManagers);
   if (

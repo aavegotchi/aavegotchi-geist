@@ -66,6 +66,10 @@ contract AavegotchiGameFacet is Modifiers {
         return RevenueSharesIO(0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF, s.daoTreasury, s.rarityFarming, s.pixelCraft);
     }
 
+    function setPixelCraft(address _pixelCraft) external onlyOwner {
+        s.pixelCraft = _pixelCraft;
+    }
+
     ///@notice Query all details associated with an NFT like collateralType,numericTraits e.t.c
     ///@param _tokenId Identifier of the NFT to query
     ///@return portalAavegotchiTraits_ A struct containing all details about the NFT with identifier `_tokenId`
@@ -279,7 +283,7 @@ contract AavegotchiGameFacet is Modifiers {
     ///@dev only valid for claimed aavegotchis
     ///@dev Kinship will only increase if the lastInteracted minus the current time is greater than or equal to 12 hours
     ///@param _tokenIds An array containing the token identifiers of the claimed aavegotchis that are to be interacted with
-    function interact(uint256[] calldata _tokenIds) external whenNotPaused {
+    function interact(uint256[] calldata _tokenIds) external {
         address sender = LibMeta.msgSender();
         for (uint256 i; i < _tokenIds.length; i++) {
             uint256 tokenId = _tokenIds[i];
@@ -294,14 +298,15 @@ contract AavegotchiGameFacet is Modifiers {
                     address lender = s.gotchiLendings[listingId].lender;
                     isOriginalPetOperator = s.operators[lender][sender] || s.petOperators[lender][sender];
                 }
-                require(
-                    sender == owner ||
-                        s.operators[owner][sender] ||
-                        s.approved[tokenId] == sender ||
-                        s.petOperators[owner][sender] ||
-                        isOriginalPetOperator,
-                    "AavegotchiGameFacet: Not owner of token or approved"
-                );
+                //TEMPORARILY ALLOW ANYONE TO PET
+                // require(
+                //     sender == owner ||
+                //         s.operators[owner][sender] ||
+                //         s.approved[tokenId] == sender ||
+                //         s.petOperators[owner][sender] ||
+                //         isOriginalPetOperator,
+                //     "AavegotchiGameFacet: Not owner of token or approved"
+                // );
             }
 
             require(s.aavegotchis[tokenId].status == LibAavegotchi.STATUS_AAVEGOTCHI, "LibAavegotchi: Only valid for Aavegotchi");

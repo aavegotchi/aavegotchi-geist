@@ -89,6 +89,12 @@ export default {
       chainId: 84532,
     },
 
+    base: {
+      url: process.env.BASE_RPC_URL,
+      accounts: [process.env.SECRET],
+      chainId: 8453,
+    },
+
     // gorli: {
     //   url: process.env.GORLI,
     //   accounts: [process.env.SECRET],
