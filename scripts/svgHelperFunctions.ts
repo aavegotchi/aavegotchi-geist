@@ -278,13 +278,14 @@ export async function uploadSvgs(
       ethers
     );
 
-    if (!deploymentConfig?.svgsUploaded[svgType]) {
-      deploymentConfig!.svgsUploaded[svgType] = {};
-    }
+    // if (!deploymentConfig?.svgsUploaded[svgType]) {
+    //   deploymentConfig!.svgsUploaded[svgType] = {};
+    // }
 
     uniqueId = `${svgItemsStart}_${svgItemsEnd}`;
 
-    isUploaded = deploymentConfig!.svgsUploaded?.[svgType]?.[uniqueId];
+    // isUploaded = deploymentConfig!.svgsUploaded?.[svgType]?.[uniqueId];
+    isUploaded = false;
 
     console.log(uniqueId, isUploaded);
 
@@ -298,9 +299,9 @@ export async function uploadSvgs(
       // let receipt = await tx.wait();
 
       //todo:
-      deploymentConfig!.svgsUploaded![svgType][
-        `${svgItemsStart}_${svgItemsEnd}`
-      ] = true;
+      // deploymentConfig!.svgsUploaded![svgType][
+      //   `${svgItemsStart}_${svgItemsEnd}`
+      // ] = true;
 
       // if (!receipt.status) {
       //   throw Error(`Error:: ${tx.hash}`);

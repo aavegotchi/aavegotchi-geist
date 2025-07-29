@@ -435,6 +435,9 @@ export const wearablesSvgs = [
   wearable("415_WildFungi"),
   wearable("416_KawaiiMouth"),
   wearable("417_BabyLicky"),
+  bodyWearable("418_BasedShirt"),
+  wearable("419_BaseApp"),
+  wearable("420_JessePollakHair"),
 ];
 
 export const sleeveSvgs = [
@@ -639,6 +642,7 @@ export const sleeveSvgs = [
   sleeves("372_PartyDress"),
   sleeves("373_Overalls"),
   sleeves("383_SandboxHoodie"),
+  sleeves("418_BasedShirt"),
 ];
 
 function stripSvg(svg: string) {
@@ -697,7 +701,7 @@ export const allSleeves: Array<BigNumberish> = [
   0, 8, 11, 15, 16, 19, 22, 25, 28, 31, 37, 43, 46, 50, 54, 56, 74, 85, 91, 102,
   105, 109, 112, 114, 115, 125, 135, 138, 150, 160, 162, 203, 213, 220, 222,
   231, 234, 241, 244, 248, 250, 253, 256, 258, 293, 297, 303, 307, 310, 314,
-  316, 317, 318, 350, 362, 366, 372, 373, 383,
+  316, 317, 318, 350, 362, 366, 372, 373, 383, 418,
 ];
 
 /* exports.wearablesSvgs = wearablesSvgs */

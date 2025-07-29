@@ -428,6 +428,9 @@ export const wearablesRightSvgs = [
   "415_WildFungi",
   wearable("416_KawaiiMouthRight"),
   "417_BabyLicky",
+  bodyWearableRight("418_BasedShirt"),
+  wearable("419_BaseAppRight"),
+  wearable("420_JessePollakHairRight"),
 ];
 
 export const wearablesBackSvgs = [
@@ -857,6 +860,9 @@ export const wearablesBackSvgs = [
   wearable("415_WildFungiBack"),
   "416_KawaiiMouth",
   wearable("417_BabyLickyBack"),
+  bodyWearable("418_BasedShirt"),
+  wearable("419_BaseAppBack"),
+  wearable("420_JessePollakHairBack"),
 ];
 
 export const wearablesLeftSvgs = [
@@ -1285,6 +1291,9 @@ export const wearablesLeftSvgs = [
   wearable("415_WildFungiLeft"),
   wearable("416_KawaiiMouthLeft"),
   wearable("417_BabyLickyLeft"),
+  bodyWearableLeft("418_BasedShirt"),
+  wearable("419_BaseAppLeft"),
+  wearable("420_JessePollakHairLeft"),
 ];
 
 export const wearablesLeftSleeveSvgs = [
@@ -1490,6 +1499,8 @@ export const wearablesLeftSleeveSvgs = [
   sleeveWearableLeft("372_PartyDress"),
   sleeveWearableLeft("373_Overalls"),
   sleeveWearableLeft("383_SandboxHoodie"),
+  //base wearables
+  sleeveWearableLeft("418_BasedShirt"),
 ];
 
 export const wearablesRightSleeveSvgs = [
@@ -1695,6 +1706,8 @@ export const wearablesRightSleeveSvgs = [
   sleeveWearableRight("372_PartyDress"),
   sleeveWearableRight("373_Overalls"),
   sleeveWearableRight("383_SandboxHoodie"),
+  //base wearables
+  sleeveWearableRight("418_BasedShirt"),
 ];
 
 export const wearablesBackSleeveSvgs = [
@@ -1898,6 +1911,8 @@ export const wearablesBackSleeveSvgs = [
   sleeveWearableRight("372_PartyDress"),
   sleeveWearableRight("373_Overalls"),
   sleeveWearableRight("383_SandboxHoodie"),
+  //base wearables
+  sleeveWearableRight("418_BasedShirt"),
 ];
 
 function stripSvg(svg: string) {
