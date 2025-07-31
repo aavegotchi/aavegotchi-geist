@@ -4,7 +4,7 @@ import path from "path";
 import { AavegotchiBridgeFacet } from "../../typechain";
 import { varsForNetwork } from "../../helpers/constants";
 import { BigNumber } from "ethers";
-import { getRelayerSigner } from "../helperFunctions";
+import { delay, getRelayerSigner } from "../helperFunctions";
 import { DATA_PATH, PROCESSED_PATH } from "./paths";
 
 const MAX_RETRIES = 3;
@@ -12,10 +12,10 @@ const MAX_RETRIES = 3;
 const WEARABLES_FILE = path.join(
   DATA_PATH,
   "wearables",
-  "wearables-regular.json"
+  "wearables-safe-done.json"
 );
-const PROGRESS_FILE = path.join(PROCESSED_PATH, "wearables-progress.json");
-const MAX_ENTRIES_PER_BATCH = 300;
+const PROGRESS_FILE = path.join(PROCESSED_PATH, "wearables-progress3.json");
+const MAX_ENTRIES_PER_BATCH = 200;
 
 interface WearableBalance {
   itemId: string;
@@ -347,6 +347,7 @@ async function processBatch(
         currentBatchDetail.batchIndex + 1
       } via tx: ${tx.hash}`
     );
+    await delay(5000);
     currentBatchDetail.success = true;
     return true;
   } catch (error: any) {
