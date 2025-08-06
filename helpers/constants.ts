@@ -211,6 +211,7 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     daoDirectorTreasury: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
     fakeGotchiCardDiamond: "0xe46B8902dAD841476d9Fee081F1d62aE317206A9",
     fakeGotchiArtDiamond: "0xAb59CA4A16925b0a4BaC5026C94bEB20A29Df479",
+    ggSkinsDiamond: "0x898d0F54d8CF60698972a75be7Ea1B45aAb66e59",
   },
 };
 
