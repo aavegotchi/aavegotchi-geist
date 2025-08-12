@@ -158,6 +158,9 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     aavegotchiDiamond: "0x03A74B3e2DD81F5E8FFA1Fb96bb81B35cF3ed5d2",
     forgeDiamond: "0xf0b0aFA15c61E939dD7Ae2e82Fbe98FFd5598C65",
     wearableDiamond: "0x83FAaC162062524e041dFB43681B0d958eD49Acb",
+    realmDiamond: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372",
+    installationDiamond: "0x5Aefdc5283B24EEa7b50FFBBf7FB8A2bD4537609",
+    tileDiamond: "0x96B19Fa954d961fAD4b665e3259C72466ca4C1dA",
   },
 
   631571: {

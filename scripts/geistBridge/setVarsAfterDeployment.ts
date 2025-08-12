@@ -10,71 +10,88 @@ import {
 } from "../helperFunctions";
 import { BigNumber } from "ethers";
 import { ForgeDAOFacet } from "../../typechain/ForgeDAOFacet";
+import { mine } from "@nomicfoundation/hardhat-network-helpers";
+import { impersonateSigner } from "../../helpers/helpers";
 
 //MAKE SURE TO SET THESE ADDRESSES IN THE CONSTANTS FILE
 
 async function setVarsAfterDeployment() {
   const c = await varsForNetwork(ethers);
 
-  const signer = await getLedgerSigner(ethers);
   let tx;
   let gasused = BigNumber.from(0);
 
-  //set realm address
-  let aavegotchiGameFacet = await ethers.getContractAt(
-    "AavegotchiGameFacet",
-    c.aavegotchiDiamond!,
-    signer
-  );
-  let forgeDaoFacet = await ethers.getContractAt(
-    "ForgeDAOFacet",
-    c.forgeDiamond!,
-    signer
-  );
-  let daoFacet = await ethers.getContractAt(
-    "DAOFacet",
-    c.aavegotchiDiamond!,
-    signer
-  );
-
-  let lendingGetterAndSetterFacet = await ethers.getContractAt(
-    "LendingGetterAndSetterFacet",
-    c.aavegotchiDiamond!,
-    signer
-  );
+  let aavegotchiGameFacet;
+  let forgeDaoFacet;
+  let daoFacet;
+  let lendingGetterAndSetterFacet;
 
   const testing = ["hardhat", "localhost"].includes(network.name);
 
   if (testing) {
+    await mine();
+
     const aavegotchiDiamondOwner = await diamondOwner(
       c.aavegotchiDiamond!,
       ethers
     );
+
+    const aavegotchiSigner = await impersonateSigner(
+      network,
+      aavegotchiDiamondOwner
+    );
+
     const forgeDiamondOwner = await diamondOwner(c.forgeDiamond!, ethers);
 
-    aavegotchiGameFacet = await impersonate(
-      aavegotchiDiamondOwner,
-      aavegotchiGameFacet,
-      ethers,
-      network
+    const forgeSigner = await impersonateSigner(network, forgeDiamondOwner);
+
+    aavegotchiGameFacet = await ethers.getContractAt(
+      "AavegotchiGameFacet",
+      c.aavegotchiDiamond!,
+      aavegotchiSigner
     );
-    forgeDaoFacet = await impersonate(
-      forgeDiamondOwner,
-      forgeDaoFacet,
-      ethers,
-      network
+
+    forgeDaoFacet = await ethers.getContractAt(
+      "ForgeDAOFacet",
+      c.forgeDiamond!,
+      forgeSigner
     );
-    daoFacet = await impersonate(
-      aavegotchiDiamondOwner,
-      daoFacet,
-      ethers,
-      network
+
+    daoFacet = await ethers.getContractAt(
+      "DAOFacet",
+      c.aavegotchiDiamond!,
+      aavegotchiSigner
     );
-    lendingGetterAndSetterFacet = await impersonate(
-      aavegotchiDiamondOwner,
-      lendingGetterAndSetterFacet,
-      ethers,
-      network
+
+    lendingGetterAndSetterFacet = await ethers.getContractAt(
+      "LendingGetterAndSetterFacet",
+      c.aavegotchiDiamond!,
+      aavegotchiSigner
+    );
+  } else {
+    const signer = await getLedgerSigner(ethers);
+
+    //set realm address
+    aavegotchiGameFacet = await ethers.getContractAt(
+      "AavegotchiGameFacet",
+      c.aavegotchiDiamond!,
+      signer
+    );
+    forgeDaoFacet = await ethers.getContractAt(
+      "ForgeDAOFacet",
+      c.forgeDiamond!,
+      signer
+    );
+    daoFacet = await ethers.getContractAt(
+      "DAOFacet",
+      c.aavegotchiDiamond!,
+      signer
+    );
+
+    lendingGetterAndSetterFacet = await ethers.getContractAt(
+      "LendingGetterAndSetterFacet",
+      c.aavegotchiDiamond!,
+      signer
     );
   }
 
@@ -93,10 +110,10 @@ async function setVarsAfterDeployment() {
     c.tileDiamond!,
     // c.fakeGotchiArtDiamond!,
     // c.fakeGotchiCardDiamond!,
-    c.ggSkinsDiamond!,
+    // c.ggSkinsDiamond!,
     // c.ggProfilesDiamond!,
   ];
-  const bools = [true, true, true, true];
+  const bools = [true, true, true];
 
   const whitelistTx = await daoFacet.setBaazaarTradingAllowlists(
     addressesToWhitelist,
