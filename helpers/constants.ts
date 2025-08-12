@@ -212,6 +212,14 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     fakeGotchiCardDiamond: "0xe46B8902dAD841476d9Fee081F1d62aE317206A9",
     fakeGotchiArtDiamond: "0xAb59CA4A16925b0a4BaC5026C94bEB20A29Df479",
     ggSkinsDiamond: "0x898d0F54d8CF60698972a75be7Ea1B45aAb66e59",
+    fud: "0x2028b4043e6722Ea164946c82fe806c4a43a0fF4",
+    fomo: "0xA32137bfb57d2b6A9Fd2956Ba4B54741a6D54b58",
+    alpha: "0x15e7CaC885e3730ce6389447BC0f7AC032f31947",
+    kek: "0xE52b9170fF4ece4C35E796Ffd74B57Dec68Ca0e5",
+    gltrAddress: "0x4D140CE792bEdc430498c2d219AfBC33e2992c9D",
+    realmDiamond: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372",
+    installationDiamond: "0xebba5b725A2889f7f089a6cAE0246A32cad4E26b",
+    tileDiamond: "0x617fdB8093b309e4699107F48812b407A7c37938",
   },
 };
 
