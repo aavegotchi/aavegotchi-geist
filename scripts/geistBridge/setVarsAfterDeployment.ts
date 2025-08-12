@@ -2,7 +2,7 @@ import { ethers } from "hardhat";
 
 import { setRealmAddress, strDisplay } from "../deployFullDiamond";
 import { varsForNetwork } from "../../helpers/constants";
-import { getRelayerSigner } from "../helperFunctions";
+import { getLedgerSigner, getRelayerSigner } from "../helperFunctions";
 import { BigNumber } from "ethers";
 import { ForgeDAOFacet } from "../../typechain/ForgeDAOFacet";
 
@@ -10,8 +10,8 @@ import { ForgeDAOFacet } from "../../typechain/ForgeDAOFacet";
 
 async function setVarsAfterDeployment() {
   const c = await varsForNetwork(ethers);
-  //@ts-ignore
-  const signer = await getRelayerSigner(hre);
+
+  const signer = await getLedgerSigner(ethers);
   let tx;
   let gasused = BigNumber.from(0);
 

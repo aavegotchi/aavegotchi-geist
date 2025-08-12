@@ -9,6 +9,8 @@ import {
 // import { run } from "hardhat";
 
 import { fundSigner } from "../helpers/helpers";
+import { LedgerSigner } from "@ethersproject/hardware-wallets";
+import { Provider } from "@ethersproject/abstract-provider";
 
 export const gasPrice = 570000000000;
 
@@ -333,6 +335,11 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
   } else {
     throw Error("Incorrect network selected");
   }
+}
+
+export async function getLedgerSigner(ethers: any) {
+  console.log("Getting ledger signer");
+  return new LedgerSigner(ethers.provider, "hid", "m/44'/60'/2'/0/0");
 }
 
 export function logXPRecipients(
