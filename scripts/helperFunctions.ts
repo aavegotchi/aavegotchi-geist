@@ -9,6 +9,8 @@ import {
 // import { run } from "hardhat";
 
 import { fundSigner } from "../helpers/helpers";
+import { LedgerSigner } from "@anders-t/ethers-ledger";
+import { Provider } from "@ethersproject/abstract-provider";
 
 export const gasPrice = 570000000000;
 
@@ -265,7 +267,8 @@ export interface RelayerInfo {
 export const xpRelayerAddress = "0xb6384935d68e9858f8385ebeed7db84fc93b1420";
 export const xpRelayerAddressBaseSepolia =
   "0x39e86c0e02076E83694083e2eb48B510B3a96E4e";
-export const xpRelayerAddressBase = "";
+export const xpRelayerAddressBase =
+  "0xf52398257A254D541F392667600901f710a006eD";
 
 export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
   const testing = ["hardhat", "localhost"].includes(hre.network.name);
@@ -277,6 +280,8 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
     xpRelayer = xpRelayerAddress;
   } else if (hre.network.config.chainId === 84532) {
     xpRelayer = xpRelayerAddressBaseSepolia;
+  } else if (hre.network.config.chainId === 8453) {
+    xpRelayer = xpRelayerAddressBase;
   }
 
   if (testing) {
@@ -298,7 +303,7 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
     }
     //we assume same defender for base mainnet
   } else if (hre.network.name === "matic" || hre.network.name === "base") {
-    console.log("USING MATIC");
+    console.log(`USING ${hre.network.name}`);
 
     const credentials: RelayerInfo = {
       apiKey: process.env.DEFENDER_APIKEY!,
@@ -307,8 +312,8 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
 
     const provider = new DefenderRelayProvider(credentials);
     return new DefenderRelaySigner(credentials, provider, {
-      speed: "average",
-      validForSeconds: 7200,
+      speed: "safeLow",
+      validForSeconds: 200,
     });
   } else if (hre.network.name === "baseSepolia") {
     console.log("USING BASE SEPOLIA DEFENDER");
@@ -330,6 +335,11 @@ export async function getRelayerSigner(hre: HardhatRuntimeEnvironment) {
   } else {
     throw Error("Incorrect network selected");
   }
+}
+
+export async function getLedgerSigner(ethers: any) {
+  console.log("Getting ledger signer");
+  return new LedgerSigner(ethers.provider, "m/44'/60'/1'/0/0");
 }
 
 export function logXPRecipients(
@@ -369,6 +379,9 @@ export async function verifyContract(
   }
 
   console.log(`Attempting to verify contract at ${address}...`);
+  //wait 5 seconds because of base mainnet lags
+  console.log("Waiting 5 seconds for base mainnet to catch up...");
+  await delay(5000);
 
   try {
     const verifyArgs: any = {

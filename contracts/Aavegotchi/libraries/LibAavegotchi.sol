@@ -412,7 +412,9 @@ library LibAavegotchi {
 
     function transfer(address _from, address _to, uint256 _tokenId) internal {
         AppStorage storage s = LibAppStorage.diamondStorage();
-
+        if (s.aavegotchis[_tokenId].locked == false && msg.sender == address(0x1E0049783F008A0085193E00003D00cd54003c71)) {
+            revert("Opensea transfers not supported yet");
+        }
         // remove
         uint256 index = s.ownerTokenIdIndexes[_from][_tokenId];
         uint256 lastIndex = s.ownerTokenIds[_from].length - 1;

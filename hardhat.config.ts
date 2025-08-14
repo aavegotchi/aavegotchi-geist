@@ -49,9 +49,8 @@ export default {
   networks: {
     hardhat: {
       forking: {
-        url: process.env.BASE_SEPOLIA_RPC_URL,
+        url: process.env.BASE_RPC_URL,
         // timeout: 12000000,
-        blockNumber: 1743308,
       },
       blockGasLimit: 20000000,
       timeout: 120000,
@@ -87,6 +86,12 @@ export default {
       url: process.env.BASE_SEPOLIA_RPC_URL,
       accounts: [process.env.SECRET],
       chainId: 84532,
+    },
+
+    base: {
+      url: process.env.BASE_RPC_URL,
+      accounts: [process.env.SECRET],
+      chainId: 8453,
     },
 
     // gorli: {

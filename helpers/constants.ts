@@ -104,6 +104,11 @@ interface NetworkAddresses {
   kek?: string;
   gltrAddress?: string;
   aavegotchiDaoAddress?: string;
+  dao?: string;
+  daoTreasury?: string;
+  pixelCraft?: string;
+  rarityFarming?: string;
+  daoDirectorTreasury?: string;
 }
 
 // export const vrfVars: Record<number, VRFVars> = {
@@ -153,6 +158,9 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     aavegotchiDiamond: "0x03A74B3e2DD81F5E8FFA1Fb96bb81B35cF3ed5d2",
     forgeDiamond: "0xf0b0aFA15c61E939dD7Ae2e82Fbe98FFd5598C65",
     wearableDiamond: "0x83FAaC162062524e041dFB43681B0d958eD49Acb",
+    realmDiamond: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372",
+    installationDiamond: "0x5Aefdc5283B24EEa7b50FFBBf7FB8A2bD4537609",
+    tileDiamond: "0x96B19Fa954d961fAD4b665e3259C72466ca4C1dA",
   },
 
   631571: {
@@ -186,6 +194,7 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     kek: "0x03f2D8689177d2ebc9686C01065818c02C053f6a",
     gltrAddress: "0x0dBFBABa88b32a96ee2c9b60007ddc03D0F1F379",
     aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
+    relayerPetter: "0xf52398257A254D541F392667600901f710a006eD",
   },
 
   8453: {
@@ -195,6 +204,25 @@ export const networkAddresses: Record<number, NetworkAddresses> = {
     //@to-do: update aavegotchiDaoAddress for bsae mainnet
     aavegotchiDaoAddress: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
     relayerPetter: "0xf52398257A254D541F392667600901f710a006eD",
+    aavegotchiDiamond: "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF",
+    forgeDiamond: "0x50aF2d63b839aA32b4166FD1Cb247129b715186C",
+    wearableDiamond: "0x052e6c114a166B0e91C2340370d72D4C33752B4b",
+    dao: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    daoTreasury: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    rarityFarming: "0x8c8E076Cd7D2A17Ba2a5e5AF7036c2b2B7F790f6",
+    pixelCraft: "0x50Def14C51123660f8768b511B93cC8c09f30356",
+    daoDirectorTreasury: "0x939b67F6F6BE63E09B0258621c5A24eecB92631c",
+    fakeGotchiCardDiamond: "0xe46B8902dAD841476d9Fee081F1d62aE317206A9",
+    fakeGotchiArtDiamond: "0xAb59CA4A16925b0a4BaC5026C94bEB20A29Df479",
+    ggSkinsDiamond: "0x898d0F54d8CF60698972a75be7Ea1B45aAb66e59",
+    fud: "0x2028b4043e6722Ea164946c82fe806c4a43a0fF4",
+    fomo: "0xA32137bfb57d2b6A9Fd2956Ba4B54741a6D54b58",
+    alpha: "0x15e7CaC885e3730ce6389447BC0f7AC032f31947",
+    kek: "0xE52b9170fF4ece4C35E796Ffd74B57Dec68Ca0e5",
+    gltrAddress: "0x4D140CE792bEdc430498c2d219AfBC33e2992c9D",
+    realmDiamond: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372",
+    installationDiamond: "0xebba5b725A2889f7f089a6cAE0246A32cad4E26b",
+    tileDiamond: "0x617fdB8093b309e4699107F48812b407A7c37938",
   },
 };
 

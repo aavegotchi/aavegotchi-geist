@@ -1,4 +1,8 @@
-import { ForgeDAOFacet, OwnershipFacet } from "../../../typechain";
+import {
+  ForgeDAOFacet,
+  ForgeTokenFacet,
+  OwnershipFacet,
+} from "../../../typechain";
 import { ethers, network } from "hardhat";
 import { sendToTenderly } from "../../libraries/tenderly";
 import { diamondOwner, impersonate } from "../../helperFunctions";
@@ -56,6 +60,12 @@ export async function setForgeProperties(
     forgeDiamondAddress,
     signer
   )) as ForgeDAOFacet;
+
+  const forgeTokenFacet = (await ethers.getContractAt(
+    "contracts/Aavegotchi/ForgeDiamond/facets/ForgeTokenFacet.sol:ForgeTokenFacet",
+    forgeDiamondAddress,
+    signer
+  )) as ForgeTokenFacet;
 
   // if (network.name === "hardhat") {
   //   forgeDaoFacet = await impersonate(
@@ -147,6 +157,10 @@ export async function setForgeProperties(
   await forgeDaoFacet.setSmeltingSkillPointReductionFactorBips(5000);
 
   await forgeDaoFacet.setAavegotchiDiamondAddress(aavegotchiDiamondAddress);
+
+  await forgeTokenFacet.setBaseURI(
+    "https://app.aavegotchi.com/metadata/forge/"
+  );
 
   // }
 
