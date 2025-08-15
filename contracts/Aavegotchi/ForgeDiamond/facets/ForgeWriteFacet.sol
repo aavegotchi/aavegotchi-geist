@@ -133,10 +133,17 @@ contract ForgeWriteFacet is Modifiers {
         emit SetGeodeWinChance(m);
     }
 
+    function syncWearablePrizes(uint256[] calldata _tokenIds) external onlyDaoOrOwner {
+        for (uint256 i; i < _tokenIds.length; i++) {
+            s.geodePrizeTokenIds.push(_tokenIds[i]);
+        }
+    }
+
     function setGeodePrizes(uint256[] calldata _tokenIds, uint256[] calldata _quantities, uint8[] calldata _rarities) external onlyDaoOrOwner {
         require(_tokenIds.length == _quantities.length && _quantities.length == _rarities.length, "ForgeWriteFacet: Array lengths must match");
 
         for (uint256 i; i < _tokenIds.length; i++) {
+            s.geodePrizeTokenIds.push(_tokenIds[i]);
             s.geodePrizeRarities[_tokenIds[i]] = _rarities[i];
             s.geodePrizeQuantities[_tokenIds[i]] = _quantities[i];
         }
