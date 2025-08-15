@@ -1,17 +1,35 @@
 import { ethers, network } from "hardhat";
 import {
   gasPrice,
+  getLedgerSigner,
+  impersonate,
   itemManagerAlt,
   maticForgeDiamond,
 } from "../helperFunctions";
-import { ForgeFacet, ForgeTokenFacet } from "../../typechain";
+import {
+  ForgeDAOFacet,
+  ForgeFacet,
+  ForgeTokenFacet,
+  ItemsFacet,
+} from "../../typechain";
 import { LedgerSigner } from "@anders-t/ethers-ledger";
 import { varsForNetwork } from "../../helpers/constants";
+import { PC_WALLET } from "../geistBridge/paths";
 
 export async function batchMintBaseWearables() {
   const c = await varsForNetwork(ethers);
-  let signer;
+
   const testing = ["hardhat", "localhost"].includes(network.name);
+  let forgeFacet = (await ethers.getContractAt(
+    "contracts/Aavegotchi/ForgeDiamond/facets/ForgeFacet.sol:ForgeFacet",
+    c.forgeDiamond!
+  )) as ForgeFacet;
+
+  let forgeDaoFacet = (await ethers.getContractAt(
+    "contracts/Aavegotchi/ForgeDiamond/facets/ForgeDaoFacet.sol:ForgeDaoFacet",
+    c.forgeDiamond!
+  )) as ForgeDAOFacet;
+
   if (testing) {
     const ownershipFacet = await ethers.getContractAt(
       "OwnershipFacet",
@@ -21,76 +39,86 @@ export async function batchMintBaseWearables() {
 
     console.log("current owner:", owner);
 
-    await network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [owner],
-    });
-    signer = await ethers.provider.getSigner(owner);
-  } else if (network.name === "matic") {
+    forgeFacet = await impersonate(owner, forgeFacet, ethers, network);
+    forgeDaoFacet = await impersonate(owner, forgeDaoFacet, ethers, network);
+  } else if (network.name === "base") {
     //item manager - ledger
-    signer = new LedgerSigner(ethers.provider, "m/44'/60'/1'/0/0");
+    const signer = await getLedgerSigner(ethers);
+    forgeFacet = forgeFacet.connect(signer);
+    forgeDaoFacet = forgeDaoFacet.connect(signer);
   } else throw Error("Incorrect network selected");
-
-  let forgeFacet = (await ethers.getContractAt(
-    "contracts/Aavegotchi/ForgeDiamond/facets/ForgeFacet.sol:ForgeFacet",
-    c.forgeDiamond!,
-    signer
-  )) as ForgeFacet;
 
   // schematics
   const common = [418];
-  // const uncommon = [373, 377];
   const rare = [419];
   const legendary = [420];
-  // const mythical = [384];
-  // const godlike = [385, 386, 387];
   const ids = [common, rare, legendary];
   const totalAmounts = [1000, 250, 100];
 
-  // const percents = [0.4, 0.6];
-  // const receipients = [itemManagerAlt, c.forgeDiamond!];
+  //10% to pixelcraft, 90% to forge diamond
+  const percents = [0.1, 0.9];
+  const receipients = [PC_WALLET, c.forgeDiamond!];
+  let toForge: number[] = [];
 
-  // for (let j = 0; j < receipients.length; j++) {
-  //   const transferAmount = [];
-  //   const transferIds = [];
+  for (let j = 0; j < receipients.length; j++) {
+    const transferAmount = [];
+    const transferIds = [];
 
-  //   const recipient = receipients[j];
-  //   const percent = percents[j];
+    const recipient = receipients[j];
+    const percent = percents[j];
 
-  //   for (let i = 0; i < ids.length; i++) {
-  //     if (totalAmounts[i] === 0) {
-  //       continue;
-  //     }
-  //     for (let j = 0; j < ids[i].length; j++) {
-  //       transferIds.push(ids[i][j]);
-  //       transferAmount.push(totalAmounts[i] * percent);
-  //     }
-  //   }
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = 0; j < ids[i].length; j++) {
+        transferIds.push(ids[i][j]);
+        transferAmount.push(totalAmounts[i] * percent);
+      }
+    }
 
-  //   console.log(
-  //     `Batch minting to ${recipient}: ${transferIds} ${transferAmount}`
-  //   );
+    console.log(
+      `Batch minting to ${recipient}: ${transferIds} ${transferAmount}`
+    );
 
-  //   const tx = await forgeFacet.adminMintBatch(
-  //     recipient,
-  //     transferIds,
-  //     transferAmount,
-  //     { gasPrice: gasPrice }
-  //   );
-  //   console.log("tx hash:", tx.hash);
-  //   const receipt = await tx.wait();
-  //   if (!receipt.status) {
-  //     throw Error(`Error with transaction: ${tx.hash}`);
-  //   }
+    const tx = await forgeFacet.adminMintBatch(
+      recipient,
+      transferIds,
+      transferAmount,
+      { gasPrice: gasPrice }
+    );
+    console.log("tx hash:", tx.hash);
+    const receipt = await tx.wait();
+    if (!receipt.status) {
+      throw Error(`Error with transaction: ${tx.hash}`);
+    }
 
-  //   let forgeTokenFacet = (await ethers.getContractAt(
-  //     "contracts/Aavegotchi/ForgeDiamond/facets/ForgeTokenFacet.sol:ForgeTokenFacet",
-  //     maticForgeDiamond,
-  //     signer
-  //   )) as ForgeTokenFacet;
-  //   const balance = await forgeTokenFacet.balanceOfOwner(recipient);
-  //   console.log("balance", balance);
-  // }
+    if (j === 1) {
+      toForge = transferIds;
+    }
+  }
+
+  const itemsFacet = (await ethers.getContractAt(
+    "contracts/Aavegotchi/facets/ItemsFacet.sol:ItemsFacet",
+    c.aavegotchiDiamond!
+  )) as ItemsFacet;
+
+  const ids2 = [418, 419, 420];
+  const items = await itemsFacet.getItemTypes(ids2);
+  let modifiers: number[] = [];
+  for (let i = 0; i < items.length; i++) {
+    modifiers.push(Number(items[i].rarityScoreModifier));
+  }
+
+  console.log("Creating Geode Prizes for Schematics:", ids2);
+  console.log("rarites", modifiers);
+
+  const tx = await forgeDaoFacet.setMultiTierGeodePrizes(
+    ids2,
+    toForge,
+    modifiers
+  );
+  console.log("tx hash:", tx.hash);
+  await tx.wait();
+
+  console.log("set multi tier geode prizes");
 }
 
 if (require.main === module) {
