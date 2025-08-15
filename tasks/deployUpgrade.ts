@@ -169,27 +169,10 @@ task(
       ) {
         if (useLedger) {
           signer = new LedgerSigner(hre.ethers.provider, "m/44'/60'/1'/0/0");
-        }
-        if (useRelayer) {
+        } else if (useRelayer) {
           signer = await getRelayerSigner(hre);
         } else signer = (await hre.ethers.getSigners())[0];
-      }
-
-      // else if (hre.network.name === "tenderly") {
-      //   if (useLedger) {
-      //     signer = new LedgerSigner(hre.ethers.provider);
-      //   } else {
-      //     signer = (await hre.ethers.getSigners())[0];
-      //   }
-
-      //   await hre.ethers.provider.send("tenderly_setBalance", [
-      //     [await signer.getAddress(), owner],
-      //     hre.ethers.utils.hexValue(
-      //       hre.ethers.utils.parseUnits("10000", "ether").toHexString()
-      //     ),
-      //   ]);
-      // }
-      else {
+      } else {
         throw Error("Incorrect network selected");
       }
 

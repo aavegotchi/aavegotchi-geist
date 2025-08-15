@@ -37,9 +37,8 @@ export async function upgradeForgeWriteFacet() {
     tokenIdsFromMatic,
   ]);
 
-  const owner = await diamondOwner(c.forgeDiamond!, ethers);
   const args: DeployUpgradeTaskArgs = {
-    diamondOwner: owner,
+    diamondOwner: "0x01F010a5e001fe9d6940758EA5e8c777885E351e",
     diamondAddress: c.forgeDiamond!,
     facetsAndAddSelectors: joined,
     useLedger: true,
@@ -49,7 +48,7 @@ export async function upgradeForgeWriteFacet() {
     initCalldata: calldata,
   };
 
-  await run("deployUpgrade", args);
+  // await run("deployUpgrade", args);
 
   //also set the vrf system that was not set in the constructor
   const signer = await getLedgerSigner(ethers);

@@ -8,9 +8,7 @@ import {
 } from "defender-relay-client/lib/ethers";
 // import { run } from "hardhat";
 
-import { fundSigner } from "../helpers/helpers";
 import { LedgerSigner } from "@anders-t/ethers-ledger";
-import { Provider } from "@ethersproject/abstract-provider";
 
 export const gasPrice = 570000000000;
 
