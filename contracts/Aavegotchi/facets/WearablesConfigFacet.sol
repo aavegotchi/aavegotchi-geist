@@ -84,6 +84,11 @@ contract WearablesConfigFacet is Modifiers {
             fee += WEARABLESCONFIG_OWNER_FEE;
         }
 
+        // Effects before interactions: store the config and increment the slot counter before any ETH transfers.
+        WearablesConfig memory wearablesConfig = WearablesConfig({name: _name, wearables: _wearablesToStore});
+        s.gotchiWearableConfigs[_tokenId][owner].push(wearablesConfig);
+        s.ownerGotchiSlotsUsed[owner][_tokenId] += 1;
+
         if (fee > 0) {
             require(msg.value == fee, "WearablesConfigFacet: Incorrect GHST value sent");
 
@@ -103,11 +108,6 @@ contract WearablesConfigFacet is Modifiers {
                 emit WearablesConfigOwnerPaymentReceived(sender, owner, _tokenId, wearablesConfigId, WEARABLESCONFIG_OWNER_FEE);
             }
         }
-
-        // create the new wearables config and add it to the gotchi for that owner
-        WearablesConfig memory wearablesConfig = WearablesConfig({name: _name, wearables: _wearablesToStore});
-        s.gotchiWearableConfigs[_tokenId][owner].push(wearablesConfig);
-        s.ownerGotchiSlotsUsed[owner][_tokenId] += 1;
 
         emit WearablesConfigCreated(owner, _tokenId, wearablesConfigId, _wearablesToStore, msg.value);
     }
